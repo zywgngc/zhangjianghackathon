@@ -1,6 +1,7 @@
 """Validated HTTP bridge to the team's proposed MaterialPortalPort, never a mock fallback."""
 import hashlib
 import json
+import uuid
 
 import httpx
 from jsonschema import Draft202012Validator, FormatChecker, ValidationError
@@ -32,6 +33,8 @@ class MaterialPortalClient:
             raise PortalContractError("invalid result at " + "/".join(map(str, exc.absolute_path))) from None
         if result["requestId"] != request["requestId"] or result["contractVersion"] != request["contractVersion"]:
             raise PortalContractError("request/version mismatch")
+        if result["discussion"] != {k: request["discussion"][k] for k in ("runId", "threadId", "round")}:
+            raise PortalContractError("discussion correlation mismatch")
         if result["status"] != "failed":
             candidates = result["candidates"]
             if len(candidates) > request["limit"]:
@@ -40,9 +43,21 @@ class MaterialPortalClient:
                 raise PortalContractError("duplicate candidate IDs")
             if any(c["kind"] not in request["materialKinds"] for c in candidates):
                 raise PortalContractError("unrequested material kind")
+        if result["status"] == "needs_clarification":
+            questions = result["questions"]
+            if len({q["questionId"] for q in questions}) != len(questions):
+                raise PortalContractError("duplicate clarification question IDs")
+            for question in questions:
+                options = [option["optionId"] for option in question["options"]]
+                if len(set(options)) != len(options):
+                    raise PortalContractError("duplicate clarification options")
+                if not question["required"] and question["defaultOptionId"] not in options:
+                    raise PortalContractError("clarification default is not an option")
 
-    def request_for(self, query, limit):
-        request = {"contractVersion": "0.1", "requestId": "pending", "projectRevision": 0,
+    def request_for(self, query, limit, run_id):
+        request = {"contractVersion": "0.2", "requestId": "pending", "projectRevision": 0,
+            "discussion": {"runId": run_id, "threadId": "archetypes", "round": 0,
+                           "inReplyToRequestId": None, "followUp": None},
             "purpose": "archetype", "description": query, "images": [],
             "constraints": {"engine": "html", "engineVersion": None, "platform": "web", "language": "any",
                             "inputModes": ["keyboard", "pointer", "touch"]},
@@ -52,8 +67,11 @@ class MaterialPortalClient:
         self.validate_request(request)
         return request
 
-    async def search(self, query, limit=4):
-        request = self.request_for(query, limit)
+    async def search(self, query, limit=4, run_id=None):
+        # Standalone knowledge lookups have their own correlation ID; workflow
+        # retrieval supplies its actual durable run ID. This bridge dispatches
+        # initial searches only and never invents follow-up answers or counters.
+        request = self.request_for(query, limit, run_id or "lookup-" + uuid.uuid4().hex)
         headers = {"Idempotency-Key": request["requestId"]}
         if self.settings.portal_token:
             headers["Authorization"] = "Bearer " + self.settings.portal_token
@@ -74,6 +92,9 @@ class MaterialPortalClient:
             return {"documents": [], "warnings": ["素材门户返回失败：" + result["error"]["code"]], "trace": trace}
         if result["isMock"]:
             return {"documents": [], "warnings": ["素材门户返回 mock 样例，未用作真实检索证据"], "trace": trace}
+        if result["status"] == "needs_clarification":
+            trace["discussion_outcome"] = "unresolved_clarification"
+            return {"documents": [], "warnings": ["素材门户需要澄清；本适配器仅支持首轮检索，问题与候选已保留，未伪造答复"], "trace": trace}
         documents = []
         for candidate in result["candidates"]:
             identity = result["provider"] + json.dumps(candidate["source"], sort_keys=True)

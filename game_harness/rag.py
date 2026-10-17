@@ -56,7 +56,7 @@ class Retriever:
                 scored.append({**doc, "score": round(score, 4)})
         return sorted(scored, key=lambda d: d["score"], reverse=True)[:top_k]
 
-    async def search(self, query: str, top_k=4):
+    async def search(self, query: str, top_k=4, run_id=None):
         warnings = []
         local = self.local_search(query, top_k)
         remote = []
@@ -76,7 +76,7 @@ class Retriever:
             except (httpx.HTTPError, ValueError, KeyError, TypeError) as exc:
                 # Do not put remote URLs/tokens or response bodies in public logs.
                 warnings.append("外部 RAG 不可用，已回退本地知识库：" + type(exc).__name__)
-        portal = await self.portal.search(query, top_k) if self.portal else None
+        portal = await self.portal.search(query, top_k, run_id=run_id) if self.portal else None
         if portal:
             warnings.extend(portal["warnings"])
         result = {"query": query, "documents": ((portal["documents"] if portal else []) + remote + local)[:top_k], "warnings": warnings}

@@ -107,7 +107,7 @@ class Harness:
         self.stage(rid, "retrieval")
         evidence = self.store.read_json(rid, "retrieval.json")
         if evidence is None:
-            evidence = await self.retriever.search(brief.rewritten_prompt)
+            evidence = await self.retriever.search(brief.rewritten_prompt, run_id=rid)
             self.store.write(rid, "retrieval.json", evidence)
         self.store.event(rid, "retrieval", "stage_done", {"ids": [d["id"] for d in evidence["documents"]], "warnings": evidence["warnings"]})
         design = await self.checkpoint(rid, "design", "design",

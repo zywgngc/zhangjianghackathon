@@ -26,12 +26,16 @@
 
 `game_harness.material_portal.MaterialPortalClient` 直接使用团队维护的 `webmcp/material-portal.schema.json` 校验请求和结果，并检查 requestId、版本、候选数量、候选类型及 ID 唯一性。
 
-配置 `MATERIAL_PORTAL_URL` 后，RAG 阶段可以通过 HTTP bridge 发送 v0.1 archetype 请求。可选 `MATERIAL_PORTAL_TOKEN` 用于服务端鉴权；`MATERIAL_PORTAL_SCHEMA` 可指定契约文件位置。HTTP bridge 需要由实际门户接入端提供，当前未配置真实服务。
+配置 `MATERIAL_PORTAL_URL` 后，RAG 阶段可以通过 HTTP bridge 发送 v0.2 archetype 首轮请求，discussion.runId 使用真实任务 ID。可选 `MATERIAL_PORTAL_TOKEN` 用于服务端鉴权；`MATERIAL_PORTAL_SCHEMA` 可指定契约文件位置。HTTP bridge 需要由实际门户接入端提供，当前未配置真实服务。不会将 v0.2 静默降级发给只支持 v0.1 的服务。
 
 - mock 结果保留轨迹，不能成为真实生成证据。
 - 真候选仍标记为 `unverified_candidate`；来源、revision 和许可信息保持原样，未检查的内容不会变成“已验证”。
 - 超时或契约错误返回警告，继续使用本地知识库，不伪造门户成功。
 - 同一输入使用稳定 requestId 与 Idempotency-Key；不盲目重试可能计费的素材搜索。
 - 异步取消传播至 HTTP 请求；无真实 MCP 作业协议时，不声称支持外部门户作业恢复。
+- 响应必须匹配 runId、threadId、round，并校验澄清问题 ID、选项唯一性与默认选项归属。
+- `needs_clarification` 会保留完整问题与候选并发出警告，不伪造答复；当前单轮 bridge 不向 Builder 注入这批未解决澄清的候选，仍可使用本地知识。
+
+最新 v0.2 的两套独立三轮追问预算、主应用追问命令、修订冲突、问题回答、原子额度预留与重启恢复属于研究 MAS 的后续 runtime 工作。本 bridge 仅执行 round 0；schema 样例校验不代表这些讨论状态机已实现。
 
 目前完成的是应用契约验证、HTTP bridge 和本地样例回归。实际 MCP tool 名称、传输方式、图像 URI 解析、源代码获取、外部作业恢复和 browser WebMCP 命令暴露仍需与门户负责人对齐。样例通过 schema 校验不代表已经连接真实 MCP 服务。
