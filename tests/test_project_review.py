@@ -50,6 +50,8 @@ class Reviewer:
             shots = payload["screenshots"]
             needed = criterion["required_viewports"]
             eligible = [s for s in shots if not needed or s["name"] in needed]
+            if self.mode == "omit_readability_landscape" and criterion["category"] == "power_readability":
+                eligible = [s for s in eligible if s["name"] != "landscape"]
             if criterion["category"] in {"upgrade_descriptions", "evolution_feedback"}:
                 tag = "upgrade_cards" if criterion["category"] == "upgrade_descriptions" else "ultimate_evolution"
                 eligible = [s for s in shots if s["scene"] == tag] or eligible
@@ -221,3 +223,17 @@ async def test_power_color_change_needs_comparable_scenes_and_never_certifies_de
     report = evaluate_evidence(spec, {"spec_sha256": spec.sha256, "project_sha256": PROJECT_HASH,
         "artifact_root": str(store.directory(rid)), "checks": checks})
     assert next(t for t in report["tests"] if t["test_id"] == "T69")["status"] == "manual_required"
+
+
+async def test_readability_requests_every_viewport_and_rejects_an_omitted_mobile_view(store):
+    rid = make_run(store)
+    reviewer = Reviewer("omit_readability_landscape")
+    spec = load_case("GAME-TEST-003")
+    checks = await review_visual(rid, spec, store, reviewer, PROJECT_HASH, screenshots(store, rid))
+    criterion = next(c for call in reviewer.calls for c in call["payload"]["criteria"] if c["test_id"] == "T70")
+    assert criterion["required_viewports"] == ["desktop", "landscape", "portrait"]
+    assert spec.case_id + "/T70" not in {c["requirement_id"] for c in checks}
+    decisions = [d for name in store.get(rid)["artifacts"] if name.endswith(".review.json")
+                 for d in store.read_json(rid, name)["reviews"] if d["requirement_id"].endswith("/T70")]
+    assert decisions and not decisions[0]["valid"]
+    assert "required viewport has no visual observation" in decisions[0]["errors"]

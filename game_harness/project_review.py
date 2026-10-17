@@ -100,6 +100,7 @@ bbox四个数必须在0到1之间，x+width和y+height不得超过1，禁止像�
 不能只说“布局合理/符合要求/清晰美观/已通过”。引用可见中文或具体外形，并精确指出位于哪张图的哪个区域。
 portrait_layout必须检查竖屏图，landscape_layout必须检查手机横屏图；不要用桌面横屏替代手机横屏。
 战力可读性须逐个提供视口描述真实数字及其角色关联；颜色动态变化须有可比较前后图。
+power_readability必须为required_viewports中的每一种视口分别提供至少一个事实；桌面不同场景不能代替手机横屏或竖屏。先覆盖全部必需视口，再补其他事实。
 升级卡描述/终极进化反馈必须看见真实相应卡片。截图没有出现时必须insufficient。
 主题判断结合给定原文的主题/角色/地形/配色要求。参考图片若未附，不得声称已经对比参考图。
 每项limitations写明截图范围与不由本次视觉证明的行为。source hash必须原样返回。
@@ -220,7 +221,9 @@ async def review_visual(rid, spec, store, agents, project_sha256, screenshots):
     checks = []
     # Three criteria keep a 4k-token structured response complete and auditable.
     for offset in range(0, len(criteria), 3):
-        batch = criteria[offset:offset + 3]
+        batch = [{**criterion, "required_viewports": sorted({shot["name"] for shot in shots})}
+                 if criterion["category"] == "power_readability" else criterion
+                 for criterion in criteria[offset:offset + 3]]
         batch_prefix = prefix + "-" + str(offset // 3 + 1)
         visual_sections = [{"number": section["number"], "text": section["text"], "source": section["source"]}
                            for section in data.get("sections", []) if section["number"] == "12"]
