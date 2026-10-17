@@ -10,14 +10,17 @@ from contextlib import contextmanager
 import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import math
 from pathlib import Path
 import re
+from socketserver import TCPServer
 import threading
+import time
 from urllib.parse import unquote, urlsplit
 
 from playwright.async_api import async_playwright
 
-from .acceptance import evaluate_assertion, evaluate_evidence, scenario_plan
+from .acceptance import PLAN_SOURCE_HASHES, evaluate_assertion, evaluate_evidence, scenario_plan
 
 
 PROJECT_CSP = ("default-src 'self' data: blob:; script-src 'self'; style-src 'self' 'unsafe-inline'; "
@@ -50,7 +53,15 @@ def verified_server(workspace):
         def log_message(self, *_):
             pass
 
-    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    class LoopbackServer(ThreadingHTTPServer):
+        def server_bind(self):
+            # HTTPServer normally reverse-resolves even 127.0.0.1. The verifier
+            # needs only a numeric, private listener; DNS can hang independently
+            # of the game (observed on macOS/Python3.13).
+            TCPServer.server_bind(self)
+            self.server_name, self.server_port = self.server_address[:2]
+
+    server = LoopbackServer(("127.0.0.1", 0), Handler)
     server.daemon_threads = True
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -85,7 +96,7 @@ INSTRUMENT_RENDERER = """() => {
       for(const name of ['fillText','strokeText']) {
         if(typeof context[name]!=='function')continue;
         const draw=context[name].bind(context);
-        context[name]=(...values)=>{const value=String(values[0]);if(!telemetry.texts.includes(value))telemetry.texts.push(value);return draw(...values);};
+        context[name]=(...values)=>{const value=String(values[0]);if(telemetry.texts.length<500&&!telemetry.texts.includes(value))telemetry.texts.push(value);return draw(...values);};
       }
     }
     return context;
@@ -96,6 +107,13 @@ INSTRUMENT_RENDERER = """() => {
 RUN_SCENARIO = """async ({scenario, sourceHash, specHash, caseId}) => {
   const bridge = window.__HARNESS__;
   if(!bridge) throw Error('Missing window.__HARNESS__');
+  const independent = scenario.fixture != null || scenario.steps.some(s=>['variant','dropExperiment'].includes(s.call));
+  const initialLive=independent?JSON.parse(JSON.stringify(await bridge.snapshot())):null;
+  const pausedLive=independent && ['PLAYING','MOVING','INTERACTING'].includes(initialLive.phase);
+  if(pausedLive) {if(bridge.command)await bridge.command('pause',{});else await bridge.dispatch({type:'pause'});}
+  const liveBefore=independent?JSON.stringify(await bridge.snapshot()):null;
+  const storageBefore=independent?JSON.stringify(Object.keys(localStorage).sort().map(k=>[k,localStorage.getItem(k)])):null;
+  const canvasBefore=independent?document.querySelectorAll('canvas').length:null;
   const expand=fixture=>{
     if(!fixture || !fixture.enemyGenerator)return fixture;
     const f=JSON.parse(JSON.stringify(fixture)),g=f.enemyGenerator;delete f.enemyGenerator;
@@ -106,21 +124,43 @@ RUN_SCENARIO = """async ({scenario, sourceHash, specHash, caseId}) => {
     } else for(let i=0;i<g.count;i++)points.push({x:Math.cos(2*Math.PI*i/g.count)*g.radius,y:Math.sin(2*Math.PI*i/g.count)*g.radius});
     f.enemies=[...(f.enemies||[]),...points.map((point,i)=>({id:'generated-'+i,kind:'enemy',hp:g.hp,damage:g.damage,speed:g.speed,...point}))];return f;
   };
+  const makeIsolate=async options=>{
+    try {
+      if(typeof bridge.isolatedSimulation!=='function')throw Error('isolatedSimulation is missing');
+      const instance=await bridge.isolatedSimulation(options);
+      for(const name of ['snapshot','config','advance','events','dispose'])
+        if(typeof instance?.[name]!=='function')throw Error('production handle is missing '+name);
+      if(typeof instance.command!=='function'&&typeof instance.dispatch!=='function')throw Error('production handle is missing command/dispatch');
+      return instance;
+    }catch(error){throw Error('HARNESS_ADAPTER: isolatedSimulation construction/protocol: '+String(error));}
+  };
+  const disposeIsolate=async instance=>{
+    try {await instance.dispose();}catch(error){throw Error('HARNESS_ADAPTER: isolated dispose failed: '+String(error));}
+  };
   const renderBefore={contexts:window.__HARNESS_RENDER_OBSERVER__?.contextCount||0,draws:window.__HARNESS_RENDER_OBSERVER__?.draws||0};
-  const api = scenario.fixture === null || scenario.fixture === undefined ? bridge :
-    await bridge.isolatedSimulation({caseId: caseId || bridge.caseId, seed: scenario.seed, fixture: expand(scenario.fixture),render:!!scenario.render});
-  if(!api || typeof api.snapshot !== 'function') throw Error('isolatedSimulation must return the production simulation handle');
+  let api = null;
   const copy = value => JSON.parse(JSON.stringify(value));
   const observe = async handle => {const s=copy(await handle.snapshot());s._entities=Object.fromEntries((s.entities||[]).map(e=>[e.id,e]));return s;};
   const send = async (handle,name,args={}) => typeof handle.command==='function' ? handle.command(name,args) : handle.dispatch({type:name,...args});
   const trace = {project_sha256:sourceHash, spec_sha256:specHash, scenario_id:scenario.id,
                  fixture:scenario.fixture, seed:scenario.seed, steps:[]};
   try {
+    api = scenario.fixture === null || scenario.fixture === undefined ? bridge :
+      await makeIsolate({caseId: caseId || bridge.caseId, seed: scenario.seed, fixture: expand(scenario.fixture),render:!!scenario.render});
+    if(!api || typeof api.snapshot !== 'function') throw Error('HARNESS_ADAPTER: isolatedSimulation must return the production simulation handle');
+    if(scenario.fixture?.player) {
+      const initial=await observe(api);
+      for(const [key,value] of Object.entries(scenario.fixture.player)) {
+        if(typeof value==='number' && (typeof initial.player?.[key]!=='number' || Math.abs(initial.player[key]-value)>0.00001))
+          throw Error('HARNESS_ADAPTER: initial player fixture was not applied: '+key+' expected '+value+' observed '+initial.player?.[key]);
+      }
+    }
     for(const step of scenario.steps) {
       if(step.call==='command') {
         try {await send(api,step.name,step.args||{});} catch(error) {if(!step.allow_rejection)throw error;trace.rejections=trace.rejections||[];trace.rejections.push(String(error));}
       } else if(step.call==='advance') await api.advance(step.milliseconds);
       else if(step.call==='snapshot') trace[step.save] = await observe(api);
+      else if(step.call==='config') trace[step.save] = copy(await api.config());
       else if(step.call==='chooseFirstUpgrade') {
         const s=await api.snapshot(),choices=s.upgradeChoices||s.choices||[];
         if(!choices.length) throw Error('No actual upgrade choices available');
@@ -141,8 +181,32 @@ RUN_SCENARIO = """async ({scenario, sourceHash, specHash, caseId}) => {
         if(step.history)trace[step.history]=history;
         if(!found)throw Error('Expected simulation condition not reached: '+step.pointer+'='+step.expected);
       } else if(step.call==='variant') {
-        const instance=await bridge.isolatedSimulation({caseId:caseId || bridge.caseId,seed:scenario.seed,fixture:expand(step.fixture)});
-        try {await instance.advance(step.milliseconds);trace[step.save]=await observe(instance);} finally {if(instance.dispose)await instance.dispose();}
+        const instance=await makeIsolate({caseId:caseId || bridge.caseId,seed:scenario.seed,fixture:expand(step.fixture)});
+        try {if(step.saveBefore)trace[step.save+'_before']=await observe(instance);await instance.advance(step.milliseconds);trace[step.save]=await observe(instance);
+          if(step.saveEvents)trace[step.save+'_events']=copy(await instance.events(0));}
+        finally {await disposeIsolate(instance);}
+      } else if(step.call==='dropExperiment') {
+        const samples=[];
+        for(let index=0;index<=step.samples;index++) {
+          const seed=scenario.seed+(index===step.samples?0:index);
+          const instance=await makeIsolate({caseId:caseId||bridge.caseId,seed,fixture:expand(step.fixture)});
+          try {
+            const sample={seed,before:await observe(instance),configuration:copy(await instance.config()),events:[]};let last=0;
+            for(let ms=0;ms<step.maxMilliseconds;ms+=500) {
+              const state=await instance.snapshot(),choices=state.upgradeChoices||state.choices||[];
+              if(choices.length) {const selected=choices[0];await send(instance,'chooseUpgrade',{id:typeof selected==='string'?selected:selected.id});}
+              await instance.advance(500);
+              for(const event of await instance.events(last)||[])if(event.seq>last){sample.events.push(copy(event));last=event.seq;}
+              const current=await instance.snapshot();
+              if(typeof current.metrics?.enemiesDefeated!=='number')throw Error('HARNESS_ADAPTER: missing actual metrics.enemiesDefeated for drop experiment');
+              if(current.metrics.enemiesDefeated>=step.enemiesPerSample)break;
+              if(current.phase==='DEFEAT'||current.phase==='VICTORY')break;
+            }
+            sample.after=await observe(instance);samples.push(sample);
+          } finally {await disposeIsolate(instance);}
+          if(index%5===0)await new Promise(resolve=>setTimeout(resolve,0));
+        }
+        trace[step.save]=samples;
       }
       else throw Error('Unknown trusted scenario step '+step.call);
       trace.steps.push(copy(step));
@@ -159,7 +223,19 @@ RUN_SCENARIO = """async ({scenario, sourceHash, specHash, caseId}) => {
     }
     return trace;
   } finally {
-    if(api !== bridge && typeof api.dispose==='function') await api.dispose();
+    if(api && api !== bridge) {
+      try {if(typeof api.dispose==='function')await api.dispose();else trace.adapter_error='HARNESS_ADAPTER: missing isolated dispose';}
+      catch(error){trace.adapter_error='HARNESS_ADAPTER: isolated dispose failed: '+String(error);}
+    }
+    if(independent) {
+      try {
+        const liveAfter=JSON.stringify(await bridge.snapshot());
+        const storageAfter=JSON.stringify(Object.keys(localStorage).sort().map(k=>[k,localStorage.getItem(k)]));
+        trace.noninterference={liveStateUnchanged:liveAfter===liveBefore,storageUnchanged:storageAfter===storageBefore,canvasUnchanged:document.querySelectorAll('canvas').length===canvasBefore};
+        if(Object.values(trace.noninterference).some(value=>!value))trace.adapter_error=(trace.adapter_error||'')+' Isolated production simulation changed live state/storage or leaked canvas';
+      } catch(error){trace.adapter_error='HARNESS_ADAPTER: isolation observation failed: '+String(error);}
+      finally {if(pausedLive) {try {if(bridge.command)await bridge.command('resume',{});else await bridge.dispatch({type:'resume'});}catch(error){trace.adapter_error='HARNESS_ADAPTER: live resume failed: '+String(error);}}}
+    }
   }
 }"""
 
@@ -175,6 +251,9 @@ RUN_NORMAL_ROUTE = """async ({route, sourceHash, specHash, caseId}) => {
   trace.initial=await observe();
   if(trace.initial.level!==route.level) throw Error('Level is locked or start(level) did not select the requested level');
   let target=null,targetSince=0,lastSeq=0,lastCheckpoint=-1;
+  const captured=new Set();let powerBefore=false,previousPower=trace.initial.player?.power;
+  const capture=async(scene)=>{if(!window.__HARNESS_HOST_CAPTURE__||captured.has(scene)||route.endurance)return;
+    captured.add(scene);await new Promise(resolve=>requestAnimationFrame(resolve));await window.__HARNESS_HOST_CAPTURE__({scene});};
   const maxMs=(route.maxSimSeconds || 150)*1000;
   for(let elapsed=0;elapsed<=maxMs;elapsed+=200) {
     const s=await api.snapshot();
@@ -197,6 +276,7 @@ RUN_NORMAL_ROUTE = """async ({route, sourceHash, specHash, caseId}) => {
         if(hazard) await send('move',{x:hazard.x>=0?-4.5:4.5});
       }
     } else if(caseId==='GAME-TEST-003') {
+      if(powerBefore && p.power>previousPower) {await capture('power_change_after');powerBefore=false;}
       if(target && !entities.some(e=>e.id===target)) target=null;
       if(target && time-targetSince>45) throw Error('Navigation/interaction did not resolve target '+target);
       if(!target && !['MOVING','INTERACTING'].includes(s.phase)) {
@@ -205,6 +285,7 @@ RUN_NORMAL_ROUTE = """async ({route, sourceHash, specHash, caseId}) => {
         const enemies=entities.filter(e=>(e.kind==='enemy'||e.kind==='boss') && p.power>e.power).sort((a,b)=>(a.kind==='boss')-(b.kind==='boss') || a.power-b.power || distance(a)-distance(b));
         const next=weapons[0] || enemies[0];
         if(!next) throw Error('No legitimate reachable power-growth action remains');
+        if(!captured.has('power_change_before')) {await capture('power_change_before');powerBefore=true;previousPower=p.power;}
         target=next.id;targetSince=time;await send('selectTarget',{id:target});
       }
     } else {
@@ -218,6 +299,7 @@ RUN_NORMAL_ROUTE = """async ({route, sourceHash, specHash, caseId}) => {
         const needNew=owned.size<2&&time>=15 || owned.size<3&&time>=30;
         const newActive=needNew?choices.find(c=>/^W\\d{2}$/.test(id(c))&&!owned.has(id(c))):null;
         const choice=newActive || [...choices].sort((a,b)=>rank(a)-rank(b))[0];
+        await capture(choices.some(c=>/^E\\d{2}$/.test(id(c)))?'ultimate_evolution':'upgrade_cards');
         await send('chooseUpgrade',{id:id(choice)});
       } else {
         const enemies=entities.filter(e=>['enemy','elite','boss'].includes(e.kind));
@@ -249,7 +331,7 @@ class ProjectValidator:
 
     async def validate(self, rid, spec, workspace, build, round_no):
         report = {"version": self.version, "passed": False, "errors": [], "browser": [], "scenarios": [],
-                  "actionable_failures": [], "missing_executors": [], "executor_gaps": [], "manual_required": [], "visual_required": [],
+                  "actionable_failures": [], "adapter_failures": [], "missing_executors": [], "executor_gaps": [], "manual_required": [], "visual_required": [],
                   "source_sha256": build.get("source_sha256"), "spec_sha256": spec.sha256}
         if build.get("passed") is not True:
             report["errors"].append("Production typecheck/build did not pass")
@@ -267,10 +349,15 @@ class ProjectValidator:
                 raw, _ = workspace.read_asset(artifact["path"])
                 if hashlib.sha256(raw).hexdigest() != artifact["sha256"]:
                     raise ValueError("Production artifact hash changed: " + artifact["path"])
-            plan = scenario_plan(spec.case_id)
+            registered = PLAN_SOURCE_HASHES.get(spec.case_id) == spec.sha256
+            plan = scenario_plan(spec.case_id) if registered else {"acceptance_mapping": {}}
             with verified_server(workspace) as origin:
-                await asyncio.wait_for(self._execute(rid, spec, workspace, report, evidence, plan, origin, round_no),
+                execution = self._execute(rid, spec, workspace, report, evidence, plan, origin, round_no) if registered else self._generic_execute(rid, spec, workspace, report, origin, round_no)
+                await asyncio.wait_for(execution,
                                        timeout=float(getattr(self.settings, "project_browser_timeout", 600)))
+            if not registered:
+                report["executor_gaps"].append({"acceptance_ids": [spec.case_id + "/task-specific-acceptance"],
+                    "reason": "No reviewed gameplay acceptance executor is registered for this complete custom specification/version; generic browser smoke cannot certify gameplay"})
         except asyncio.CancelledError:
             raise
         except Exception as exc:
@@ -278,12 +365,12 @@ class ProjectValidator:
         if workspace.snapshot().get("sha256") != build["source_sha256"]:
             report["errors"].append("Source changed during browser acceptance")
         report["acceptance"] = evaluate_evidence(spec, evidence)
-        report["passed"] = report["acceptance"]["complete"] and not report["errors"]
+        report["passed"] = report["acceptance"]["complete"] and not report["errors"] and not report["adapter_failures"]
         report["evidence_manifest"] = [{"requirement_id": c["requirement_id"], "scenario_id": c.get("scenario_id"), "artifacts": c["artifacts"]} for c in evidence["checks"]]
         browser_executors = {
-            "GAME-TEST-001": {3, 4, 31, 32, 33, 37, 38, 39, 40, 41, 42, 45, 46},
-            "GAME-TEST-002": {2, 3, 61, 62, 65, 69, 70, 71, 72, 73, 74, 77, 78},
-            "GAME-TEST-003": {52, 53, 54, 56, 58, 59, 62, 63, 64, 65, 66, 67, 68, 72, 73},
+            "GAME-TEST-001": {3, 4, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 45, 46},
+            "GAME-TEST-002": {2, 3, 48, 59, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 77, 78},
+            "GAME-TEST-003": {2, 3, 24, 25, 50, 52, 53, 54, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 72, 73},
         }.get(spec.case_id, set())
         mapping = plan["acceptance_mapping"] if "plan" in locals() else {}
         report["actionable_failures"] = [{"id": test["id"], "text": test["text"], "errors": test["errors"]}
@@ -291,9 +378,12 @@ class ProjectValidator:
         report["missing_executors"] = [{"id": test["id"], "text": test["text"]}
             for test in report["acceptance"]["tests"] if test["status"] == "not_run"
             and not mapping.get(test["id"]) and int(test["test_id"][1:]) not in browser_executors]
-        report["missing_executors"].extend({"id": test_id, "reason": gap["reason"]} for gap in report["executor_gaps"] for test_id in gap["acceptance_ids"])
+        unresolved = {test["id"] for test in report["acceptance"]["tests"] if test["status"] != "passed"}
+        report["missing_executors"].extend({"id": test_id, "reason": gap["reason"]} for gap in report["executor_gaps"] for test_id in gap["acceptance_ids"] if test_id in unresolved or test_id.endswith("/task-specific-acceptance"))
         report["manual_required"] = [test["id"] for test in report["acceptance"]["tests"] if test["status"] == "manual_required"]
         report["visual_required"] = [test["id"] for test in report["acceptance"]["tests"] if test["status"] == "visual_required"]
+        report["actionable_failures"].extend({"id": "browser/" + row["name"], "errors": row["errors"]}
+            for row in report["browser"] if row.get("errors"))
         report["repair_policy"] = "Repair actual failed assertions; missing executors are harness work, and manual/visual pending checks are separate verification work."
         self.store.write(rid, f"project-evidence-{round_no}.json", evidence)
         return report
@@ -323,34 +413,82 @@ class ProjectValidator:
                 errors = []
                 page.on("pageerror", lambda error: errors.append(str(error)[:1000]))
                 await page.goto(origin + "/", wait_until="networkidle", timeout=30000)
-                await page.wait_for_function("window.__HARNESS__ && typeof window.__HARNESS__.snapshot==='function'", timeout=15000)
+                await page.wait_for_function("() => Boolean(window.__HARNESS__ && typeof window.__HARNESS__.snapshot==='function')", timeout=15000)
+                capture_counts = {}
+
+                def merge_ui(result):
+                    report.setdefault("captured_screenshots", []).extend(result.get("screenshots", []))
+                    report.setdefault("ui_errors", []).extend(result.get("errors", []))
+                    report["adapter_failures"].extend(result.get("adapter_failures", []))
+                    for gap in result.get("missing_executors", []):
+                        report["executor_gaps"].append({"acceptance_ids": gap.get("acceptance_ids", []), "reason": gap.get("reason", "UI prerequisite unavailable")})
+
+                async def capture_scene(source, payload):
+                    scene = payload.get("scene") if isinstance(payload, dict) else None
+                    if scene not in {"upgrade_cards", "ultimate_evolution", "power_change_before", "power_change_after"}:
+                        raise ValueError("Unsupported host capture scene")
+                    if capture_counts.get(scene, 0) >= 2:
+                        return {"captured": False, "reason": "Host per-scene screenshot bound"}
+                    capture_counts[scene] = capture_counts.get(scene, 0) + 1
+                    from .project_ui_validation import capture_project_ui_scene
+                    result = await capture_project_ui_scene(self, source["page"], rid, spec, evidence, round_no, scene)
+                    merge_ui(result)
+                    return {"captured": bool(result.get("screenshots"))}
+
+                await page.expose_binding("__HARNESS_HOST_CAPTURE__", capture_scene)
                 for index, scenario in enumerate(plan["scenarios"]):
                     if index % 10 == 0:
                         self.store.event(rid, "project_verification", "acceptance_progress", {"scenario": index, "total": len(plan["scenarios"]), "case_id": spec.case_id})
                     try:
-                        trace = await page.evaluate(RUN_SCENARIO, {"scenario": scenario, "sourceHash": evidence["project_sha256"], "specHash": spec.sha256, "caseId": spec.case_id})
+                        trace = await self._renderer_memory(page, context, spec, scenario) if scenario.get("executor") == "renderer_memory" else await page.evaluate(RUN_SCENARIO, {"scenario": scenario, "sourceHash": evidence["project_sha256"], "specHash": spec.sha256, "caseId": spec.case_id})
                         assertions = scenario["assertions"]
                     except Exception as exc:
                         trace = {"execution_error": str(exc)[:3000]}
-                        assertions = [{"pointer": "/execution_error", "op": "eq", "expected": None}]
+                        assertions = scenario["assertions"] + [{"pointer": "/execution_error", "op": "eq", "expected": None}]
                     if scenario.get("render") and trace.get("renderUnavailable"):
                         report["scenarios"].append({"id": scenario["id"], "status": "not_run", "executor_gap": "Optional isolated real-renderer handle is unavailable"})
-                        report["executor_gaps"].append({"scenario_id": scenario["id"], "acceptance_ids": scenario["acceptance_ids"], "reason": "isolatedSimulation(render:true) must supply the actual renderer handle"})
+                        report["adapter_failures"].append({"scenario_id": scenario["id"], "acceptance_ids": scenario["acceptance_ids"], "reason": "The required isolatedSimulation(render:true) adapter must supply the actual renderer handle"})
                         continue
-                    self._evidence(rid, spec, evidence, round_no, f"scenario-{index}", trace,
-                        scenario["acceptance_ids"], assertions, scenario_id=scenario["id"], fixture=scenario["fixture"])
                     assertion_errors = []
-                    for assertion in scenario["assertions"]:
+                    adapter_errors = []
+                    if trace.get("adapter_error"):
+                        adapter_errors.append(trace["adapter_error"])
+                    if trace.get("execution_error") and re.search(r"HARNESS_ADAPTER|not a function|missing (?:window|.*handle|.*snapshot)|must return.*(?:handle|snapshot)|fixture.*(?:ignored|match)|No actual upgrade choices", trace["execution_error"], re.I):
+                        adapter_errors.append(trace["execution_error"])
+                    if trace.get("execution_error") and not adapter_errors:
+                        # A real condition timeout/runtime exception is a failed
+                        # behavior, not a missing observation bridge. Preserve all
+                        # trusted assertions in evidence even though it aborted.
+                        assertion_errors.append("Production scenario execution failed: " + trace["execution_error"])
+                    for assertion in [] if trace.get("execution_error") else scenario["assertions"]:
                         try:
                             if not evaluate_assertion(trace, assertion):
                                 assertion_errors.append("Failed assertion: " + json.dumps(assertion, ensure_ascii=False))
+                        except (KeyError, IndexError, TypeError, StopIteration) as exc:
+                            adapter_errors.append("Observation adapter is missing a required field: " + str(exc))
                         except Exception as exc:
                             assertion_errors.append(type(exc).__name__ + ": " + str(exc)[:500])
+                    if adapter_errors:
+                        report["adapter_failures"].append({"scenario_id": scenario["id"], "acceptance_ids": scenario["acceptance_ids"], "errors": adapter_errors})
+                        self.store.write(rid, f"project-r{round_no}-scenario-{index}-adapter.json", trace)
+                    else:
+                        self._evidence(rid, spec, evidence, round_no, f"scenario-{index}", trace,
+                            scenario["acceptance_ids"], assertions, scenario_id=scenario["id"], fixture=scenario["fixture"])
                     report["scenarios"].append({"id": scenario["id"], "error": trace.get("execution_error"),
-                        "status": "failed" if assertion_errors else "passed", "assertion_errors": assertion_errors})
-                # A fresh page removes isolated test instance state from normal play.
-                await page.reload(wait_until="networkidle")
-                await page.wait_for_function("window.__HARNESS__ && typeof window.__HARNESS__.snapshot==='function'")
+                        "status": "not_run" if adapter_errors else "failed" if assertion_errors else "passed", "assertion_errors": assertion_errors, "adapter_errors": adapter_errors})
+                # A fresh browser context prevents even a rejected adapter's
+                # constructor/save side effect from seeding normal-play progress.
+                # All normal victories and shop earnings share this clean context.
+                await context.close()
+                context = await self._context(browser, origin)
+                page = await context.new_page()
+                page.set_default_timeout(3000)
+                page.on("pageerror", lambda error: errors.append(str(error)[:1000]))
+                await page.expose_binding("__HARNESS_HOST_CAPTURE__", capture_scene)
+                await page.goto(origin + "/", wait_until="networkidle")
+                await page.wait_for_function("() => Boolean(window.__HARNESS__ && typeof window.__HARNESS__.snapshot==='function')")
+                report["normal_play_started_in_clean_browser_context"] = True
+                normal_play_traces = []
                 for route in plan["normal_play_routes"]:
                     try:
                         trace = await page.evaluate(RUN_NORMAL_ROUTE, {"route": route, "sourceHash": evidence["project_sha256"], "specHash": spec.sha256, "caseId": spec.case_id})
@@ -358,6 +496,7 @@ class ProjectValidator:
                     except Exception as exc:
                         trace = {"execution_error": str(exc)[:3000]}
                         assertions = [{"pointer": "/execution_error", "op": "eq", "expected": None}]
+                    normal_play_traces.append(trace)
                     self._evidence(rid, spec, evidence, round_no, "normal-level-" + str(route["level"]), trace,
                         route["acceptance_ids"], assertions, kind="gameplay", scenario_id=route["id"], mode="normal_play")
                     report["scenarios"].append({"id": route["id"], "error": trace.get("execution_error"), "phase": trace.get("final", {}).get("phase")})
@@ -374,13 +513,46 @@ class ProjectValidator:
                     # completed levels rather than exercising default save values.
                     before_reload = await page.evaluate("() => JSON.parse(JSON.stringify(window.__HARNESS__.snapshot()))")
                     await page.reload(wait_until="networkidle")
-                    await page.wait_for_function("window.__HARNESS__ && typeof window.__HARNESS__.snapshot==='function'")
+                    await page.wait_for_function("() => Boolean(window.__HARNESS__ && typeof window.__HARNESS__.snapshot==='function')")
                     after_reload = await page.evaluate("() => JSON.parse(JSON.stringify(window.__HARNESS__.snapshot()))")
                     persistence_ids = [52, 53] if spec.case_id.endswith("003") else []
                     assertions = [{"pointer": "/after/progress/unlockedLevel", "op": "same", "other_pointer": "/before/progress/unlockedLevel"},
                                   {"pointer": "/after/progress/completedLevels", "op": "same", "other_pointer": "/before/progress/completedLevels"}]
                     self._evidence(rid, spec, evidence, round_no, "persistence-level-" + str(route["level"]),
                         {"before": before_reload, "after": after_reload}, [spec.case_id + "/T" + str(n).zfill(2) for n in persistence_ids], assertions, kind="browser")
+                if any(trace.get("final", {}).get("phase") == "VICTORY" for trace in normal_play_traces):
+                    before = await page.evaluate("() => JSON.parse(JSON.stringify(window.__HARNESS__.snapshot()))")
+                    await page.evaluate("() => {const api=window.__HARNESS__;return api.command?api.command('start',{level:1,seed:20261016}):api.dispatch({type:'start',level:1,seed:20261016});}")
+                    after = await page.evaluate("() => JSON.parse(JSON.stringify(window.__HARNESS__.snapshot()))")
+                    replay_id = 48 if spec.case_id.endswith("002") else 50 if spec.case_id.endswith("003") else None
+                    if replay_id:
+                        self._evidence(rid, spec, evidence, round_no, "completed-level-replay", {"before": before, "after": after},
+                            [spec.case_id + f"/T{replay_id:02}"],
+                            [{"pointer": "/before/progress/completedLevels", "op": "contains", "expected": 1},
+                             {"pointer": "/after/progress/completedLevels", "op": "same", "other_pointer": "/before/progress/completedLevels"},
+                             {"pointer": "/after/progress/unlockedLevel", "op": "same", "other_pointer": "/before/progress/unlockedLevel"},
+                             {"pointer": "/after/level", "op": "eq", "expected": 1}, {"pointer": "/after/phase", "op": "eq", "expected": "PLAYING"}], kind="gameplay", mode="normal_play")
+                    await page.reload(wait_until="networkidle")
+                    await page.wait_for_function("() => Boolean(window.__HARNESS__ && typeof window.__HARNESS__.snapshot==='function')")
+                from .project_ui_validation import capture_isolated_project_ui, validate_project_ui
+                merge_ui(await validate_project_ui(self, page, rid, spec, evidence, round_no, normal_play_traces=normal_play_traces))
+                if spec.case_id.endswith("001"):
+                    fixture = {"player": {"soldiers": 1, "x": 0, "z": 0},
+                        "gates": [{"id": "loss", "group": "loss", "operator": "-", "operand": 3, "x": 0, "z": 1}], "boss": None, "trackEnd": 1000}
+                    merge_ui(await capture_isolated_project_ui(self, page, rid, spec, evidence, round_no, fixture, "defeat", steps=[{"call": "advance", "milliseconds": 300}]))
+                elif spec.case_id.endswith("002"):
+                    fixture = {"player": {"hp": 1, "maxHp": 100, "x": 0, "y": 0}, "skills": {"active": [], "passive": []},
+                        "enemies": [{"id": "contact", "hp": 100000, "speed": 0, "damage": 8, "x": 0, "y": 0}], "spawnEnabled": False, "freeUpgradesGranted": [5, 15]}
+                    merge_ui(await capture_isolated_project_ui(self, page, rid, spec, evidence, round_no, fixture, "defeat", steps=[{"call": "advance", "milliseconds": 100}]))
+                    for scene in ["upgrade_cards", "ultimate_evolution"]:
+                        fixture = {"player": {"hp": 100, "characterLevel": 1, "xp": 0, "x": 0, "y": 0},
+                            "gems": [{"id": "xp", "xp": 6, "x": 0, "y": 0}], "spawnEnabled": False, "freeUpgradesGranted": [5, 15]}
+                        if scene == "ultimate_evolution":
+                            fixture["skills"] = {"active": [{"id": "W01", "level": 5}], "passive": [{"id": "P05", "level": 3}]}
+                        merge_ui(await capture_isolated_project_ui(self, page, rid, spec, evidence, round_no, fixture, scene, steps=[{"call": "advance", "milliseconds": 500}]))
+                else:
+                    fixture = {"player": {"power": 10, "x": 0, "z": 0}, "enemies": [], "weapons": [], "boss": {"id": "boss", "power": 150, "x": 3, "z": 0}}
+                    merge_ui(await capture_isolated_project_ui(self, page, rid, spec, evidence, round_no, fixture, "deadlock", steps=[{"call": "advance", "milliseconds": 100}]))
                 report["errors"].extend(errors)
                 await context.close()
                 for viewport in [("desktop", 1280, 800, False), ("portrait", 390, 844, True), ("landscape", 844, 390, True)]:
@@ -409,6 +581,147 @@ class ProjectValidator:
         context._harness_blocked = blocked
         return context
 
+    async def _renderer_memory(self, page, context, spec, scenario):
+        """Exercise real production systems and renderer without retaining JS traces.
+
+        CDP observes heap/DOM independently. Twelve simulated minutes are rendered
+        for at least one wall-clock minute. This is an isolated endurance boundary,
+        never a level-completion or physical-phone performance certificate.
+        """
+        fixture = json.loads(json.dumps(scenario["fixture"]))
+        generator = fixture.pop("enemyGenerator")
+        fixture["enemies"] = [{"id": "endurance-" + str(index), "kind": "enemy",
+            "x": math.cos(2 * math.pi * index / generator["count"]) * generator["radius"],
+            "y": math.sin(2 * math.pi * index / generator["count"]) * generator["radius"],
+            **{key: generator[key] for key in ["hp", "damage", "speed"]}}
+            for index in range(generator["count"])]
+        step = scenario["steps"][0]
+        trace = {"scenario_id": scenario["id"], "fixture": scenario["fixture"], "samples": [],
+                 "mode": "isolated_renderer_endurance", "scope": "720 simulated seconds / >=60 wall seconds; software renderer, not physical-phone FPS"}
+        session = None
+        started = time.monotonic()
+        try:
+            await page.evaluate("""async ({caseId,fixture,seed})=>{
+              const bridge=window.__HARNESS__,copy=v=>JSON.parse(JSON.stringify(v));
+              const command=(name)=>bridge.command?bridge.command(name,{}):bridge.dispatch({type:name});
+              const initial=copy(await bridge.snapshot());
+              const state={bridge,handle:null,resume:['PLAYING','MOVING','INTERACTING'].includes(initial.phase),copy};window.__HARNESS_MEMORY_SESSION__=state;
+              if(state.resume)await command('pause');
+              state.live=JSON.stringify(await bridge.snapshot());
+              state.storage=JSON.stringify(Object.keys(localStorage).sort().map(k=>[k,localStorage.getItem(k)]));
+              state.canvas=document.querySelectorAll('canvas').length;
+              state.contexts=window.__HARNESS_RENDER_OBSERVER__?.contextCount||0;
+              state.draws=window.__HARNESS_RENDER_OBSERVER__?.draws||0;
+              state.handle=await bridge.isolatedSimulation({caseId,fixture,seed,render:true});
+              for(const name of ['snapshot','advance','engineInfo','dispose'])if(typeof state.handle?.[name]!=='function')throw Error('HARNESS_ADAPTER: missing rendered simulation '+name);
+              const info=await state.handle.engineInfo();
+              if(!info?.running||!info?.version||typeof info?.resources!=='object')throw Error('HARNESS_ADAPTER: real running engineInfo/resources required for endurance');
+              const before=await state.handle.snapshot();
+              if(before.player?.hp!==fixture.player.hp||(before.entities||[]).filter(e=>e.kind==='enemy'&&e.active!==false).length!==fixture.enemies.length)
+                throw Error('HARNESS_ADAPTER: endurance initial fixture was not applied');
+            }""", {"caseId": spec.case_id, "fixture": fixture, "seed": scenario["seed"]})
+            session = await context.new_cdp_session(page)
+
+            async def sample():
+                await session.send("HeapProfiler.collectGarbage")
+                heap = await session.send("Runtime.getHeapUsage")
+                dom = await session.send("Memory.getDOMCounters")
+                observed = await page.evaluate("""async()=>{const h=window.__HARNESS_MEMORY_SESSION__.handle;
+                  return {snapshot:await h.snapshot(),engineInfo:await h.engineInfo()};}""")
+                trace["samples"].append({**observed, "heap": heap, "dom": dom, "wallSeconds": time.monotonic() - started})
+
+            await sample()
+            if str(trace["samples"][0]["engineInfo"].get("name", "")).lower().replace(".js", "") != spec.engine:
+                raise ValueError("HARNESS_ADAPTER: endurance renderer is not the locked production engine")
+            duration = int(step["durationSeconds"])
+            for elapsed in range(1, duration + 1):
+                await page.evaluate("""async()=>{await window.__HARNESS_MEMORY_SESSION__.handle.advance(1000);
+                  await new Promise(resolve=>requestAnimationFrame(resolve));}""")
+                # A small per-step yield permits the real engine/React/DOM lifecycle
+                # to execute, while Python owns accumulated observations.
+                await asyncio.sleep(step["minimumWallSeconds"] / duration)
+                if elapsed % step["sampleEvery"] == 0:
+                    await sample()
+            trace["elapsedWallSeconds"] = time.monotonic() - started
+            trace.update(await page.evaluate("""()=>{const s=window.__HARNESS_MEMORY_SESSION__,o=window.__HARNESS_RENDER_OBSERVER__;
+              return {drawCalls:(o?.draws||0)-s.draws,additionalContexts:(o?.contextCount||0)-s.contexts};}"""))
+        finally:
+            cleanup = await page.evaluate("""async()=>{const s=window.__HARNESS_MEMORY_SESSION__;if(!s)return {adapter_error:'Endurance setup unavailable'};
+              const result={};try{if(s.handle)await s.handle.dispose();
+                result.noninterference={liveStateUnchanged:JSON.stringify(await s.bridge.snapshot())===s.live,
+                  storageUnchanged:JSON.stringify(Object.keys(localStorage).sort().map(k=>[k,localStorage.getItem(k)]))===s.storage,
+                  canvasUnchanged:document.querySelectorAll('canvas').length===s.canvas};
+                if(Object.values(result.noninterference).some(v=>!v))result.adapter_error='Isolated renderer endurance changed live state/storage or leaked canvas';
+              }catch(error){result.adapter_error='HARNESS_ADAPTER: endurance dispose '+String(error);}
+              finally{if(s.resume){if(s.bridge.command)await s.bridge.command('resume',{});else await s.bridge.dispatch({type:'resume'});}delete window.__HARNESS_MEMORY_SESSION__;}
+              return result;}""")
+            trace.update(cleanup)
+            if session:
+                await session.detach()
+        return trace
+
+    async def _generic_execute(self, rid, spec, workspace, report, origin, round_no):
+        """Exercise the common project contract without inventing official test IDs."""
+        async with async_playwright() as playwright:
+            args = ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] if getattr(self.settings, "project_software_rendering", True) else []
+            browser = await playwright.chromium.launch(headless=True, chromium_sandbox=self.settings.browser_sandbox, args=args)
+            try:
+                for name, width, height, touch in [("desktop", 1280, 800, False), ("portrait", 390, 844, True), ("landscape", 844, 390, True)]:
+                    row = {"name": name, "width": width, "height": height, "errors": [], "generic_smoke": {},
+                           "scope": "Custom-spec common UI smoke only; no task-specific gameplay certification"}
+                    context = await self._context(browser, origin, width=width, height=height, touch=touch)
+                    page = await context.new_page()
+                    page.set_default_timeout(3000)
+                    page.on("pageerror", lambda error, row=row: row["errors"].append(str(error)[:1000]))
+                    try:
+                        await page.goto(origin + "/", wait_until="networkidle", timeout=30000)
+                        await page.wait_for_function("() => Boolean(window.__HARNESS__ && typeof window.__HARNESS__.snapshot==='function')", timeout=10000)
+
+                        async def click(action):
+                            controls = page.locator(f'[data-action="{action}"]:visible')
+                            for index in reversed(range(await controls.count())):
+                                try:
+                                    await controls.nth(index).click(trial=True, timeout=500)
+                                    await controls.nth(index).click()
+                                    return
+                                except Exception:
+                                    continue
+                            raise AssertionError("Missing actionable common control: " + action)
+
+                        state = lambda: page.evaluate("() => JSON.parse(JSON.stringify(window.__HARNESS__.snapshot()))")
+                        row["initial"] = await state()
+                        await click("start")
+                        await page.wait_for_timeout(150)
+                        row["started"] = await state()
+                        await click("pause")
+                        before = await state()
+                        await page.wait_for_timeout(150)
+                        after = await state()
+                        row["generic_smoke"]["pause_stops_simulation_clock"] = before.get("simTime") == after.get("simTime") and after.get("phase") == "PAUSED"
+                        await click("resume")
+                        await page.wait_for_timeout(150)
+                        resumed = await state()
+                        row["generic_smoke"]["resume_advances_clock"] = resumed.get("simTime", 0) > after.get("simTime", 0)
+                        await click("restart")
+                        row["restarted"] = await state()
+                        row["generic_smoke"]["visible_canvas"] = await page.locator("canvas").first.is_visible()
+                        row["blocked_requests"] = list(context._harness_blocked)
+                        row["generic_smoke"]["no_external_requests"] = not context._harness_blocked
+                        row["errors"].extend("Generic smoke assertion failed: " + key for key, value in row["generic_smoke"].items() if not value)
+                    except Exception as exc:
+                        row["errors"].append(type(exc).__name__ + ": " + str(exc)[:1500])
+                    finally:
+                        try:
+                            row["screenshot"] = f"project-r{round_no}-{name}.png"
+                            row["screenshot_sha256"] = self.store.write(rid, row["screenshot"], await page.screenshot(full_page=True, timeout=4000))
+                        except Exception as exc:
+                            row["errors"].append("Failure screenshot unavailable: " + str(exc)[:500])
+                        await context.close()
+                    report["browser"].append(row)
+                    report["errors"].extend(row["errors"])
+            finally:
+                await browser.close()
+
     async def _viewport(self, browser, origin, rid, spec, workspace, evidence, round_no, name, width, height, touch):
         result = {"name": name, "width": width, "height": height, "errors": [], "observations": {}}
         context = await self._context(browser, origin, width=width, height=height, touch=touch)
@@ -436,7 +749,7 @@ class ProjectValidator:
 
         try:
             await page.goto(origin + "/", wait_until="networkidle", timeout=30000)
-            await page.wait_for_function("window.__HARNESS__ && typeof window.__HARNESS__.snapshot==='function'", timeout=15000)
+            await page.wait_for_function("() => Boolean(window.__HARNESS__ && typeof window.__HARNESS__.snapshot==='function')", timeout=15000)
             result["initial"] = await state()
             initial_text = await page.locator("body").inner_text()
             menu_id = 31 if prefix.endswith("001") else 61 if prefix.endswith("002") else 56
@@ -615,7 +928,7 @@ class ProjectValidator:
             }""")
             before_reload = await state()
             await page.reload(wait_until="networkidle")
-            await page.wait_for_function("window.__HARNESS__ && typeof window.__HARNESS__.snapshot==='function'")
+            await page.wait_for_function("() => Boolean(window.__HARNESS__ && typeof window.__HARNESS__.snapshot==='function')")
             after_reload = await state()
             save("audio-persistence", {"before": before_reload, "after": after_reload}, [54] if prefix.endswith("003") else [],
                 [{"pointer": "/before/progress/audio/music", "op": "eq", "expected": False},

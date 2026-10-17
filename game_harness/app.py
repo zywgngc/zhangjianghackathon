@@ -126,11 +126,17 @@ def create_app(settings=None, agents_factory=AgentClient, validator_factory=Brow
         from .project_runtime import ProjectWorkspace, WorkspaceError
         workspace = ProjectWorkspace(store.directory(rid) / 'project', run['request']['engine'])
         try:
+            source_sha = workspace.snapshot()['sha256']
+            manifest = store.read_json(rid, 'manifest.json') or {}
+            if run['status'] == 'passed' and manifest.get('source_sha256') != source_sha:
+                raise RuntimeError('Approved source changed')
             html = workspace.inline_preview()
-        except (WorkspaceError, FileNotFoundError) as exc:
+            if workspace.snapshot()['sha256'] != source_sha:
+                raise RuntimeError('Source changed during preview')
+        except (WorkspaceError, FileNotFoundError, RuntimeError):
             raise HTTPException(409, "尚无可预览的完整构建") from None
         return HTMLResponse(html, headers={"Content-Security-Policy": CSP, "Cache-Control": "no-store",
-            "X-Harness-Acceptance": run['status'], "X-Harness-Source-SHA256": workspace.snapshot()['sha256'],
+            "X-Harness-Acceptance": run['status'], "X-Harness-Source-SHA256": source_sha,
             "X-Content-Type-Options": "nosniff"})
 
     @app.get("/api/projects/{rid}/archive", dependencies=auth)
@@ -141,6 +147,9 @@ def create_app(settings=None, agents_factory=AgentClient, validator_factory=Brow
         from .project_runtime import ProjectWorkspace
         workspace = ProjectWorkspace(store.directory(rid) / 'project', run['request']['engine'])
         try:
+            manifest = store.read_json(rid, 'manifest.json') or {}
+            if run['status'] == 'passed' and manifest.get('source_sha256') != workspace.snapshot()['sha256']:
+                raise RuntimeError('Approved source changed')
             app.state.projects.package(rid, workspace)
         except (OSError, RuntimeError, ValueError):
             raise HTTPException(409, '项目正在更新或尚未初始化，稍后重试下载') from None
@@ -177,8 +186,15 @@ def create_app(settings=None, agents_factory=AgentClient, validator_factory=Brow
     @app.post("/api/runs/{rid}/resume", dependencies=auth)
     async def resume(rid: str):
         run = require_run(rid)
-        if run["status"] != "failed":
-            raise HTTPException(409, "仅失败任务可从已有检查点恢复")
+        project = run['request'].get('mode') == 'project'
+        if run["status"] != "failed" and not (project and run["status"] in {'needs_attention', 'cancelled'}):
+            raise HTTPException(409, "当前任务无需恢复；项目可从失败、待处理或已取消状态继续")
+        if project:
+            for feature in app.state.projects.ledger.features(rid):
+                if feature['status'] in {'needs_work', 'blocked'}:
+                    app.state.projects.ledger.retry(rid, feature['feature_id'])
+                    store.event(rid, 'project_recovery', 'feature_resume_requested', {
+                        'feature': feature['feature_id'], 'previous_attempts': feature['attempts'], 'budget_reset': False})
         store.update(rid, status="queued", error=None)
         store.event(rid, "queued", "resumed", {"message": "手动恢复，继续使用原有预算"})
         return store.get(rid)

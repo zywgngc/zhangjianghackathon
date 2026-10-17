@@ -123,6 +123,74 @@ class AcceptanceTests(unittest.TestCase):
         events[1]["simTime"] = 2.5
         self.assertFalse(evaluate_assertion({"events": events}, assertion))
 
+    def test_exact_damage_requires_real_hits_and_hp_accounting(self):
+        trace = {"before": {"entities": [{"id": "target", "hp": 100}]},
+                 "after": {"entities": [{"id": "target", "hp": 52.96}]},
+                 "events": [{"type": "damage", "data": {"targetId": "target", "amount": 23.52}}] * 2}
+        assertion = {"pointer": "", "op": "damage_formula", "expected": {"target": "target", "perHit": 23.52}}
+        self.assertTrue(evaluate_assertion(trace, assertion))
+        trace["after"]["entities"][0]["hp"] = 1
+        self.assertFalse(evaluate_assertion(trace, assertion))
+        trace["events"] = []
+        with self.assertRaises(KeyError):
+            evaluate_assertion(trace, assertion)
+
+    def test_spawn_count_and_exact_two_shop_definitions(self):
+        assertion = {"pointer": "", "op": "normal_spawn_count", "expected": {"count": 20, "tolerance": 1}}
+        enemies = [{"kind": "enemy", "active": True}] * 20 + [{"kind": "elite"}]
+        self.assertTrue(evaluate_assertion(enemies, assertion))
+        self.assertFalse(evaluate_assertion(enemies[:18], assertion))
+        configuration = {"permanentUpgrades": [{"id": "initialSoldiers"}, {"id": "weaponDamage"}], "enemies": [{"hp": 10}, {"hp": 10}]}
+        check = {"pointer": "", "op": "case1_configuration", "expected": True}
+        self.assertTrue(evaluate_assertion(configuration, check))
+        configuration["enemies"][1]["hp"] = 15
+        self.assertFalse(evaluate_assertion(configuration, check))
+        configuration["permanentUpgrades"].append({"id": "fireRate"})
+        self.assertFalse(evaluate_assertion(configuration, check))
+
+    def test_drop_probability_requires_actual_multiseed_kills_and_reproducible_loot(self):
+        samples = []
+        for seed in range(50):
+            events = [{"seq": i + 1, "type": "drop_created", "data": {"id": str(i), "kind": kind, "value": 1}}
+                      for i, kind in enumerate(["gold"] * 10 + ["healing"] * 2 + (["magnet"] if seed < 10 else []))]
+            samples.append({"seed": seed, "before": {"metrics": {"enemiesDefeated": 0}},
+                            "after": {"metrics": {"enemiesDefeated": 200}, "entities": []}, "events": events})
+        samples.append(json.loads(json.dumps(samples[0])))
+        assertion = {"pointer": "", "op": "drop_statistics", "expected": {"samples": 50, "killsPerSample": 200,
+                     "gold": .05, "healing": .01, "magnet": .001, "standardDeviations": 4.5}}
+        self.assertTrue(evaluate_assertion(samples, assertion))
+        samples[-1]["events"].pop()
+        self.assertFalse(evaluate_assertion(samples, assertion))
+        samples[-1] = json.loads(json.dumps(samples[0]))
+        samples[1]["after"]["metrics"]["enemiesDefeated"] = 199
+        self.assertFalse(evaluate_assertion(samples, assertion))
+
+    def test_evolution_strength_requires_damage_events_to_match_real_hp_loss(self):
+        trace = {}
+        for name, damage, skill in [("base", 16.8, "W01"), ("ultimate", 25, "E01")]:
+            trace[name + "_before"] = {"entities": [{"id": "target", "hp": 1000}]}
+            trace[name] = {"entities": [{"id": "target", "hp": 1000 - damage}]}
+            trace[name + "_events"] = [{"type": "damage", "data": {"skillId": skill, "targetId": "target", "amount": damage}}]
+        assertion = {"pointer": "", "op": "evolution_strength", "expected": {"id": "E01", "baseIds": ["W01"], "minimumHit": 25, "damageOverTime": False}}
+        self.assertTrue(evaluate_assertion(trace, assertion))
+        trace["ultimate"]["entities"][0]["hp"] = 999
+        self.assertFalse(evaluate_assertion(trace, assertion))
+
+    def test_long_session_checks_browser_heap_draws_and_real_resource_growth(self):
+        samples = [{"snapshot": {"simTime": elapsed, "phase": "PLAYING", "player": {"hp": 300}, "metrics": {"totalDamage": elapsed * 100}},
+                    "engineInfo": {"running": True, "resources": {"textures": 4, "objects": 220, "scenes": 1}},
+                    "heap": {"usedSize": 10_000_000}, "dom": {"nodes": 300, "jsEventListeners": 20}}
+                   for elapsed in range(0, 721, 30)]
+        trace = {"samples": samples, "elapsedWallSeconds": 65, "drawCalls": 1000, "additionalContexts": 1,
+                 "noninterference": {"liveStateUnchanged": True, "storageUnchanged": True}}
+        assertion = {"pointer": "", "op": "bounded_renderer_session", "expected": {"durationSeconds": 720, "minimumWallSeconds": 60, "minimumSamples": 20}}
+        self.assertTrue(evaluate_assertion(trace, assertion))
+        trace["samples"][-1]["heap"]["usedSize"] = 30_000_000
+        self.assertFalse(evaluate_assertion(trace, assertion))
+        trace["samples"][-1]["heap"]["usedSize"] = 10_000_000
+        trace["samples"][-1]["engineInfo"]["resources"]["objects"] = 500
+        self.assertFalse(evaluate_assertion(trace, assertion))
+
 
 if __name__ == "__main__":
     unittest.main()

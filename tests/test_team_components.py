@@ -1,6 +1,7 @@
 import asyncio
 import json
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
 import httpx
 import pytest
@@ -8,6 +9,7 @@ from jsonschema import Draft202012Validator
 
 from game_harness.benchmarks import inventory
 from game_harness.material_portal import MaterialPortalClient, PortalContractError
+from game_harness.specifications import load_case
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,6 +28,30 @@ def test_team_case_inventory_preserves_explicit_engine_locks():
     assert all(c["blockers"] == [] for c in cases)
     assert len(cases[2]["names"]) == 2  # Header and body have different game names.
     assert all(i["width"] > 0 and i["height"] > 0 for c in cases for i in c["reference_images"])
+
+
+@pytest.mark.parametrize("case_id,count,engine", [
+    ("GAME-TEST-001", 54, "babylon"),
+    ("GAME-TEST-002", 88, "phaser"),
+    ("GAME-TEST-003", 83, "babylon"),
+])
+def test_research_profiles_preserve_every_official_acceptance_requirement(case_id, count, engine):
+    """The new research runtime and Python harness share the original 225 checks."""
+    profile = json.loads((ROOT / "webmcp/benchmarks" / (case_id + ".json")).read_text())
+    spec = load_case(case_id, ROOT)
+    assert profile["caseId"] == spec.case_id
+    assert profile["engine"] == spec.engine == engine
+    assert len(profile["checks"]) == len(spec.acceptance_tests) == count
+    assert [check["id"] for check in profile["checks"]] == [test["id"] for test in spec.acceptance_tests]
+    for check, test in zip(profile["checks"], spec.acceptance_tests):
+        # Profiles flatten line wrapping, but cannot change words or numeric rules.
+        assert " ".join(check["requirement"].split()) == " ".join(test["text"].split())
+    source = profile["source"]
+    assert source["path"] == spec.source_path
+    assert source["commit"] == "81fc5366aa417754ccdba07d5d3dc08daa8f6a02"
+    url = urlparse(source["url"])
+    assert url.scheme == "https" and url.netloc == "github.com"
+    assert unquote(url.path) == "/zywgngc/zhangjianghackathon/blob/" + source["commit"] + "/" + source["path"]
 
 
 def test_all_team_portal_examples_satisfy_their_canonical_schema(settings):
@@ -99,6 +125,23 @@ async def test_portal_timeout_does_not_substitute_mock_results(settings):
     assert result["documents"] == []
     assert "result" not in result["trace"]
     assert result["warnings"]
+
+
+@pytest.mark.parametrize("status,payload", [
+    (202, {"runId": "research-run", "projectRevision": 0, "status": "queued"}),
+    (200, {"version": 1, "caseId": "GAME-TEST-001", "readiness": "partial",
+           "projectRevision": 0, "agentMode": "reference-planner", "candidates": [],
+           "acceptance": [{"id": "GAME-TEST-001/T01", "status": "not_executed"}]}),
+])
+async def test_research_api_ack_or_partial_blueprint_cannot_become_material_search_evidence(settings, status, payload):
+    """The research StartRequest API is not the v0.2 MaterialSearchResult bridge."""
+    settings.portal_url = "https://mock.invalid/api/runs"
+    portal = MaterialPortalClient(settings, transport=httpx.MockTransport(
+        lambda request: httpx.Response(status, json=payload)))
+    result = await portal.search("从研究服务返回值中检索素材", run_id="actual-game-run")
+    assert result["documents"] == []
+    assert result["warnings"]
+    assert "result" not in result["trace"]
 
 
 async def test_portal_cancellation_propagates(settings):

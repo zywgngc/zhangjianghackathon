@@ -286,6 +286,23 @@ def scenario_plan(case_id: str, root: str | Path | None = None) -> dict[str, Any
             route["acceptance_extra"] = [25, 27, 52]
             route["assertions"] += [assertion("/final/progress/unlockedLevel", "gte", min(route["level"] + 1, 3)),
                 {"pointer": "/final/progress/gold", "op": "delta", "other_pointer": "/initial/progress/gold", "expected": route["level"] * 100}]
+        scenarios.append(_scenario(case_id, "exact-two-upgrades-and-enemy-health", [16, 29],
+            [{"call": "config", "save": "configuration"}], [{"pointer": "/configuration", "op": "case1_configuration", "expected": True}]))
+        for level in range(1, 4):
+            scenarios.append(_scenario(case_id, "ordinary-enemy-health-L" + str(level), [16],
+                [command("start", level=level), snapshot("after")],
+                [{"pointer": "/after/entities", "op": "normal_enemy_health", "expected": 10}],
+                {"progress": {"unlockedLevel": 3}}))
+        for key in ["initialSoldiers", "weaponDamage"]:
+            for level in [0, 1, 2, 9, 10]:
+                next_level = min(10, level + 1)
+                scenarios.append(_scenario(case_id, f"price-{key}-L{level}", [28, 29],
+                    [{**command("purchase", id=key), "allow_rejection": level == 10}, snapshot("purchased"), command("start", level=1), snapshot("after")],
+                    [assertion("/purchased/progress/gold", "eq", 10000 - (100 * (level + 1) if level < 10 else 0)),
+                     assertion("/purchased/progress/upgrades/" + key, "eq", next_level),
+                     assertion("/after/player/soldiers", "eq", next_level + 1) if key == "initialSoldiers" else assertion("/after/effectiveStats/bulletDamage", "eq", next_level + 1)],
+                    {"phase": "UPGRADE", "progress": {"gold": 10000, "upgrades": {"initialSoldiers": level if key == "initialSoldiers" else 0,
+                                                                                         "weaponDamage": level if key == "weaponDamage" else 0}}}))
     elif case_id == "GAME-TEST-003":
         navigation_fixture = {"player": {"power": 10, "x": 0, "z": 0},
             "enemies": [{"id": "target", "power": 3, "x": 6, "z": 0}],
@@ -408,7 +425,7 @@ def scenario_plan(case_id: str, root: str | Path | None = None) -> dict[str, Any
             {"skills": {"active": [{"id": "W01", "level": 5}], "passive": []}, "boss": {"id": "boss", "hp": 1, "x": 40, "y": 0}, "spawnEnabled": False}))
         for status, milliseconds, field, expected in [
             ("slow", 1000, "x", 130), ("freeze", 500, "x", 200), ("stun", 500, "x", 200),
-            ("burn", 1000, "hp", 96), ("poison", 1000, "hp", 97), ("knockback", 50, "x", 240)]:
+            ("burn", 3000, "hp", 88), ("poison", 4000, "hp", 88), ("knockback", 50, "x", 240)]:
             effect = {"type": status, "duration": {"slow": 2, "freeze": 1, "stun": 0.8, "burn": 3, "poison": 4, "knockback": 0.01}[status],
                       "strength": 0.3, "sourceDamage": 20, "damagePerSecond": 3, "distance": 40, "source": {"x": 0, "y": 0}}
             scenarios.append(_scenario(case_id, "status-" + status, [28], [advance(milliseconds), snapshot("after")],
@@ -479,6 +496,57 @@ def scenario_plan(case_id: str, root: str | Path | None = None) -> dict[str, Any
             if route["level"] == 1:
                 route["acceptance_extra"] += [50, 51, 52]
                 route["assertions"] += [{"pointer": "/checkpoints", "op": "progression", "expected": {"activeBy30": 2, "activeBy60": 3, "ultimateBy180": True}}]
+        for level in WUXIA_LEVELS:
+            for start, end, rate in level["spawnRates"]:
+                scenarios.append(_scenario(case_id, f"spawn-rate-L{level['level']}-t{start}", [6],
+                    [advance(10000), snapshot("after")],
+                    [{"pointer": "/after/entities", "op": "normal_spawn_count", "expected": {"count": rate * 10, "tolerance": 1}},
+                     assertion("/after/player/hp", "gt", 0)],
+                    {"level": level["level"], "simTime": start + 0.1, "skills": {"active": [], "passive": [{"id": "P03", "level": 5}]},
+                     "player": {"hp": 300, "maxHp": 300, "x": 0, "y": 0}, "enemies": [], "freeUpgradesGranted": [5, 15]}))
+        for skill_level, passive_level, expected_damage in [(1, 0, 12), (2, 0, 14.4), (4, 0, 16.8), (4, 5, 23.52)]:
+            scenarios.append(_scenario(case_id, f"exact-damage-W01L{skill_level}-P02L{passive_level}", [27],
+                [snapshot("before"), advance(5000), snapshot("after")],
+                [{"pointer": "", "op": "damage_formula", "expected": {"target": "target", "perHit": expected_damage}}],
+                {"skills": {"active": [{"id": "W01", "level": skill_level}], "passive": [{"id": "P02", "level": passive_level}] if passive_level else []},
+                 "enemies": [{"id": "target", "hp": 100000, "damage": 0, "speed": 0, "x": 100, "y": 0}], "spawnEnabled": False}))
+        drop_fixture = {"player": {"hp": 300, "maxHp": 300, "x": 0, "y": 0}, "skills": {"active": [
+            {"id": identifier, "level": 5} for identifier in ["W01", "W02", "W08", "W09"]], "passive": []},
+            "enemyGenerator": {"count": 200, "radius": 200, "hp": 0.001, "damage": 0, "speed": 0},
+            "spawnEnabled": False, "freeUpgradesGranted": [5, 15]}
+        scenarios.append(_scenario(case_id, "multi-seed-real-drop-probabilities", [55],
+            [{"call": "dropExperiment", "save": "dropSamples", "samples": 50, "enemiesPerSample": 200,
+              "maxMilliseconds": 60000, "fixture": drop_fixture}],
+            [{"pointer": "/dropSamples", "op": "drop_statistics", "expected": {"samples": 50, "killsPerSample": 200,
+                "gold": 0.05, "healing": 0.01, "magnet": 0.001, "standardDeviations": 4.5}}]))
+        scenarios.append(_scenario(case_id, "elite-guaranteed-ten-gold", [55],
+            [snapshot("before"), advance(2500), snapshot("after")],
+            [{"pointer": "", "op": "elite_gold_reward", "expected": 10}],
+            {"player": {"hp": 100, "maxHp": 100, "x": 0, "y": 0},
+             "skills": {"active": [{"id": "W01", "level": 1}], "passive": []},
+             "enemies": [{"id": "elite", "kind": "elite", "hp": 1, "damage": 0, "speed": 0, "x": 100, "y": 0}], "spawnEnabled": False}))
+        for ultimate in ULTIMATE_SKILLS:
+            passive = [{"id": key, "level": value} for key, value in ultimate["requires"].items() if key.startswith("P")]
+            common = {"player": {"hp": 100, "x": 0, "y": 0}, "spawnEnabled": False, "freeUpgradesGranted": [5, 15],
+                      "enemyGenerator": {"layout": "grid", "count": 48, "spacing": 25, "hp": 100000, "damage": 0, "speed": 0}}
+            base = {**common, "skills": {"active": [{"id": key, "level": 5} for key in ultimate["replaces"]], "passive": passive, "ultimate": []}}
+            evolved = {**common, "skills": {"active": [], "passive": passive, "ultimate": [{"id": ultimate["id"]}]}}
+            scenarios.append(_scenario(case_id, "evolution-strength-" + ultimate["id"], [86],
+                [{"call": "variant", "save": "base", "milliseconds": 5000, "fixture": base, "saveEvents": True, "saveBefore": True},
+                 {"call": "variant", "save": "ultimate", "milliseconds": 5000, "fixture": evolved, "saveEvents": True, "saveBefore": True}],
+                [{"pointer": "", "op": "evolution_strength", "expected": {"id": ultimate["id"], "baseIds": ultimate["replaces"],
+                    "minimumHit": ultimate.get("damage", 0) * (1.24 if ultimate["id"] == "E02" else 1),
+                    "damageOverTime": ultimate["id"] == "E04", "minimumTargetDamage": 120}}]))
+        memory = _scenario(case_id, "long-rendered-simulation-memory", [79],
+            [{"call": "rendererMemory", "durationSeconds": 720, "minimumWallSeconds": 60, "sampleEvery": 30}],
+            [{"pointer": "", "op": "bounded_renderer_session", "expected": {"durationSeconds": 720, "minimumWallSeconds": 60, "minimumSamples": 20}}],
+            {"level": 3, "player": {"hp": 300, "maxHp": 300, "x": 0, "y": 0}, "spawnEnabled": False,
+             "skills": {"active": [{"id": key, "level": 5} for key in ["W01", "W02", "W05", "W08", "W09", "W10"]],
+                        "passive": [{"id": key, "level": 5} for key in ["P02", "P03", "P05", "P08"]]},
+             "enemyGenerator": {"count": 200, "radius": 200, "hp": 1000000000, "damage": 0, "speed": 0},
+             "boss": None})
+        memory.update(executor="renderer_memory", render=True)
+        scenarios.append(memory)
     for route in normal_routes:
         route["id"] = case_id + "/scenario/normal-level-" + str(route["level"])
         route["acceptance_ids"] = [case_id + "/" + route["test_id"]] + [case_id + f"/T{number:02}" for number in route.get("acceptance_extra", [])]
@@ -509,6 +577,165 @@ def evaluate_assertion(document: Any, assertion: dict[str, Any]) -> bool:
     actual = _pointer(document, assertion["pointer"])
     expected = assertion.get("expected")
     operator = assertion["op"]
+    if operator == "case1_configuration":
+        upgrades = actual.get("permanentUpgrades", actual.get("upgrades"))
+        if upgrades is None:
+            raise KeyError("config.permanentUpgrades")
+        upgrades = list(upgrades.values()) if isinstance(upgrades, dict) else upgrades
+        if len(upgrades) != 2 or {row["id"] for row in upgrades} != {"initialSoldiers", "weaponDamage"}:
+            return False
+        enemies = actual.get("enemies", actual.get("enemyTypes", []))
+        enemies = list(enemies.values()) if isinstance(enemies, dict) else enemies
+        ordinary = [row for row in enemies if row.get("kind", "enemy") not in {"boss", "elite"}]
+        if not ordinary:
+            if "normalEnemyHp" not in actual:
+                raise KeyError("config.enemies ordinary definitions or normalEnemyHp")
+            return actual["normalEnemyHp"] == 10
+        return all(row["hp"] == 10 for row in ordinary)
+    if operator == "normal_enemy_health":
+        ordinary = [row for row in actual if row.get("kind") == "enemy" and row.get("active", True)]
+        if not ordinary:
+            raise KeyError("initial production ordinary enemy entities")
+        return all(row.get("maxHp", row["hp"]) == expected and 0 < row["hp"] <= expected for row in ordinary)
+    if operator == "normal_spawn_count":
+        count = sum(1 for row in actual if row.get("kind") == "enemy" and row.get("active", True)
+                    and not row.get("defeated") and not row.get("elite") and not row.get("isElite"))
+        return abs(count - expected["count"]) <= expected["tolerance"]
+    if operator == "damage_formula":
+        target, per_hit = expected["target"], expected["perHit"]
+        before = next(row for row in actual["before"]["entities"] if row["id"] == target)
+        after = next(row for row in actual["after"]["entities"] if row["id"] == target)
+        hits = []
+        for event in actual["events"]:
+            data = event.get("data", {})
+            if "damage" in str(event.get("type", "")).lower() and data.get("targetId", data.get("target")) == target:
+                hits.append(data.get("amount", data.get("damage")))
+        if not hits:
+            raise KeyError("actual per-target damage events {targetId,amount}")
+        return (all(isinstance(hit, (int, float)) and not isinstance(hit, bool) and abs(hit - per_hit) <= 1e-6 for hit in hits)
+                and abs(before["hp"] - after["hp"] - sum(hits)) <= 1e-5 and after["hp"] < before["hp"])
+    if operator == "drop_statistics":
+        if len(actual) != expected["samples"] + 1 or len({sample["seed"] for sample in actual[:-1]}) != expected["samples"]:
+            return False
+        outcomes = []
+        aliases = {"gold": "gold", "coin": "gold", "healing": "healing", "heal": "healing", "medicine": "healing", "magnet": "magnet"}
+        for sample in actual:
+            if sample["after"]["metrics"]["enemiesDefeated"] - sample["before"]["metrics"]["enemiesDefeated"] != expected["killsPerSample"]:
+                return False
+            drops, witnessed = {kind: 0 for kind in ["gold", "healing", "magnet"]}, False
+            ids = set()
+            for event in sample["events"]:
+                data = event.get("data", {})
+                event_type = str(event.get("type", "")).lower()
+                if "drop" not in event_type or any(word in event_type for word in ["pick", "collect", "despawn", "remove"]):
+                    continue
+                kind = aliases.get(data.get("kind", data.get("itemType", data.get("dropType"))))
+                if not kind:
+                    continue
+                identity = data.get("id", data.get("dropId", event.get("seq")))
+                if identity in ids:
+                    continue
+                ids.add(identity)
+                witnessed = True
+                if kind == "gold" and data.get("value", data.get("amount", 1)) != 1:
+                    return False
+                drops[kind] += 1
+            if not witnessed:
+                # Uncollected physical items are an independent observation of
+                # actual production loot. These fixtures keep player stationary
+                # and kills outside pickup range; collected items require events.
+                for row in sample["after"]["entities"]:
+                    kind = aliases.get(row.get("kind"))
+                    if kind and row.get("active", True) and not row.get("collected"):
+                        witnessed = True
+                        if kind == "gold" and row.get("value", row.get("amount", 1)) != 1:
+                            return False
+                        drops[kind] += 1
+            if not witnessed:
+                raise KeyError("actual drop-created events or uncollected drop entities")
+            outcomes.append(drops)
+        if actual[-1]["seed"] != actual[0]["seed"] or outcomes[-1] != outcomes[0]:
+            return False
+        trials = expected["samples"] * expected["killsPerSample"]
+        for kind in ["gold", "healing", "magnet"]:
+            observed = sum(sample[kind] for sample in outcomes[:-1])
+            probability = expected[kind]
+            sigma = math.sqrt(trials * probability * (1 - probability))
+            if observed == 0 or abs(observed - trials * probability) > expected["standardDeviations"] * sigma + 0.5:
+                return False
+        return True
+    if operator == "elite_gold_reward":
+        before, after = actual["before"], actual["after"]
+        if after["metrics"]["enemiesDefeated"] - before["metrics"]["enemiesDefeated"] != 1:
+            return False
+        gold = [event["data"] for event in actual["events"] if "drop" in str(event.get("type", "")).lower()
+                and not any(word in str(event.get("type", "")).lower() for word in ["pick", "collect", "remove"])
+                and event.get("data", {}).get("kind", event.get("data", {}).get("itemType")) in {"gold", "coin"}]
+        if gold:
+            return sum(row.get("value", row.get("amount", 1)) for row in gold) == expected
+        items = [row for row in after["entities"] if row.get("kind") in {"gold", "coin"} and row.get("active", True)]
+        if items:
+            return sum(row.get("value", row.get("amount", 1)) for row in items) == expected
+        return after["progress"]["gold"] - before["progress"]["gold"] == expected
+    if operator == "evolution_strength":
+        def damage_events(events, ids):
+            return [event["data"] for event in events if "damage" in str(event.get("type", "")).lower()
+                    and event.get("data", {}).get("skillId", event.get("data", {}).get("sourceSkill")) in ids
+                    and isinstance(event["data"].get("amount", event["data"].get("damage")), (int, float))]
+        base_hits = damage_events(actual["base_events"], expected["baseIds"])
+        ultimate_hits = damage_events(actual["ultimate_events"], [expected["id"]])
+        if not base_hits or not ultimate_hits:
+            raise KeyError("per-target real damage events {targetId,skillId,amount} for both base and evolved attacks")
+        amount = lambda row: row.get("amount", row.get("damage"))
+        for name, hits in [("base", base_hits), ("ultimate", ultimate_hits)]:
+            totals = {}
+            for row in hits:
+                if isinstance(amount(row), bool) or not math.isfinite(amount(row)) or amount(row) <= 0:
+                    return False
+                target = row.get("targetId", row.get("target"))
+                if target is None:
+                    raise KeyError("damage event targetId")
+                totals[target] = totals.get(target, 0) + amount(row)
+            before = {row["id"]: row for row in actual[name + "_before"]["entities"]}
+            after = {row["id"]: row for row in actual[name]["entities"]}
+            if any(target not in before or target not in after or not math.isfinite(before[target]["hp"]) or not math.isfinite(after[target]["hp"])
+                   or abs(before[target]["hp"] - after[target]["hp"] - total) > 1e-4 for target, total in totals.items()):
+                return False
+        if expected["damageOverTime"]:
+            totals = {}
+            for row in ultimate_hits:
+                target = row.get("targetId", row.get("target"))
+                totals[target] = totals.get(target, 0) + amount(row)
+            return len(totals) >= 2 and max(totals.values()) >= expected["minimumTargetDamage"] and max(totals.values()) > max(map(amount, base_hits)) * 2
+        return max(map(amount, ultimate_hits)) >= expected["minimumHit"] - 1e-6 and max(map(amount, ultimate_hits)) > max(map(amount, base_hits)) * 1.4
+    if operator == "bounded_renderer_session":
+        samples = actual["samples"]
+        if len(samples) < expected["minimumSamples"] or actual["elapsedWallSeconds"] < expected["minimumWallSeconds"]:
+            return False
+        if samples[-1]["snapshot"]["simTime"] - samples[0]["snapshot"]["simTime"] < expected["durationSeconds"] - 1:
+            return False
+        if actual["drawCalls"] < 100 or actual["additionalContexts"] < 1 or not actual["noninterference"]["liveStateUnchanged"] or not actual["noninterference"]["storageUnchanged"]:
+            return False
+        warmed = [row for row in samples if row["snapshot"]["simTime"] - samples[0]["snapshot"]["simTime"] >= 60]
+        baseline = warmed[0]
+        resources = baseline["engineInfo"]["resources"]
+        if len(resources) < 3 or baseline["engineInfo"].get("running") is not True:
+            raise KeyError("real renderer engineInfo.running/resources")
+        for row in warmed:
+            state = row["snapshot"]
+            if state["phase"] != "PLAYING" or not math.isfinite(state["player"]["hp"]) or state["player"]["hp"] <= 0:
+                return False
+            if row["heap"]["usedSize"] > max(baseline["heap"]["usedSize"] * 1.5, baseline["heap"]["usedSize"] + 8_000_000):
+                return False
+            if row["dom"]["nodes"] > baseline["dom"]["nodes"] + 500 or row["dom"]["jsEventListeners"] > baseline["dom"]["jsEventListeners"] + 30:
+                return False
+            for key, value in resources.items():
+                current = row["engineInfo"]["resources"][key]
+                if any(isinstance(number, bool) or not isinstance(number, (int, float)) or not math.isfinite(number) or number < 0 for number in [value, current]):
+                    return False
+                if current > max(value * 1.25, value + 40):
+                    return False
+        return samples[-1]["snapshot"]["metrics"]["totalDamage"] > baseline["snapshot"]["metrics"]["totalDamage"]
     if operator == "eq":
         return type(actual) is type(expected) and actual == expected or (
             not isinstance(actual, bool) and not isinstance(expected, bool) and isinstance(actual, (int, float)) and isinstance(expected, (int, float)) and actual == expected)
@@ -655,7 +882,11 @@ def evaluate_evidence(spec: SpecDocument | dict[str, Any], reports: dict[str, An
     checks = reports.get("checks", [])
     if not isinstance(checks, list):
         raise ValueError("checks must be a list")
-    plan = scenario_plan(data["case_id"]) if data["case_id"] in PLAN_SOURCE_HASHES else None
+    plan_error = None
+    try:
+        plan = scenario_plan(data["case_id"]) if data["case_id"] in PLAN_SOURCE_HASHES else None
+    except (OSError, ValueError) as exc:
+        plan, plan_error, valid_context = None, str(exc), False
     if plan and plan["spec_sha256"] != spec_hash:
         valid_context = False
     trusted_scenarios = {scenario["id"]: scenario for scenario in plan["scenarios"] + plan["normal_play_routes"]} if plan else {}
@@ -758,6 +989,7 @@ def evaluate_evidence(spec: SpecDocument | dict[str, Any], reports: dict[str, An
             "status": "passed" if complete else "failed" if failures else "incomplete", "complete": complete,
             "counts": counts, "tests": results, "unexecuted_is_passed": False,
             "source_requirement_count": len(data["requirements"]), "source_constraint_count": len(data["constraints"]),
+            "trusted_plan_error": plan_error,
             "scope": "The complete numbered section-14 acceptance suite; raw section requirements remain in the implementation plan"}
 
 

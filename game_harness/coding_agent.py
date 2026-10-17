@@ -38,7 +38,7 @@ class Workspace(Protocol):
 class CodingAction(BaseModel):
     """One bounded action per model call; no arbitrary shell or test editing."""
     model_config = ConfigDict(extra="forbid")
-    tool: Literal["list_files", "read_file", "read_context", "read_observation",
+    tool: Literal["list_files", "read_file", "read_lines", "read_context", "read_observation",
                   "write_file", "apply_patch", "delete_file", "build", "note", "finish", "blocked"]
     path: str = Field(default="", max_length=300)
     content: str = Field(default="", max_length=180_000)
@@ -47,15 +47,23 @@ class CodingAction(BaseModel):
     expected_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     section: str = Field(default="", max_length=200)
     offset: int = Field(default=0, ge=0)
-    limit: int = Field(default=12_000, ge=256, le=16_000)
+    limit: int = Field(default=12_000, ge=1, le=16_000)
+    start_line: int | None = Field(default=None, ge=1)
+    end_line: int | None = Field(default=None, ge=1)
     step: int = Field(default=0, ge=0)
     memory: str = Field(default="", max_length=5_000)
     summary: str = Field(default="", max_length=3_000)
 
     @model_validator(mode="after")
     def validate_action(self):
-        if self.tool in {"read_file", "write_file", "apply_patch", "delete_file"} and not self.path:
+        if self.tool in {"read_file", "read_lines", "write_file", "apply_patch", "delete_file"} and not self.path:
             raise ValueError("file actions require path")
+        if self.tool == "read_lines" and self.start_line is None:
+            raise ValueError("read_lines requires a 1-based start_line")
+        if self.end_line is not None and (self.start_line is None or self.end_line < self.start_line):
+            raise ValueError("end_line requires start_line and must not precede it")
+        if self.start_line is not None and self.tool not in {"read_file", "read_lines"}:
+            raise ValueError("line coordinates are only valid for source-file reads")
         if self.tool == "apply_patch" and (not self.old or self.old == self.new):
             raise ValueError("patch requires a nonempty, changing exact match")
         if self.tool == "read_context" and not self.section:
@@ -65,18 +73,33 @@ class CodingAction(BaseModel):
         return self
 
 
+class FocusedCodingAction(CodingAction):
+    """A single recovery proposal cannot spend its lease rereading inputs."""
+    tool: Literal["write_file", "apply_patch", "build", "blocked"]
+
+
+class DiagnosticCodingAction(CodingAction):
+    """Fresh diagnostics permit bounded reads of source and its dependencies."""
+    tool: Literal["read_file", "read_lines", "write_file", "apply_patch", "build", "blocked"]
+
+
 CODING_INSTRUCTION = """你是长程游戏工程团队中负责一个 feature 的编码代理。只执行当前 feature，保留现有已实现功能。
 当前会话按文件增量交付。每读取1至2个必要资料页后，优先创建或精确修改一个可独立编译的文件；从尚缺的类型/配置等低依赖文件开始。
 next_unwritten_owned_files是主机根据真实目录计算的待创建文件，优先完成其中一个文件，再读取下一文件需要的资料；每次按一个文件推进。
 优先使用已批准approved_configuration和公共接口，原文按需核对精确差异。已经读完整的源不得再次从头通读。
 memory应保存当前/下一文件、关键导出签名、已确定参数值及其来源、确切剩余偏移；避免只写“还需更多资料/已经读过”。
 continuation是上一分段会话的主机交接；优先沿下一文件继续，核对已读区间后复用已确定配置，避免新会话又从全文offset0开始。
+resident_files是主机本轮从真实工作区读出的完整文件，含当前SHA与完整export名称；实际字段以这些文件为准，不用再次read_file确认。
+接口提案中存在而真实types未导出的名字，不能通过反复读interfaces找到。可在当前owned文件定义兼容的局部结构类型；确实需要上游新增字段则blocked列出最小缺失，禁止捏造已存在字段。
+若packet有focused_recovery，本次JSON只能write_file/apply_patch/build/blocked。主机已提供可容纳的当前文件与接口；仍缺必要信息则blocked列出确切缺失，不能再读资料或只写note。
 这是真实多文件 React + TypeScript + Vite 项目；必须使用项目指定 Phaser/Babylon 引擎，npm 依赖已由主机固定并本地打包。
 每次只提交一个 JSON 工具动作，不输出计划之外的 shell、不修改受保护的构建配置、规格、验收脚本或证据。
 先读接口、依赖实现和相关规格片段再编码；一个文件一个动作，保持模块化，不把项目塞进一个文件。
-工具：list_files；read_file(path,offset,limit)；read_context(section,offset,limit)；read_observation(step,offset,limit)；
+工具：list_files；read_file(path,offset,limit)；read_lines(path,start_line,end_line)；read_context(section,offset,limit)；read_observation(step,offset,limit)；
 write_file(path,content)；apply_patch(path,old,new,expected_sha256)；delete_file(path,expected_sha256)；build；note；finish；blocked。
-现有文件完整替换前必须先完整读取；大文件用精确 patch（old 只能匹配一次）。工具偏移均为字符，不是行号。
+现有文件完整替换前必须先完整读取；大文件用精确 patch（old 只能匹配一次）。offset和limit均为字符，不是行号。
+tsc的file.ts(255,30)表示第255行第30列，绝不能用offset=255代替；用read_lines(start_line=245,end_line=265)或read_file的start_line/end_line字段读取。
+build_diagnostics由主机解析真实构建输出并读取当前源，含行号、SHA和错误行上下文。new_build_diagnostic允许最多3次有新源/新区间的源码读取，可读故障文件与依赖接口，不限制为报错路径；重复同页仍会暂停。取得必要片段后提交修复。
 read_context 可按节读取完整存档，__feature__ 是完整 feature，__specification__ 可读取主机保存的完整原始规格（若提供）。
 __catalog__可读取上下文章节目录。read_receipts是主机记录的已读源区间与真实总长度，优先继续next_offset，禁止反复读同一页。
 若旧观察content_view_truncated，shown_next_offset是当前真正展示到的位置；可从该源位置继续取未展示文字，不把预览长度当全文长度。
@@ -88,7 +111,7 @@ memory 不是测试证据，不得把自述当成通过验收。所有原始动�
 实现真实数值、碰撞、技能、状态流转与可见反馈；禁止为了测试写假 __HARNESS__ 状态、假事件或作弊入口。
 必须保留失败路径、固定随机种子和正常更新函数，按项目接口实现只读 snapshot/config、真实输入 dispatch 与同一生产 advance。
 build 运行真实 typecheck 和打包；失败后读取错误并精确修复，禁止删测试、删类型检查、降级需求或切换引擎。
-finish 仅表示当前 feature 已实现并可构建。主机会验证最新源代码与构建产物；最终产品需独立逐项验收和视觉审查。
+finish 仅表示当前 feature 已实现并可构建。主机还要求具体owned文件存在且非空；仅glob归属时至少有一个匹配的安全非空源文件。模板或构建成功不能证明业务需求完成，最终产品需独立逐项验收和视觉审查。
 不能完成时用 blocked 说明具体缺失依赖、接口或构建限制。不要编造测试已执行、已通过或上游组件已存在。
 """
 
@@ -207,7 +230,41 @@ class CodingAgent:
         except FileNotFoundError:
             return None
 
+    def _owned_output_gaps(self, feature):
+        """Ownership is not acceptance; absent declared output is still a gap."""
+        patterns = feature.get("owned_paths") or []
+        concrete = [path for path in patterns if not any(mark in path for mark in ("*", "?", "["))
+                    and not path.endswith("/")]
+        missing, empty = [], []
+        for relative in concrete:
+            path = self.workspace.resolve(relative, writable=True)
+            if not path.is_file():
+                missing.append(relative)
+            elif not path.read_bytes().strip():
+                empty.append(relative)
+        if patterns and not concrete:
+            matches = []
+            for relative in self.workspace.list_files():
+                if not any(fnmatch.fnmatchcase(relative, pattern)
+                           or pattern.endswith("/") and relative.startswith(pattern) for pattern in patterns):
+                    continue
+                try:
+                    path = self.workspace.resolve(relative, writable=True)
+                    if path.is_file() and path.read_bytes().strip():
+                        matches.append(relative)
+                except (ValueError, OSError):
+                    continue
+            if not matches:
+                missing.extend(patterns)
+        return {"missing_owned_paths": missing, "empty_owned_paths": empty} if missing or empty else {}
+
     def _prepare(self, action, feature, state):
+        if state.get("focused_recovery") and action.tool not in {"write_file", "apply_patch", "build", "blocked"}:
+            raise ValueError("focused recovery permits one write_file/apply_patch/build/blocked action, not another read")
+        allowance = state.get("diagnostic_read_allowance")
+        if allowance:
+            if action.tool not in {"read_file", "read_lines", "write_file", "apply_patch", "build", "blocked"}:
+                raise ValueError("new compiler diagnostic permits one targeted file read, patch, build or blocked")
         if action.tool not in {"write_file", "apply_patch", "delete_file"}:
             return {}
         self._owned(action.path, feature)
@@ -231,9 +288,57 @@ class CodingAgent:
             after = before.replace(action.old, action.new, 1)
         return {"before_sha256": before_hash, "after_sha256": _text_hash(after)}
 
+    @staticmethod
+    def _configuration_feature(feature):
+        paths = feature.get("owned_paths") or []
+        return not paths or any(re.search(r"(?:^|/)(?:types|config|balance|levels|skills|passives|enemies|evolutions)(?:[./]|$)",
+                                         path, re.I) for path in paths)
+
+    def _focus_target(self, feature, context):
+        paths = [path for path in feature.get("owned_paths", [])
+                 if not any(mark in path for mark in ("*", "?", "["))]
+        if paths:
+            return next((path for path in paths if self._read(path) is None), paths[0])
+        # A dependency coordinator owns globs, but its concrete working file is
+        # the existing shared contract, not every unrelated project file.
+        for path in ("src/game/types.ts", "src/types.ts"):
+            try:
+                self._owned(path, feature)
+                if feature.get("owned_paths") and self._read(path) is not None:
+                    return path
+            except (ValueError, OSError):
+                pass
+        return None
+
+    def _resident_files(self, feature, context, state):
+        """Fresh source beats obsolete plan names; never call a preview complete."""
+        if self._configuration_feature(feature) and not state.get("focused_recovery"):
+            return []
+        paths = ["src/game/types.ts", "src/types.ts"]
+        if state.get("focused_recovery"):
+            target = self._focus_target(feature, context)
+            if target and target not in paths:
+                paths.append(target)
+        result = []
+        budget = min(10_000, self.context_chars // 3)
+        for path in paths:
+            try:
+                text = self._read(path)
+            except (ValueError, OSError):
+                continue
+            if text is None or len(text) > 8_000:
+                continue
+            entry = {"path": path, "sha256": _text_hash(text), "characters": len(text),
+                     "content": text, "complete": True,
+                     "exports": re.findall(r"\bexport\s+(?:declare\s+)?(?:interface|type|class|function|const|enum)\s+([A-Za-z_$][\w$]*)", text)}
+            if _serialized_size(result + [entry]) <= budget:
+                result.append(entry)
+        return result
+
     def _prompt(self, feature, context, state, prefix):
         """Bound active context; full context and observations remain retrievable."""
         manifest = self.workspace.snapshot()
+        resident = self._resident_files(feature, context, state)
         payload = {
             "feature": _preview(feature, min(6_000, self.context_chars // 6)), "feature_section": "__feature__",
             "context_sections": _preview({k: {"characters": len(_json(v)), "sha256": _hash(v)}
@@ -253,25 +358,53 @@ class CodingAgent:
             "latest_build": _preview(state.get("last_build"), min(2_000, self.context_chars // 16)),
             "context": {}, "recent_observations": [],
         }
+        diagnostics = state.get("build_diagnostics", [])
+        if diagnostics:
+            payload["build_diagnostics"] = diagnostics
+        if state.get("diagnostic_read_allowance"):
+            payload["new_build_diagnostic"] = state["diagnostic_read_allowance"]
+        if resident:
+            payload["resident_files"] = resident
+        if state.get("focused_recovery"):
+            payload["focused_recovery"] = {**state["focused_recovery"],
+                "allowed_tools": ["write_file", "apply_patch", "build", "blocked"],
+                "target_file": self._focus_target(feature, context),
+                "instruction": "工作集为当前真实源码。现在提交一项具体改动；接口确实缺失则blocked列出名字/字段，禁止再读同一资料。"}
         if context.get("source_archive") == "specification.txt":
             payload["context_sections"]["__specification__"] = {
                 "archive": "specification.txt", "retrieve": "read_context", "immutable_source": True}
         # Large specs never accumulate in the conversation. This is a small
         # project/feature packet plus a filesystem-style context catalog.
-        for key in ("project_summary", "approved_configuration", "continuation", "independent_code_review", "review_feedback", "validation_report", "interfaces",
+        protected = {"project_summary"}
+        configuration = self._configuration_feature(feature)
+        for key in ("project_summary", "approved_configuration", "continuation", "independent_code_review", "review_feedback", "validation_report", "interfaces", "blocked_feature",
                     "engine_contract", "production_contract", "architecture", "acceptance", "spec_excerpts", "source_index"):
             if key in context:
-                if key == "approved_configuration" and _serialized_size(context[key]) <= 8_000:
+                if key == "interfaces" and self.context_chars >= 28_000 and _serialized_size(context[key]) <= 8_000:
                     limit = 8_000
+                    protected.add(key)
+                elif key == "approved_configuration" and configuration and _serialized_size(context[key]) <= 8_000:
+                    limit = 8_000
+                    protected.add(key)
+                elif key == "approved_configuration" and not configuration:
+                    limit = 1_200
                 else:
                     limit = 4_000 if key in {"approved_configuration", "spec_excerpts", "validation_report", "production_contract"} else 2_500
                 payload["context"][key] = _preview(context[key], limit)
-        reserve = min(16_000, self.context_chars - 3_000)
+        latest = state["history"][-1:] or []
+        reserve = min(14_000, _serialized_size(latest) + 600, self.context_chars - 3_000)
         while _serialized_size(payload) > self.context_chars - reserve and payload["context"]:
-            removable = [key for key in payload["context"] if key not in {"approved_configuration", "project_summary"}]
+            removable = [key for key in payload["context"] if key not in protected]
             if not removable:
                 break
             payload["context"].pop(removable[-1])
+        # Make room before adding the latest page. Reducing metadata afterwards
+        # cannot recover source text that was already cut from an observation.
+        for key in ("context_sections", "workspace", "memory", "feature", "read_receipts", "latest_build", "reference_images"):
+            excess = _serialized_size(payload) - (self.context_chars - reserve)
+            if excess <= 0:
+                break
+            payload[key] = _preview(payload[key], max(128, _serialized_size(payload[key]) - excess - 100))
         history = state["history"][-self.history_limit:]
         for item in reversed(history):
             compact = {"step": item["step"], "tool": item["tool"], "path": item.get("path"),
@@ -326,6 +459,10 @@ class CodingAgent:
                        "recent_observations": [{"step": item["step"], "tool": item["tool"],
                            "result_artifact": item["result_artifact"]} for item in history[-2:]],
                        "notice": "Context view compacted; retrieve exact feature, context or observation before editing."}
+        # Full replacement permission is issued only for complete source that
+        # actually survived packet budgeting, never for a hash-only receipt.
+        for entry in payload.get("resident_files", []):
+            state["full_reads"][entry["path"]] = entry["sha256"]
         return payload
 
     def _record_read(self, state, source, digest, length, start, end):
@@ -393,7 +530,150 @@ class CodingAgent:
                 continue
         state["read_counts"] = {}
 
+    def _build_diagnostics(self, report):
+        """Only host build output can name locations; workspace resolves every path."""
+        output = "\n".join(str(report.get(key, "")) for key in ("stdout", "stderr"))
+        if not output.strip():
+            output = "\n".join(str(stage.get(key, "")) for stage in report.get("stages", [])
+                               if isinstance(stage, dict) for key in ("stdout", "stderr"))
+        output = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", output)
+        pattern = re.compile(r"(?P<path>[^\s():]+\.[cm]?[jt]sx?)(?:\((?P<line>\d+),(?P<column>\d+)\)|:(?P<line2>\d+):(?P<column2>\d+))(?P<message>[^\n]*)")
+        candidates, seen = [], set()
+        budget = min(6_000, self.context_chars // 3)
+        for match in pattern.finditer(output):
+            relative = match.group("path")
+            try:
+                path = Path(relative)
+                if path.is_absolute():
+                    relative = path.resolve().relative_to(Path(self.workspace.root).resolve()).as_posix()
+                text = self._read(relative)
+                if text is None:
+                    continue
+            except (ValueError, OSError):
+                continue
+            line = int(match.group("line") or match.group("line2"))
+            column = int(match.group("column") or match.group("column2"))
+            lines = text.splitlines()
+            if not 1 <= line <= len(lines) or (relative, line, column) in seen:
+                continue
+            seen.add((relative, line, column))
+            start, end = max(1, line - 10), min(len(lines), line + 10)
+            excerpt = [{"line": number, "text": lines[number - 1]} for number in range(start, end + 1)]
+            # Keep the error line when long neighbors would exhaust the view.
+            while len(excerpt) > 1 and _serialized_size(excerpt) > 2_400:
+                if abs(excerpt[0]["line"] - line) >= abs(excerpt[-1]["line"] - line):
+                    excerpt.pop(0)
+                else:
+                    excerpt.pop()
+            if _serialized_size(excerpt) > 2_400:
+                offset = max(0, column - 601)
+                excerpt = [{"line": line, "text": lines[line - 1][offset:offset + 1_200],
+                            "column_offset": offset, "text_truncated": True}]
+            entry = {"path": relative, "line": line, "column": column,
+                     "message": match.group("message")[:1_200], "source_sha256": _text_hash(text),
+                     "start_line": excerpt[0]["line"], "end_line": excerpt[-1]["line"], "excerpt": excerpt,
+                     "coordinate_unit": "1-based lines and columns; offset is a separate character coordinate"}
+            candidates.append(entry)
+        # Deduplicate the complete output before any limit. One file's many
+        # errors must not hide another file (e.g. StatusEffectSystem after four
+        # ProjectilePool errors). Choose a first location per file, then extras.
+        first, extra, paths = [], [], set()
+        for entry in candidates:
+            if entry["path"] in paths:
+                extra.append(entry)
+            else:
+                first.append(entry)
+                paths.add(entry["path"])
+        diagnostics = []
+        for entry in first + extra:
+            if _serialized_size(diagnostics + [entry]) > budget:
+                if entry in first:
+                    entry = {**entry, "excerpt": [row for row in entry["excerpt"] if row["line"] == entry["line"]]}
+                    entry["start_line"] = entry["end_line"] = entry["line"]
+                if _serialized_size(diagnostics + [entry]) > budget:
+                    continue
+            diagnostics.append(entry)
+            if len(diagnostics) >= 6:
+                break
+        return diagnostics
+
+    def _ingest_diagnostics(self, result, state, source_sha256):
+        diagnostics = self._build_diagnostics(result)
+        fingerprint = _hash({"source_sha256": source_sha256, "diagnostics": diagnostics})
+        fresh = bool(diagnostics and (fingerprint != state.get("diagnostic_fingerprint")
+                     or state.get("diagnostic_policy_version") != 2))
+        state["build_diagnostics"] = diagnostics
+        if fresh:
+            state["diagnostic_fingerprint"] = fingerprint
+            state["diagnostic_policy_version"] = 2
+            state["read_counts"] = {}
+            state.pop("focused_recovery", None)
+            state["diagnostic_read_allowance"] = {"remaining": 3, "observed_ranges": {},
+                "reported_paths": sorted({row["path"] for row in diagnostics}), "fingerprint": fingerprint,
+                "instruction": "可直接patch或最多3次有效读取任意安全源码及依赖接口；每次须有新来源/新区间，重复同页仍受限。"}
+        elif not diagnostics:
+            state.pop("diagnostic_read_allowance", None)
+        return diagnostics, fresh
+
+    def _hydrate_diagnostics(self, rid, prefix, state, prior):
+        """A restart must not hide a trusted compiler result behind a focus gate."""
+        candidates = []
+        for build in (state.get("last_build"), prior.get("build") if isinstance(prior, dict) else None):
+            if isinstance(build, dict) and build.get("source_sha256") == state["snapshot"]["sha256"] and build.get("report"):
+                try:
+                    saved = self.store.read_json(rid, build["report"])
+                except (OSError, ValueError):
+                    continue
+                if isinstance(saved, dict):
+                    candidates.append((saved, "run-artifact:" + build["report"]))
+        cache = Path(self.workspace.root) / ".harness/build.json"
+        if cache.is_file() and cache.stat().st_size <= 2_000_000:
+            try:
+                candidates.append((json.loads(cache.read_text()), "host-workspace:.harness/build.json"))
+            except (OSError, ValueError):
+                pass
+        # Prefer a current successful external integration build over older
+        # same-source compiler failures saved by an interrupted coding session.
+        candidates.sort(key=lambda row: bool(isinstance(row[0], dict) and row[0].get("passed")), reverse=True)
+        for report, origin in candidates:
+            if not isinstance(report, dict) or report.get("source_sha256") != state["snapshot"]["sha256"]:
+                continue
+            if report.get("passed"):
+                if not self._cached_build_valid(report):
+                    continue
+                name = prefix + ".verified-build-handoff.json"
+                self.store.write(rid, name, {**report, "origin": origin})
+                state["last_build"] = {"source_sha256": state["snapshot"]["sha256"], "passed": True, "report": name}
+                state.pop("focused_recovery", None)
+                state.pop("diagnostic_read_allowance", None)
+                state["build_diagnostics"], state["read_counts"] = [], {}
+                break
+            diagnostics, fresh = self._ingest_diagnostics(report, state, state["snapshot"]["sha256"])
+            if diagnostics:
+                self.store.write(rid, prefix + ".diagnostic-handoff.json", {
+                    "origin": origin, "report_sha256": _hash(report), "source_sha256": state["snapshot"]["sha256"],
+                    "diagnostics": diagnostics, "fresh": fresh})
+                break
+
+    def _cached_build_valid(self, report):
+        if not report.get("entrypoint") or not report.get("artifact_manifest"):
+            return False
+        root = Path(self.workspace.root) / "dist"
+        if root.is_symlink():
+            return False
+        try:
+            for item in report["artifact_manifest"]:
+                path = root / item["path"]
+                if not path.resolve().is_relative_to(root.resolve()) or any(parent.is_symlink() for parent in (path, *path.parents) if parent != root.parent):
+                    return False
+                if hashlib.sha256(path.read_bytes()).hexdigest() != item["sha256"]:
+                    return False
+            return report["entrypoint"] in {item["path"] for item in report["artifact_manifest"]}
+        except (OSError, ValueError, TypeError, KeyError):
+            return False
+
     async def _build(self, rid, prefix, state):
+        previous = state.get("last_build") or {}
         before = self.workspace.snapshot()
         result = await self.workspace.build(timeout=self.build_timeout)
         after = self.workspace.snapshot()
@@ -401,6 +681,17 @@ class CodingAgent:
             result = {**result, "passed": False, "host_error": "source changed during build"}
         if result.get("passed") and not (result.get("entrypoint") and result.get("artifact_manifest")):
             result = {**result, "passed": False, "host_error": "build returned no verifiable artifact manifest"}
+        if before["sha256"] == after["sha256"]:
+            diagnostics, fresh = self._ingest_diagnostics(result, state, after["sha256"])
+        else:
+            diagnostics, fresh = [], False
+        verified = result.get("passed") is True and not (previous.get("passed") is True and
+            previous.get("source_sha256") == after["sha256"])
+        if verified:
+            state.pop("focused_recovery", None)
+            state.pop("diagnostic_read_allowance", None)
+            state["read_counts"] = {}
+        result = {**result, "diagnostics": diagnostics, "diagnostic_progress": fresh, "build_progress": verified}
         state["last_build"] = {"source_sha256": after["sha256"], "passed": result.get("passed") is True,
                                "report": prefix + f".build-{state['steps']:04d}.json"}
         self.store.write(rid, state["last_build"]["report"], result)
@@ -410,8 +701,9 @@ class CodingAgent:
         self._check_cancelled(rid)
         if action.tool == "list_files":
             return {"files": self.workspace.list_files(), "snapshot": self.workspace.snapshot()["sha256"]}
-        if action.tool in {"read_file", "read_context", "read_observation"}:
-            if action.tool == "read_file":
+        if action.tool in {"read_file", "read_lines", "read_context", "read_observation"}:
+            file_read = action.tool in {"read_file", "read_lines"}
+            if file_read:
                 full = self._read(action.path)
                 if full is None:
                     raise FileNotFoundError(action.path)
@@ -437,33 +729,77 @@ class CodingAgent:
                     raise ValueError("observation is not available")
                 full = _json(value)
             # Bound the actual page so the newest observation fits intact.
-            cap = min(action.limit, 6_000)
-            low, high = 0, min(cap, max(0, len(full) - action.offset))
+            offset, end = action.offset, len(full)
+            if file_read and action.start_line is not None:
+                lines = full.splitlines(keepends=True)
+                requested_end = action.end_line or action.start_line + 39
+                offset = sum(map(len, lines[:action.start_line - 1]))
+                end = sum(map(len, lines[:requested_end]))
+            cap = min(action.limit, 12_000 if file_read else 6_000)
+            low, high = 0, min(cap, max(0, end - offset))
             page_budget = min(12_000, self.context_chars // 2) - 1_000
             while low < high:
                 middle = (low + high + 1) // 2
-                candidate = full[action.offset:action.offset + middle]
+                candidate = full[offset:offset + middle]
                 if _serialized_size(candidate) <= page_budget:
                     low = middle
                 else:
                     high = middle - 1
-            text = full[action.offset:action.offset + low]
-            source = ("file:" + action.path if action.tool == "read_file" else
+            text = full[offset:offset + low]
+            source = ("file:" + action.path if file_read else
                       "context:" + action.section if action.tool == "read_context" else "observation:" + str(action.step))
             digest = _text_hash(full)
-            receipt, repeats = self._record_read(state, source, digest, len(full), action.offset, action.offset + len(text))
-            result = {"content": text, "offset": action.offset, "next_offset": action.offset + len(text),
-                      "characters": len(full), "truncated": action.offset + len(text) < len(full),
+            receipt, repeats = self._record_read(state, source, digest, len(full), offset, offset + len(text))
+            result = {"content": text, "offset": offset, "next_offset": offset + len(text),
+                      "characters": len(full), "truncated": offset + len(text) < len(full),
                       "sha256": digest, "source": source, "page_characters": len(text), "repeat_count": repeats}
+            if file_read:
+                start_line = full.count("\n", 0, offset) + 1
+                end_line = start_line + text.count("\n") - int(text.endswith("\n")) if text else start_line - 1
+                result.update(start_line=start_line, end_line=end_line, total_lines=len(full.splitlines()),
+                              coordinate_unit="offset/next_offset are characters; start_line/end_line are 1-based lines")
+                if action.start_line is not None:
+                    result.update(requested_start_line=action.start_line, requested_end_line=requested_end,
+                                  selected_lines_complete=offset + len(text) >= end)
             if repeats >= 2:
                 result["read_guidance"] = "此页已读取；按真实 next_offset 继续下一页，或根据当前feature已有章节开始实现，勿重复通读整本规格。"
+                if receipt["next_unread_offset"] >= len(full) and self._focus_target(feature, context):
+                    state["focused_recovery"] = {"reason": "complete source repeatedly reread without code progress",
+                        "source": source, "sha256": digest, "armed_at_step": state["steps"]}
+                    result["next_action"] = "host will supply the complete shared types and interfaces; next proposal must write/patch/build/blocked"
             if repeats >= 5:
                 state["status"] = "needs_work"
                 state["stop_reason"] = "non_progress"
                 state["summary"] = "连续重复读取相同源位置5次且无阅读进展；已暂停当前feature以避免消耗预算，检查read_receipts和next_offset后继续。"
                 result["non_progress_stop"] = True
-            if action.tool == "read_file" and receipt["next_unread_offset"] >= len(full):
+            if file_read and receipt["next_unread_offset"] >= len(full):
                 state["full_reads"][action.path] = result["sha256"]
+            if file_read and state.get("diagnostic_read_allowance"):
+                allowance = state["diagnostic_read_allowance"]
+                ranges = allowance.setdefault("observed_ranges", {}).setdefault(source + ":" + digest, [])
+                start, stop = offset, offset + len(text)
+                # Count only ranges with new visible source information; a
+                # different spelling or overlapping read cannot reset budget.
+                covered = 0
+                spans = sorted((max(start, left), min(stop, right)) for left, right in ranges
+                               if right > start and left < stop)
+                cursor = start
+                for left, right in spans:
+                    covered += max(0, right - max(cursor, left))
+                    cursor = max(cursor, right)
+                progress = len(text) > covered
+                if progress:
+                    ranges.append([start, stop])
+                    allowance["remaining"] -= 1
+                else:
+                    state["focused_recovery"] = {"reason": "diagnostic source page repeated without new information",
+                        "source": source, "sha256": digest, "armed_at_step": state["steps"]}
+                result["diagnostic_read_progress"] = progress
+                result["diagnostic_reads_remaining"] = allowance["remaining"]
+                if allowance["remaining"] <= 0 or state.get("focused_recovery"):
+                    state.pop("diagnostic_read_allowance", None)
+                    state.setdefault("focused_recovery", {"reason": "diagnostic source/dependency read budget supplied; submit the repair next",
+                        "source": source, "sha256": digest, "armed_at_step": state["steps"]})
             return result
         if action.tool in {"write_file", "apply_patch", "delete_file"}:
             self._owned(action.path, feature)
@@ -475,6 +811,8 @@ class CodingAgent:
                 state["changed_files"] = sorted(set(state["changed_files"]) | {action.path})
                 state["full_reads"].pop(action.path, None)
                 state["last_build"] = None
+                state["build_diagnostics"] = []
+                state.pop("diagnostic_read_allowance", None)
                 state.pop("acceptance", None)
                 state["read_counts"] = {}
                 return {"path": action.path, "sha256": current_hash, "recovered_already_applied": True}
@@ -494,6 +832,8 @@ class CodingAgent:
             state["changed_files"] = sorted(set(state["changed_files"]) | {action.path})
             state["full_reads"].pop(action.path, None)
             state["last_build"] = None
+            state["build_diagnostics"] = []
+            state.pop("diagnostic_read_allowance", None)
             state.pop("acceptance", None)
             state["read_counts"] = {}
             return {"path": action.path, "bytes": len((written or "").encode()), "sha256": actual_hash,
@@ -508,6 +848,10 @@ class CodingAgent:
             state["summary"] = action.summary
             return {"blocked": True, "reason": action.summary}
         if action.tool == "finish":
+            gaps = self._owned_output_gaps(feature)
+            if gaps:
+                return {"accepted": False, "reason": "declared owned outputs are missing or empty", **gaps,
+                        "acceptance": {"status": "not_run", "passed": False}}
             snapshot = self.workspace.snapshot()
             last = state.get("last_build") or {}
             if not last.get("passed") or last.get("source_sha256") != snapshot["sha256"]:
@@ -588,9 +932,10 @@ class CodingAgent:
                     state["last_build"], state["full_reads"] = None, {}
                     self.store.event(rid, stage, "coding_workspace_drift", {"feature": fid,
                         "previous": state["snapshot"]["sha256"], "current": snapshot["sha256"]})
-                if state["status"] == "implemented" and not drift and not updated_context and not updated_images:
+                outputs_incomplete = state["status"] == "implemented" and bool(self._owned_output_gaps(feature))
+                if state["status"] == "implemented" and not drift and not updated_context and not updated_images and not outputs_incomplete:
                     return self._result(prefix, state)
-                if drift or updated_context or updated_images:
+                if drift or updated_context or updated_images or outputs_incomplete:
                     state.pop("acceptance", None)
                 state["status"] = "working"
                 state.pop("stop_reason", None)
@@ -598,6 +943,14 @@ class CodingAgent:
                 state["reference_images"] = reference_images
             self.store.write(rid, prefix + ".context.json", context)
             self.store.write(rid, prefix + ".feature.json", immutable)
+            feedback = context.get("review_feedback")
+            prior = context.get("continuation") or (feedback.get("failed_session") if isinstance(feedback, dict) else None) or {}
+            if (state["steps"] == 0 and isinstance(prior, dict) and prior.get("stop_reason") == "non_progress"
+                    and self._focus_target(feature, context)):
+                state["focused_recovery"] = {"reason": "previous session stopped for repeated reads",
+                    "armed_at_step": 0, "prior_stop_reason": "non_progress"}
+            if not state.get("pending"):
+                self._hydrate_diagnostics(rid, prefix, state, prior)
             self._save(rid, prefix, state)
             self.store.event(rid, stage, "coding_start", {"feature": fid, "owner": owner, "role": role,
                 "workspace": str(self.workspace.root), "integration": "serial_workspace_lock"})
@@ -609,8 +962,10 @@ class CodingAgent:
                         number = state["steps"] + 1
                         self.store.write(rid, prefix + f".step-{number:04d}.input.json", packet)
                         image_args = {"images": self.images} if self.images and state.get("images_seen") != images_digest else {}
+                        action_schema = (FocusedCodingAction if state.get("focused_recovery") else
+                                         DiagnosticCodingAction if state.get("diagnostic_read_allowance") else CodingAction)
                         action = await self.client.structured(rid, stage + f".step-{number:04d}", role,
-                            CODING_INSTRUCTION, packet, CodingAction, max_tokens=16_000, **image_args)
+                            CODING_INSTRUCTION, packet, action_schema, max_tokens=16_000, **image_args)
                         state["images_seen"] = images_digest
                         # Preserve the exact validated proposal even if host
                         # preparation rejects it. A failed tool is an observation.
@@ -622,12 +977,16 @@ class CodingAgent:
                             prepared, preparation_error = {}, str(exc)
                         state["steps"] = number
                         state["pending"] = {"action": action.model_dump(), "prepared": prepared,
-                                            "preparation_error": preparation_error}
+                                            "preparation_error": preparation_error,
+                                            "focused_recovery": bool(state.get("focused_recovery")),
+                                            "diagnostic_mode": bool(state.get("diagnostic_read_allowance")),
+                                            "before_snapshot_sha256": state["snapshot"]["sha256"]}
                         self._save(rid, prefix, state)
                     pending = state["pending"]
                     action = CodingAction.model_validate(pending["action"])
                     self.store.event(rid, stage, "coding_action", {"feature": fid, "step": state["steps"],
                                                                   "tool": action.tool, "path": action.path})
+                    before_action_sha = pending.get("before_snapshot_sha256", state["snapshot"]["sha256"])
                     try:
                         if pending["preparation_error"]:
                             raise ValueError(pending["preparation_error"])
@@ -646,6 +1005,19 @@ class CodingAgent:
                     # historical observations remain independently addressable.
                     state["history"] = state["history"][-self.history_limit:]
                     state["snapshot"] = self.workspace.snapshot()
+                    if pending.get("focused_recovery") or pending.get("diagnostic_mode"):
+                        changed = state["snapshot"]["sha256"] != before_action_sha
+                        self.store.event(rid, stage, "focused_recovery_action", {"feature": fid,
+                            "step": state["steps"], "tool": action.tool, "ok": result["ok"],
+                            "source_changed": changed, "diagnostic_progress": result.get("diagnostic_progress", False)})
+                        if result["ok"] and (changed or result.get("diagnostic_progress") or result.get("build_progress")):
+                            state.pop("focused_recovery", None)
+                        elif pending.get("diagnostic_mode") and result["ok"] and action.tool in {"read_file", "read_lines"}:
+                            pass  # One precise read was allowed; the next proposal is the concrete repair.
+                        elif state["status"] != "blocked":
+                            state["status"], state["stop_reason"] = "needs_work", "non_progress"
+                            state["summary"] = ("focused recovery completed one action without verified source progress; "
+                                "preserve the concrete tool result for dependency repair instead of reopening a read loop")
                     state["pending"] = None
                     self._save(rid, prefix, state)
                     self.store.event(rid, stage, "coding_observation", {"feature": fid, "step": state["steps"],

@@ -72,6 +72,10 @@ class Workspace:
     def list_files(self):
         return [item["path"] for item in self.snapshot()["files"]]
 
+    def inline_preview(self):
+        """ZIP packaging fixture only; this is not a generated or accepted game."""
+        return "<!doctype html><html lang='zh'><body>仅用于ZIP封装测试</body></html>"
+
     async def build(self, **kwargs):
         return {"passed": self.passed, "source_sha256": self.snapshot()["sha256"], "entrypoint": "index.html",
                 "artifact_manifest": [{"path": "index.html", "sha256": "a" * 64}],
@@ -372,8 +376,37 @@ def test_delivery_zip_contains_referenced_evidence_and_excludes_execution_metada
         assert "evidence/trace.json" in paths
         assert "evidence/project-evidence-0.json" in paths
         assert "evidence/project-build-0.json" in paths
+        assert "playable.html" in paths and "delivery-manifest.json" in paths
+        manifest = json.loads(archive.read("delivery-manifest.json"))
+        assert manifest["source_sha256"] == workspace.snapshot()["sha256"]
+        assert manifest["playable"]["path"] == "playable.html"
+        assert hashlib.sha256(archive.read("playable.html")).hexdigest() == manifest["playable"]["sha256"]
+        assert archive.read("playable.html").decode() == workspace.inline_preview()
         assert hashlib.sha256(archive.read("evidence/trace.json")).hexdigest() == digest
         assert not any(".env" in path or ".harness" in path for path in paths)
+
+
+def test_reviewed_repair_handoff_preserves_unapplied_work_and_never_replays_completed_patches(settings, store):
+    rid = store.create(project_request())["id"]
+    spec = load_case("GAME-TEST-001")
+    workflow = ProjectOrchestrator(settings, store, agents=Planner(implementation_plan(spec)))
+    proposal = {"patches": [{"path": "src/game/types.ts", "old": "before", "new": "after"}],
+                "remaining_findings": ["Integrate real production renderer"],
+                "integration_requirements": ["Pass actual event sink"]}
+    digest = store.write(rid, "proposed-repairs.json", proposal)
+    assert workflow.proposed_repairs(rid) == proposal
+    journal_name = "reviewed-repair-" + digest[:20] + ".journal.json"
+    store.write(rid, journal_name, {"status": "pending", "proposal_sha256": digest})
+    assert workflow.proposed_repairs(rid) == proposal
+    store.write(rid, journal_name, {"status": "complete", "proposal_sha256": "0" * 64})
+    assert workflow.proposed_repairs(rid) == proposal
+    store.write(rid, journal_name, {"status": "complete", "proposal_sha256": digest, "source_after": "a" * 64})
+    handoff = workflow.proposed_repairs(rid)
+    assert handoff["status"] == "already_applied" and handoff["do_not_reapply"] is True
+    assert handoff["official_acceptance"] is False and handoff["proposal_sha256"] == digest
+    assert "patches" not in handoff and handoff["remaining_findings"] == proposal["remaining_findings"]
+    assert handoff["integration_requirements"] == proposal["integration_requirements"]
+    assert store.get(rid)["calls"] == 0 and store.get(rid)["status"] == "queued"
 
 
 @pytest.mark.parametrize("source_defect", [None, "stale_browser_source", "stale_ledger_source", "stale_spec"])
@@ -397,6 +430,8 @@ async def test_visual_stage_follows_bound_browser_artifacts_and_is_re_evaluated(
             evidence = store.read_json(rid, "project-evidence-0.json")
             assert evidence["project_sha256"] == workspace.snapshot()["sha256"] == payload["project_sha256"]
             assert evidence["checks"] and all(c["producer"] == "playwright" for c in evidence["checks"])
+            assert {shot["scene"] for shot in payload["screenshots"]} >= {"upgrade_cards", "unspecified"}
+            assert len(kwargs["images"]) == 2
             observed_order.append("independent_vision")
             qa_calls.append(kwargs)
             image = payload["screenshots"][0]["path"]
@@ -421,6 +456,7 @@ async def test_visual_stage_follows_bound_browser_artifacts_and_is_re_evaluated(
         trace_sha = store.write(rid, trace_name, {"project_sha256": source_hash, "draws": 120})
         fixture_png = Path(__file__).parent / "fixtures" / "vision-probe.png"
         screen_sha = store.write(rid, "project-r0-desktop.png", fixture_png.read_bytes())
+        card_sha = store.write(rid, "project-r0-upgrade-cards.png", fixture_png.read_bytes())
         evidence = {"project_sha256": "b" * 64 if source_defect == "stale_ledger_source" else source_hash,
             "spec_sha256": "b" * 64 if source_defect == "stale_spec" else spec.sha256,
             "artifact_root": str(store.directory(rid)), "checks": [{"requirement_id": spec.case_id + "/T54",
@@ -431,6 +467,9 @@ async def test_visual_stage_follows_bound_browser_artifacts_and_is_re_evaluated(
         observed_order.append("browser_artifacts_committed")
         return {"passed": False, "source_sha256": "b" * 64 if source_defect == "stale_browser_source" else source_hash,
             "spec_sha256": spec.sha256, "errors": [], "acceptance": {"complete": False, "tests": []},
+            "captured_screenshots": [{"path": "project-r0-upgrade-cards.png", "sha256": card_sha,
+                "width": 720, "height": 480, "name": "desktop", "scene": "upgrade_cards",
+                "project_sha256": source_hash, "spec_sha256": spec.sha256}],
             "browser": [{"name": "desktop", "width": 720, "height": 480,
                          "screenshot": "project-r0-desktop.png", "screenshot_sha256": screen_sha}]}
 
@@ -479,3 +518,144 @@ async def test_only_missing_executors_and_manual_observations_do_not_spend_repai
     assert any(event["kind"] == "verification_pending" for event in store.events(rid))
     final = store.read_json(rid, "project-validation.json")["acceptance"]
     assert final["counts"]["failed"] == 0 and final["counts"]["manual_required"] > 0
+
+
+async def test_verification_rounds_append_after_interruption_and_repairs_remain_cumulative(settings, store, tmp_path, monkeypatch):
+    """Interrupted fixture verification must preserve evidence, never imply case success."""
+    spec = load_case("GAME-TEST-001")
+    rid = store.create(project_request(spec.case_id))["id"]
+    store.claim()
+    store.reserve_call(rid, 600, 6_000_000)
+    store.charge(rid, 123)
+    workflow = ProjectOrchestrator(replace(settings, project_repair_rounds=2), store,
+                                   agents=Planner(implementation_plan(spec)))
+    workspace = Workspace(tmp_path / "workspace")
+    monkeypatch.setattr(workflow, "workspace", lambda _: workspace)
+    calls = install_fake_workers(monkeypatch)
+    rounds, interrupted = [], False
+
+    class Validator:
+        def __init__(self, settings, store):
+            pass
+
+        async def validate(self, rid, spec, workspace, build, round_no):
+            nonlocal interrupted
+            rounds.append(round_no)
+            trace = {"fixture_only": True, "round": round_no, "project_sha256": build["source_sha256"]}
+            store.write(rid, f"round-{round_no}-trace.json", trace)
+            store.write(rid, f"project-evidence-{round_no}.json", {
+                "project_sha256": build["source_sha256"], "spec_sha256": spec.sha256,
+                "artifact_root": str(store.directory(rid)), "checks": [], "round": round_no})
+            if round_no == 1 and not interrupted:
+                interrupted = True
+                raise asyncio.CancelledError("fixture worker restart after its evidence was persisted")
+            return {"passed": False, "source_sha256": build["source_sha256"], "spec_sha256": spec.sha256,
+                "errors": ["fixture integration defect still unresolved"], "browser": []}
+
+    sys.modules["game_harness.project_validation"].ProjectValidator = Validator
+    with pytest.raises(asyncio.CancelledError):
+        await workflow.run(rid)
+    names = ["project-build-0.json", "project-build-1.json", "project-evidence-0.json",
+             "project-evidence-1.json", "project-repair-1.json"]
+    preserved = {name: store.path(rid, name).read_bytes() for name in names}
+    await workflow.run(rid)
+    assert rounds == [0, 1, 2, 3]
+    assert [feature["id"] for _, feature, _, _ in calls if feature["id"].startswith("integration-repair-")] == [
+        "integration-repair-1", "integration-repair-2"]
+    assert all(store.path(rid, name).read_bytes() == content for name, content in preserved.items())
+    assert store.path(rid, "project-build-3.json").is_file()
+    await workflow.run(rid)
+    assert rounds == [0, 1, 2, 3, 4]
+    assert not store.path(rid, "project-repair-3.json").exists()
+    assert store.get(rid)["calls"] == 1 and store.get(rid)["tokens"] == 123
+    assert store.get(rid)["status"] == "needs_attention"
+    assert not store.path(rid, "manifest.json").exists()
+
+
+@pytest.mark.parametrize("status", ["failed", "needs_attention", "cancelled"])
+def test_project_resume_api_keeps_attempts_budget_and_completed_artifacts(settings, status):
+    # No lifespan workers or model calls: only the explicit resume control path.
+    app = create_app(settings)
+    store = app.state.store
+    rid = store.create(project_request())["id"]
+    ledger = ProjectLedger(store)
+    feature = implementation_plan(load_case("GAME-TEST-001")).features[0].model_dump()
+    ledger.register(rid, [feature])
+    ledger.claim(rid)
+    ledger.finish(rid, feature["id"], {"status": "needs_work", "stop_reason": "non_progress"})
+    store.reserve_call(rid, 600, 6_000_000)
+    store.charge(rid, 123)
+    store.write(rid, "project-evidence-7.json", {"fixture_only": True, "round": 7})
+    before = store.path(rid, "project-evidence-7.json").read_bytes()
+    store.update(rid, status=status, error="fixture unresolved work")
+    app.state.projects = SimpleNamespace(ledger=ledger)
+    client = TestClient(app)
+    response = client.post(f"/api/runs/{rid}/resume")
+    assert response.status_code == 200
+    assert response.json()["status"] == "queued" and response.json()["error"] is None
+    saved = ledger.features(rid)[0]
+    assert saved["status"] == "pending" and saved["attempts"] == 1
+    assert saved["result"]["stop_reason"] == "non_progress"
+    assert store.get(rid)["calls"] == 1 and store.get(rid)["tokens"] == 123
+    assert store.path(rid, "project-evidence-7.json").read_bytes() == before
+    assert any(e["kind"] == "feature_resume_requested" and e["payload"]["budget_reset"] is False for e in store.events(rid))
+    assert client.post(f"/api/runs/{rid}/resume").status_code == 409
+
+
+@pytest.mark.parametrize("stop_reason", ["action_limit", "non_progress"])
+@pytest.mark.parametrize("mode", ["productive", "no_progress"])
+async def test_continuation_leases_require_host_observed_source_progress(settings, store, tmp_path, monkeypatch, mode, stop_reason):
+    rid = store.create(project_request())["id"]
+    store.claim()
+    settings = replace(settings, project_repair_rounds=0)
+    spec = load_case("GAME-TEST-001")
+    workflow = ProjectOrchestrator(settings, store, agents=Planner(implementation_plan(spec)))
+    workspace = Workspace(tmp_path / "workspace")
+    monkeypatch.setattr(workflow, "workspace", lambda _: workspace)
+    install_fake_workers(monkeypatch)
+    calls, sessions = [], []
+
+    class LeaseCoder:
+        def __init__(self, agents, store, workspace, **kwargs):
+            self.workspace = workspace
+
+        async def run_feature(self, run_id, feature, context, **kwargs):
+            store.reserve_call(run_id, settings.project_max_calls, settings.project_max_tokens)
+            store.charge(run_id, 100)
+            calls.append((feature["id"], kwargs["role"]))
+            if feature["id"].startswith("dependency-repair-"):
+                return {"status": "implemented", "stop_reason": "implemented"}
+            if feature["id"].startswith("feature-0"):
+                sessions.append(context)
+                step = len(sessions)
+                if mode != "no_progress":
+                    path = self.workspace.root / f"foundation-part-{step}.ts"
+                    path.write_text(f"export const completedPart = {step};")
+                if mode == "productive" and step == 4:
+                    return {"status": "implemented", "stop_reason": "implemented"}
+                return {"status": "needs_work", "stop_reason": stop_reason,
+                    "memory": f"下一文件 foundation-part-{step + 1}.ts；已确认speed=6。", "read_receipts": [],
+                    "changed_files": ["untrusted-model-change-claim.ts"],
+                    "host_progress": {"source_changed": True}}  # Host must overwrite this claim.
+            (self.workspace.root / (feature["id"] + ".ts")).write_text("export const finished = true;")
+            return {"status": "implemented", "stop_reason": "implemented"}
+
+    monkeypatch.setattr("game_harness.coding_agent.CodingAgent", LeaseCoder)
+    if mode == "productive":
+        await workflow.run(rid)
+        assert len(sessions) == 4
+        assert not any(role == "repair" for _, role in calls)
+        assert sessions[1]["continuation"]["memory"].startswith("下一文件 foundation-part-2.ts")
+        assert all(f["status"] == "implemented" for f in workflow.ledger.features(rid))
+        assert store.get(rid)["calls"] == 8 and store.get(rid)["tokens"] == 800
+        events = [e for e in store.events(rid) if e["kind"] == "feature_continuation"]
+        assert len(events) == 3 and all(e["payload"]["budget_reset"] is False for e in events)
+    else:
+        with pytest.raises(RuntimeError, match="功能尚未完成"):
+            await workflow.run(rid)
+        assert len(sessions) == 3
+        assert sum(role == "repair" for _, role in calls) == 2
+        assert store.get(rid)["calls"] == 5 and store.get(rid)["tokens"] == 500
+        assert not any(e["kind"] == "feature_continuation" for e in store.events(rid))
+        progress = workflow.ledger.features(rid)[0]["result"]["host_progress"]
+        assert progress["source_changed"] is (mode != "no_progress")

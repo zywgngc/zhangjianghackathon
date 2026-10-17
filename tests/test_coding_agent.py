@@ -8,7 +8,7 @@ import pytest
 from openai import AsyncOpenAI
 
 from game_harness.agents import AgentClient
-from game_harness.coding_agent import CodingAction, CodingAgent
+from game_harness.coding_agent import CodingAction, CodingAgent, DiagnosticCodingAction, FocusedCodingAction
 
 
 class Workspace:
@@ -59,7 +59,9 @@ class Workspace:
     def snapshot(self):
         files = [{"path": str(p.relative_to(self.root)), "sha256": hashlib.sha256(p.read_bytes()).hexdigest(),
                   "bytes": p.stat().st_size}
-                 for p in sorted(self.root.rglob("*")) if p.is_file() and not p.name.startswith(".")]
+                 for p in sorted(self.root.rglob("*")) if p.is_file()
+                 and not any(part.startswith(".") or part in {"dist", "node_modules"}
+                             for part in p.relative_to(self.root).parts)]
         return {"files": files, "sha256": hashlib.sha256(json.dumps(files, sort_keys=True).encode()).hexdigest()}
 
     async def build(self, install=True, timeout=180):
@@ -317,6 +319,7 @@ async def test_delete_is_scoped_and_requires_a_current_file_digest(store, reques
     rid = run_id(store, request_data)
     workspace = Workspace(tmp_path / "game")
     workspace.write_file("src/obsolete.ts", "export const obsolete = true;")
+    workspace.write_file("src/current.ts", "export const current = true;")
     digest = hashlib.sha256(workspace.read_file("src/obsolete.ts").encode()).hexdigest()
     client = ScriptedClient([
         {"tool": "delete_file", "path": "src/obsolete.ts"},
@@ -324,7 +327,7 @@ async def test_delete_is_scoped_and_requires_a_current_file_digest(store, reques
         {"tool": "finish", "summary": "删除错误的旧模块并重新构建。"},
     ])
     result = await CodingAgent(client, store, workspace).run_feature(rid,
-        {"id": "cleanup", "owned_paths": ["src/obsolete.ts"]}, {})
+        {"id": "cleanup", "owned_paths": ["src/**"]}, {})
     assert result["status"] == "implemented"
     assert not (workspace.root / "src/obsolete.ts").exists()
     assert "requires a current full read" in client.inputs[1]["data"]["recent_observations"][-1]["result"]["error"]
@@ -383,6 +386,49 @@ async def test_complete_source_read_preserves_crlf_offsets_and_digest(store, req
     observed = client.inputs[1]["data"]["recent_observations"][-1]["result"]
     assert observed["content"] == source
     assert observed["sha256"] == hashlib.sha256(source.encode()).hexdigest()
+
+
+async def test_eight_thousand_character_file_reads_in_one_complete_page_and_authorizes_replacement(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    source = "// 共享接口与原始数值必须保留\n" * 400
+    source = (source + " " * 8_000)[:8_000]
+    workspace.write_file("src/types.ts", source)
+    specification = "原文技能参数\n" * 2_000
+    store.write(rid, "specification.txt", specification)
+    prefix = CodingAgent._prefix("larger-file-page")
+
+    class InspectingClient(ScriptedClient):
+        async def structured(self, rid, stage, role, instruction, packet, schema, **kwargs):
+            assert len(json.dumps(packet, ensure_ascii=False)) <= 32_000
+            if len(self.inputs) == 1:
+                observed = packet["recent_observations"][-1]["result"]
+                assert observed["source"] == "file:src/types.ts"
+                assert observed["content"] == source
+                assert observed["offset"] == 0 and observed["next_offset"] == 8_000
+                assert observed["characters"] == 8_000 and observed["truncated"] is False
+                assert not observed.get("content_view_truncated")
+                state = store.read_json(rid, prefix + ".checkpoint.json")
+                assert state["full_reads"]["src/types.ts"] == hashlib.sha256(source.encode()).hexdigest()
+            if len(self.inputs) == 3:
+                observed = packet["recent_observations"][-1]["result"]
+                assert observed["source"] == "context:__specification__"
+                assert observed["next_offset"] == 6_000
+                assert observed["characters"] == len(specification) and observed["truncated"] is True
+            return await super().structured(rid, stage, role, instruction, packet, schema, **kwargs)
+
+    client = InspectingClient([
+        {"tool": "read_file", "path": "src/types.ts", "limit": 16_000},
+        {"tool": "write_file", "path": "src/types.ts", "content": "export type Phase = 'ready';"},
+        {"tool": "read_context", "section": "__specification__", "limit": 16_000},
+        {"tool": "finish", "summary": "完整读过已有共享类型后替换，原始规格仍按6000字符分页。"},
+    ])
+    result = await CodingAgent(client, store, workspace, context_chars=32_000).run_feature(
+        rid, {"id": "larger-file-page", "owned_paths": ["src/types.ts"]},
+        {"source_archive": "specification.txt", "interfaces": specification * 5, "production_contract": specification})
+    assert result["status"] == "implemented"
+    assert workspace.read_file("src/types.ts") == "export type Phase = 'ready';"
+    assert result["changed_files"] == ["src/types.ts"]
 
 
 @pytest.mark.parametrize("limit", [8_000, 60_000])
@@ -463,6 +509,485 @@ async def test_five_identical_nonprogress_reads_stop_before_spending_the_session
     checkpoint = store.read_json(rid, result["checkpoint"])
     assert checkpoint["history"][-1]["result"]["non_progress_stop"] is True
     assert list(checkpoint["read_receipts"].values())[0]["characters"] == 100_000
+
+
+async def test_shared_types_and_interfaces_remain_complete_when_configuration_and_history_compete(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    types = "export type PRNG = () => number;\nexport type EventSink = (event: string) => void;\n"
+    types = (types + "// 真实共享接口字段\n" * 1_000)[:7_978]
+    workspace.write_file("src/game/types.ts", types)
+    interfaces = "export function updatePlayerNavigation(state: GameState, dt: number, rng: PRNG, emit: EventSink): void;\n" * 15
+    configuration = {"unrelatedSkillRows": "全部技能数值" * 1_000}
+    page = "必须按当前功能实现移动。" * 600
+
+    class InspectingClient(ScriptedClient):
+        async def structured(self, rid, stage, role, instruction, packet, schema, **kwargs):
+            assert len(json.dumps(packet, ensure_ascii=False)) <= 32_000
+            assert packet["context"]["interfaces"] == interfaces
+            resident = packet["resident_files"][0]
+            assert resident["path"] == "src/game/types.ts" and resident["content"] == types
+            assert resident["complete"] and resident["characters"] == 7_978
+            assert resident["sha256"] == hashlib.sha256(types.encode()).hexdigest()
+            assert resident["exports"] == ["PRNG", "EventSink"]
+            if len(self.inputs) == 1:
+                observed = packet["recent_observations"][-1]["result"]
+                assert observed["content"] == page[:6_000]
+                assert observed["next_offset"] == 6_000 and not observed.get("content_view_truncated")
+            return await super().structured(rid, stage, role, instruction, packet, schema, **kwargs)
+
+    client = InspectingClient([
+        {"tool": "read_context", "section": "spec_excerpts", "limit": 16_000},
+        {"tool": "note", "summary": "共享字段已经确认。", "memory": "下一文件InputManager.ts，PRNG/EventSink使用resident_files真实定义。"},
+        {"tool": "write_file", "path": "src/game/InputManager.ts", "content": "export const input = { dx: 0, dy: 0, active: false };"},
+        {"tool": "finish", "summary": "不再反复读取共享类型。"},
+    ])
+    result = await CodingAgent(client, store, workspace, context_chars=32_000, history_limit=3).run_feature(rid,
+        {"id": "player-navigation", "owned_paths": ["src/game/InputManager.ts"], "objective": "实现移动输入"},
+        {"interfaces": interfaces, "approved_configuration": configuration, "spec_excerpts": page,
+         "review_feedback": page * 5, "production_contract": page * 5, "architecture": page * 5})
+    assert result["status"] == "implemented" and result["steps"] == 4
+
+
+async def test_large_resident_contracts_preserve_the_latest_escape_heavy_page_within_serialized_budget(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    types = "export type Phase = 'ready';\n" + "中" * 7_950
+    workspace.write_file("src/game/types.ts", types)
+    interfaces = "接口签名" + "值" * 7_975
+    source = '"\\\n中文' * 5_000
+
+    class InspectingClient(ScriptedClient):
+        async def structured(self, rid, stage, role, instruction, packet, schema, **kwargs):
+            assert len(json.dumps(packet, ensure_ascii=False)) <= 32_000
+            assert packet["context"]["interfaces"] == interfaces
+            assert packet["resident_files"][0]["content"] == types
+            if self.inputs:
+                result = store.read_json(rid, CodingAgent._prefix("dense-resident-packet") + ".step-0001.result.json")
+                latest = packet["recent_observations"][-1]["result"]
+                assert latest["content"] == result["content"]
+                assert latest["next_offset"] == len(result["content"])
+                assert not latest.get("content_view_truncated")
+            return await super().structured(rid, stage, role, instruction, packet, schema, **kwargs)
+
+    client = InspectingClient([
+        {"tool": "read_context", "section": "spec_excerpts", "limit": 16_000},
+        {"tool": "blocked", "summary": "序列化极限回归，不宣称实现。"},
+    ])
+    result = await CodingAgent(client, store, workspace, context_chars=32_000).run_feature(rid,
+        {"id": "dense-resident-packet", "owned_paths": ["src/game/InputManager.ts"], "objective": "保留需求" * 10_000},
+        {"interfaces": interfaces, "spec_excerpts": source, "project_summary": {"notes": "元数据" * 5_000},
+         "approved_configuration": source, "production_contract": source, "review_feedback": source})
+    assert result["status"] == "blocked"
+
+
+@pytest.mark.parametrize("action,expected", [
+    ({"tool": "write_file", "path": "src/game/InputManager.ts", "content": "export const input = { dx: 0 };"}, "implemented"),
+    ({"tool": "blocked", "summary": "共享GameState缺少input字段，需上游增加input:InputState。"}, "blocked"),
+    ({"tool": "build"}, "implemented"),
+])
+async def test_nonprogress_handoff_allows_one_concrete_recovery_action_not_more_reads(store, request_data, tmp_path, action, expected):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    workspace.write_file("src/game/types.ts", "export interface InputState { dx: number; dy: number; active: boolean; }")
+    if action["tool"] == "build":
+        workspace.write_file("src/game/InputManager.ts", "export const input = { dx: 0, dy: 0, active: false };")
+
+    class FocusClient(ScriptedClient):
+        async def structured(self, rid, stage, role, instruction, packet, schema, **kwargs):
+            if not self.inputs:
+                assert schema is FocusedCodingAction
+                assert schema.model_json_schema()["properties"]["tool"]["enum"] == ["write_file", "apply_patch", "build", "blocked"]
+                assert packet["focused_recovery"]["target_file"] == "src/game/InputManager.ts"
+                assert packet["resident_files"][0]["complete"]
+                assert packet["context"]["interfaces"] == "InputState is the real shared input contract."
+            return await super().structured(rid, stage, role, instruction, packet, schema, **kwargs)
+
+    client = FocusClient([action, {"tool": "finish", "summary": "已提交真实源码，主机构建确认。"}])
+    result = await CodingAgent(client, store, workspace, context_chars=32_000).run_feature(rid,
+        {"id": "focused-navigation", "owned_paths": ["src/game/InputManager.ts"]},
+        {"interfaces": "InputState is the real shared input contract.",
+         "continuation": {"stop_reason": "non_progress", "memory": "types已读完整，再读interfaces确认一次。"}})
+    assert result["status"] == expected
+    assert len(client.inputs) == (2 if expected == "implemented" else 1)
+    if expected == "needs_work":
+        assert result["stop_reason"] == "non_progress" and not result["changed_files"]
+
+
+async def test_repeated_complete_interface_reads_trigger_typed_recovery_before_five_read_stop(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    workspace.write_file("src/game/types.ts", "export type EventSink = (event: string) => void;")
+
+    class InspectingClient(ScriptedClient):
+        async def structured(self, rid, stage, role, instruction, packet, schema, **kwargs):
+            if len(self.inputs) == 2:
+                assert schema is FocusedCodingAction
+                assert packet["focused_recovery"]["source"] == "context:interfaces"
+                assert packet["resident_files"][0]["exports"] == ["EventSink"]
+            return await super().structured(rid, stage, role, instruction, packet, schema, **kwargs)
+
+    client = InspectingClient([
+        {"tool": "read_context", "section": "interfaces"},
+        {"tool": "read_context", "section": "interfaces"},
+        {"tool": "write_file", "path": "src/game/InputManager.ts", "content": "export const active = false;"},
+        {"tool": "finish", "summary": "主机约束第二次重复后提交改动。"},
+    ])
+    result = await CodingAgent(client, store, workspace, context_chars=32_000).run_feature(rid,
+        {"id": "repeat-interfaces", "owned_paths": ["src/game/InputManager.ts"]}, {"interfaces": "No PRNG declaration here; see actual shared types."})
+    assert result["status"] == "implemented" and result["steps"] == 4
+    assert [item["data"].get("focused_recovery") is not None for item in client.inputs] == [False, False, True, False]
+
+
+async def test_host_rejects_read_even_if_custom_client_ignores_focused_schema(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    workspace.write_file("src/game/types.ts", "export interface InputState { dx: number; }")
+
+    class IgnoringClient:
+        calls = 0
+        async def structured(self, *args, **kwargs):
+            self.calls += 1
+            assert args[5] is FocusedCodingAction
+            return CodingAction(tool="read_context", section="interfaces")
+
+    client = IgnoringClient()
+    feature = {"id": "untrusted-focused-action", "owned_paths": ["src/game/InputManager.ts"]}
+    result = await CodingAgent(client, store, workspace, context_chars=32_000).run_feature(rid, feature,
+        {"interfaces": "Already available.", "continuation": {"stop_reason": "non_progress"}})
+    assert result["status"] == "needs_work" and result["stop_reason"] == "non_progress" and client.calls == 1
+    raw = store.read_json(rid, CodingAgent._prefix(feature["id"]) + ".step-0001.result.json")
+    assert raw["ok"] is False and "not another read" in raw["error"]
+
+
+async def test_focused_write_crash_replays_once_and_releases_gate_only_on_verified_mutation(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    workspace.write_file("src/game/types.ts", "export interface InputState { dx: number; }")
+    workspace.crash_after_write = True
+    feature = {"id": "focused-write-crash", "owned_paths": ["src/game/InputManager.ts"]}
+    context = {"interfaces": "Use the real InputState.", "continuation": {"stop_reason": "non_progress"}}
+    client = ScriptedClient([
+        {"tool": "write_file", "path": "src/game/InputManager.ts", "content": "export const dx = 0;"},
+        {"tool": "finish", "summary": "同一write经崩溃恢复只执行一次。"},
+    ])
+    agent = CodingAgent(client, store, workspace, context_chars=32_000)
+    with pytest.raises(asyncio.CancelledError):
+        await agent.run_feature(rid, feature, context)
+    result = await agent.run_feature(rid, feature, context)
+    assert result["status"] == "implemented" and len(client.inputs) == 2
+    assert workspace.writes == 2  # Initial types fixture plus exactly one proposed write.
+
+
+@pytest.mark.parametrize("tool", ["read_file", "read_lines"])
+async def test_compiler_line_numbers_have_explicit_source_reads_and_small_limits_are_valid(store, request_data, tmp_path, tool):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    lines = [f"// 第{number}行的真实内容\n" for number in range(1, 301)]
+    source = "".join(lines)
+    workspace.write_file("src/game/levels.ts", source)
+    client = ScriptedClient([
+        {"tool": "read_file", "path": "src/game/levels.ts", "offset": 240, "limit": 30},
+        {"tool": tool, "path": "src/game/levels.ts", "start_line": 245, "end_line": 265},
+        {"tool": "read_file", "path": "src/game/levels.ts", "start_line": 255, "end_line": 255, "limit": 1},
+        {"tool": "blocked", "summary": "本回归核对字符偏移与tsc行号，不宣称功能完成。"},
+    ])
+    result = await CodingAgent(client, store, workspace, context_chars=32_000).run_feature(rid,
+        {"id": "line-coordinate-"+tool, "owned_paths": ["src/game/levels.ts"]}, {})
+    first = client.inputs[1]["data"]["recent_observations"][-1]["result"]
+    assert first["content"] == source[240:270] and first["offset"] == 240
+    assert first["start_line"] != 240 and "characters" in first["coordinate_unit"]
+    line_read = client.inputs[2]["data"]["recent_observations"][-1]["result"]
+    assert line_read["content"] == "".join(lines[244:265])
+    assert line_read["start_line"] == 245 and line_read["end_line"] == 265
+    assert line_read["offset"] == sum(map(len, lines[:244])) and line_read["selected_lines_complete"] is True
+    tiny = client.inputs[3]["data"]["recent_observations"][-1]["result"]
+    assert tiny["content"] == lines[254][0] and tiny["selected_lines_complete"] is False
+    assert result["status"] == "blocked"
+
+
+class CompilerWorkspace(Workspace):
+    """Compiler-output control fixture reproducing the observed case3 positions."""
+    async def build(self, **kwargs):
+        if "const rng: {}" in self.read_file("src/game/levels.ts"):
+            self.builds += 1
+            return {"passed": False, "errors": ["typecheck failed"], "stdout":
+                "src/game/levels.ts(255,30): error TS2339: Property 'next' does not exist on type '{}'.\n"
+                "src/game/levels.ts:258:30 - error TS2339: Property 'next' does not exist on type '{}'.\n"
+                "../../outside.ts(1,1): error TS2339: Untrusted outside path.\n", "stderr": ""}
+        return await super().build(**kwargs)
+
+
+def compiler_source():
+    lines = [f"// Context line {number}\n" for number in range(1, 301)]
+    lines[253] = "const rng: {} = { next: () => 0.5 };\n"
+    lines[254] = "const first = rng.next();\n"
+    lines[257] = "const second = rng.next();\n"
+    return "".join(lines)
+
+
+async def test_fresh_host_compiler_locations_release_focus_for_one_precise_read_then_patch(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = CompilerWorkspace(tmp_path / "game")
+    source = compiler_source()
+    workspace.write_file("src/game/levels.ts", source)
+    feature = {"id": "compiler-focused-recovery", "owned_paths": ["src/game/levels.ts"]}
+
+    class InspectingClient(ScriptedClient):
+        async def structured(self, rid, stage, role, instruction, packet, schema, **kwargs):
+            assert len(json.dumps(packet, ensure_ascii=False)) <= 32_000
+            if not self.inputs:
+                assert schema is FocusedCodingAction
+            elif len(self.inputs) == 1:
+                assert schema is DiagnosticCodingAction and "focused_recovery" not in packet
+                assert packet["new_build_diagnostic"]["remaining"] == 3
+                assert packet["new_build_diagnostic"]["reported_paths"] == ["src/game/levels.ts"]
+                diagnostics = packet["build_diagnostics"]
+                assert [row["line"] for row in diagnostics] == [255, 258]
+                assert diagnostics[0]["start_line"] == 245 and diagnostics[0]["end_line"] == 265
+                assert diagnostics[0]["source_sha256"] == hashlib.sha256(source.encode()).hexdigest()
+                assert next(row["text"] for row in diagnostics[0]["excerpt"] if row["line"] == 255) == "const first = rng.next();"
+                state = store.read_json(rid, CodingAgent._prefix(feature["id"]) + ".checkpoint.json")
+                assert state["read_counts"] == {}
+            elif len(self.inputs) == 2:
+                assert schema is DiagnosticCodingAction and packet["new_build_diagnostic"]["remaining"] == 2
+                read = packet["recent_observations"][-1]["result"]
+                assert read["start_line"] == 245 and read["end_line"] == 265
+                assert "const rng: {}" in read["content"]
+            return await super().structured(rid, stage, role, instruction, packet, schema, **kwargs)
+
+    client = InspectingClient([
+        {"tool": "build"},
+        {"tool": "read_lines", "path": "src/game/levels.ts", "start_line": 245, "end_line": 265},
+        {"tool": "apply_patch", "path": "src/game/levels.ts", "old": "const rng: {}", "new": "const rng: { next(): number }"},
+        {"tool": "finish", "summary": "已根据主机真实诊断行修复类型并重新构建。"},
+    ])
+    result = await CodingAgent(client, store, workspace, context_chars=32_000).run_feature(rid, feature,
+        {"continuation": {"stop_reason": "non_progress"}, "approved_configuration": "规则" * 5_000,
+         "review_feedback": "旧上下文" * 5_000, "interfaces": "interface contract"})
+    assert result["status"] == "implemented" and result["steps"] == 4
+    assert len(client.inputs) == 4
+    stored = store.read_json(rid, CodingAgent._prefix(feature["id"]) + ".build-0001.json")
+    assert stored["diagnostic_progress"] is True and len(stored["diagnostics"]) == 2
+
+
+async def test_same_compiler_diagnostic_cannot_reset_nonprogress_by_rebuilding_forever(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = CompilerWorkspace(tmp_path / "game")
+    workspace.write_file("src/game/levels.ts", compiler_source())
+    client = ScriptedClient([{"tool": "build"}] * 36)
+    result = await CodingAgent(client, store, workspace, context_chars=32_000).run_feature(rid,
+        {"id": "repeat-compiler-errors", "owned_paths": ["src/game/levels.ts"]},
+        {"continuation": {"stop_reason": "non_progress"}})
+    assert result["status"] == "needs_work" and result["stop_reason"] == "non_progress"
+    assert result["steps"] == len(client.inputs) == 2 and not result["changed_files"]
+
+
+@pytest.mark.parametrize("stale", [False, True])
+async def test_resume_hydrates_current_host_build_before_the_first_focused_proposal(store, request_data, tmp_path, stale):
+    rid = run_id(store, request_data)
+    workspace = CompilerWorkspace(tmp_path / "game")
+    workspace.write_file("src/game/levels.ts", compiler_source())
+    report = await workspace.build()
+    report["source_sha256"] = "b" * 64 if stale else workspace.snapshot()["sha256"]
+    (workspace.root / ".harness").mkdir()
+    (workspace.root / ".harness/build.json").write_text(json.dumps(report))
+
+    class InspectingClient(ScriptedClient):
+        async def structured(self, rid, stage, role, instruction, packet, schema, **kwargs):
+            if not self.inputs:
+                if stale:
+                    assert schema is FocusedCodingAction and "build_diagnostics" not in packet
+                else:
+                    assert schema is DiagnosticCodingAction and "focused_recovery" not in packet
+                    assert packet["build_diagnostics"][0]["line"] == 255
+            return await super().structured(rid, stage, role, instruction, packet, schema, **kwargs)
+
+    actions = ([{"tool": "blocked", "summary": "旧构建与当前源码SHA不同，不能沿用诊断。"}] if stale else [
+        {"tool": "read_lines", "path": "src/game/levels.ts", "start_line": 245, "end_line": 265},
+        {"tool": "apply_patch", "path": "src/game/levels.ts", "old": "const rng: {}", "new": "const rng: { next(): number }"},
+        {"tool": "finish", "summary": "重启前的真实构建诊断可安全恢复，不重复读全书。"}])
+    client = InspectingClient(actions)
+    result = await CodingAgent(client, store, workspace, context_chars=32_000).run_feature(rid,
+        {"id": "resume-current-compiler", "owned_paths": ["src/game/levels.ts"]},
+        {"continuation": {"stop_reason": "non_progress"}})
+    assert result["status"] == ("blocked" if stale else "implemented")
+    assert len(client.inputs) == (1 if stale else 3)
+
+
+async def test_missing_export_diagnostic_allows_three_source_and_dependency_reads_then_repair(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    lines = ["// Simulation context\n"] * 40
+    lines[13] = "import { createPRNG } from './prng';\n"
+    lines[14] = "import { buildGameConfig } from './config';\n"
+    old = "".join(lines[13:15])
+    workspace.write_file("src/game/Simulation.ts", "".join(lines))
+    workspace.write_file("src/game/prng.ts", "export class PRNG { next() { return 0.5; } }\n")
+    workspace.write_file("src/game/config.ts", "export const GAME_CONFIG = { forwardSpeed: 8 };\n")
+    report = {"passed": False, "source_sha256": workspace.snapshot()["sha256"], "stdout":
+        "src/game/Simulation.ts(14,10): error TS2305: Module './prng' has no exported member 'createPRNG'.\n"
+        "src/game/Simulation.ts(15,10): error TS2724: Module './config' has no exported member 'buildGameConfig'.\n"}
+    (workspace.root / ".harness").mkdir()
+    (workspace.root / ".harness/build.json").write_text(json.dumps(report))
+
+    class InspectingClient(ScriptedClient):
+        async def structured(self, rid, stage, role, instruction, packet, schema, **kwargs):
+            if len(self.inputs) < 3:
+                assert schema is DiagnosticCodingAction
+                assert packet["new_build_diagnostic"]["remaining"] == 3-len(self.inputs)
+                assert packet["new_build_diagnostic"]["reported_paths"] == ["src/game/Simulation.ts"]
+            elif len(self.inputs) == 3:
+                assert schema is FocusedCodingAction and "new_build_diagnostic" not in packet
+            return await super().structured(rid, stage, role, instruction, packet, schema, **kwargs)
+
+    client = InspectingClient([
+        {"tool": "read_file", "path": "src/game/prng.ts"},
+        {"tool": "read_file", "path": "src/game/config.ts"},
+        {"tool": "read_lines", "path": "src/game/Simulation.ts", "start_line": 11, "end_line": 18},
+        {"tool": "apply_patch", "path": "src/game/Simulation.ts", "old": old,
+         "new": "import { PRNG } from './prng';\nimport { GAME_CONFIG } from './config';\n"},
+        {"tool": "finish", "summary": "使用实际导出签名修复依赖接口，没有无关读取。"},
+    ])
+    result = await CodingAgent(client, store, workspace, context_chars=32_000).run_feature(rid,
+        {"id": "missing-export-source-working-set", "owned_paths": ["src/game/Simulation.ts"]},
+        {"continuation": {"stop_reason": "non_progress"}})
+    assert result["status"] == "implemented" and len(client.inputs) == 5
+
+
+def test_diagnostic_deduplication_and_file_diversity_include_seventh_status_effect_error(store, tmp_path):
+    workspace = Workspace(tmp_path / "game")
+    for path in ["src/game/ProjectilePool.ts", "src/game/StatusEffectSystem.ts"]:
+        workspace.write_file(path, "".join(f"// Actual source line {line}\n" for line in range(1, 201)))
+    first = [f"src/game/ProjectilePool.ts({line},7): error TS2554: Expected 9 arguments, but got 7.\n"
+             for line in [164,168,179,185]]
+    seventh = "src/game/StatusEffectSystem.ts(44,3): error TS1016: A required parameter cannot follow an optional parameter.\n"
+    output = "".join(first+first[:2]+[seventh])
+    report = {"stdout": output, "stderr": output, "stages": [{"stdout": output, "stderr": ""}]}
+    rows = CodingAgent(None, store, workspace, context_chars=32_000)._build_diagnostics(report)
+    assert len({(r["path"],r["line"],r["column"]) for r in rows}) == len(rows) <= 6
+    assert [r["path"] for r in rows[:2]] == ["src/game/ProjectilePool.ts", "src/game/StatusEffectSystem.ts"]
+    status = next(r for r in rows if r["path"].endswith("StatusEffectSystem.ts"))
+    assert status["line"] == 44 and any(line["line"] == 44 for line in status["excerpt"])
+
+
+async def test_diagnostic_dependency_same_page_repeat_does_not_renew_three_read_allowance(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = CompilerWorkspace(tmp_path / "game")
+    workspace.write_file("src/game/levels.ts", compiler_source())
+    workspace.write_file("src/game/prng.ts", "export class PRNG { next() { return 0.5; } }\n")
+    client = ScriptedClient([
+        {"tool": "build"}, {"tool": "read_file", "path": "src/game/prng.ts"},
+        {"tool": "read_file", "path": "src/game/prng.ts"},
+        {"tool": "blocked", "summary": "同一依赖已完整展示两次，需明确修复而非重新读取。"},
+    ])
+    result = await CodingAgent(client, store, workspace, context_chars=32_000).run_feature(rid,
+        {"id": "repeat-diagnostic-dependency", "owned_paths": ["src/game/levels.ts"]}, {})
+    assert result["status"] == "blocked" and len(client.inputs) == 4
+    assert client.inputs[3]["data"]["focused_recovery"]["reason"] == "diagnostic source page repeated without new information"
+    assert "new_build_diagnostic" not in client.inputs[3]["data"]
+
+
+async def test_current_successful_host_build_releases_focus_without_unnecessary_source_edits(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    workspace.write_file("src/game/levels.ts", "export const levels = [1,2,3];")
+    before = workspace.snapshot()["sha256"]
+    (workspace.root / "dist").mkdir()
+    artifact = b"<!doctype html><html lang='zh'><body>build fixture only</body></html>"
+    (workspace.root / "dist/index.html").write_bytes(artifact)
+    report = {"passed": True, "source_sha256": before, "entrypoint": "index.html",
+              "artifact_manifest": [{"path": "index.html", "sha256": hashlib.sha256(artifact).hexdigest()}]}
+    (workspace.root / ".harness").mkdir()
+    (workspace.root / ".harness/build.json").write_text(json.dumps(report))
+
+    async def no_rebuild(**kwargs):
+        raise AssertionError("the current trusted successful build should be reused")
+
+    workspace.build = no_rebuild
+    client = ScriptedClient([{"tool": "finish", "summary": "外部修复已由同源码主机构建验证，当前功能完成，逐T验收尚未执行。"}])
+    result = await CodingAgent(client, store, workspace, context_chars=32_000).run_feature(rid,
+        {"id": "external-repair-completed", "owned_paths": ["src/game/levels.ts"]},
+        {"continuation": {"stop_reason": "non_progress"}})
+    assert result["status"] == "implemented" and result["acceptance"]["status"] == "not_run"
+    assert workspace.snapshot()["sha256"] == before and workspace.writes == 1
+    assert client.inputs[0]["data"]["latest_build"]["passed"] is True
+    assert "focused_recovery" not in client.inputs[0]["data"]
+
+
+async def test_repeating_successful_build_at_same_source_is_not_new_verification_progress(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    workspace.write_file("src/game/levels.ts", "export const levels = [1,2,3];")
+    client = ScriptedClient([{"tool": "build"}, {"tool": "build"}])
+    result = await CodingAgent(client, store, workspace, max_steps=2, context_chars=32_000).run_feature(rid,
+        {"id": "verify-once-per-source", "owned_paths": ["src/game/levels.ts"]},
+        {"continuation": {"stop_reason": "non_progress"}})
+    prefix = CodingAgent._prefix("verify-once-per-source")
+    assert store.read_json(rid, prefix + ".build-0001.json")["build_progress"] is True
+    assert store.read_json(rid, prefix + ".build-0002.json")["build_progress"] is False
+    assert not result["changed_files"] and result["status"] == "needs_work"
+
+
+@pytest.mark.parametrize("output", ["missing", "empty", "whitespace", "unmatched_glob"])
+async def test_successful_build_cannot_finish_without_declared_owned_outputs(store, request_data, tmp_path, output):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    workspace.write_file("src/template.ts", "export const template = true;")
+    if output in {"empty", "whitespace"}:
+        workspace.write_file("src/game/SkillSystem.ts", "" if output == "empty" else " \n\t")
+    feature = {"id": "required-owned-output-" + output,
+               "owned_paths": ["src/skills/**"] if output == "unmatched_glob" else ["src/game/SkillSystem.ts"]}
+    client = ScriptedClient([{"tool": "build"}, {"tool": "finish", "summary": "模板已构建，所以声称功能完成。"},
+                             {"tool": "blocked", "summary": "主机指出归属文件未交付，不能标记implemented。"}])
+    result = await CodingAgent(client, store, workspace).run_feature(rid, feature, {})
+    assert result["status"] == "blocked" and result["acceptance"]["status"] == "not_run"
+    rejected = client.inputs[2]["data"]["recent_observations"][-1]["result"]
+    assert rejected["accepted"] is False and "missing or empty" in rejected["reason"]
+    assert rejected["missing_owned_paths"] or rejected["empty_owned_paths"]
+
+
+async def test_finish_recovers_by_creating_missing_owned_file_within_the_same_session(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    client = ScriptedClient([
+        {"tool": "finish", "summary": "先尝试完成。"},
+        {"tool": "write_file", "path": "src/game/SkillSystem.ts", "content": "export const skillCount = 12;"},
+        {"tool": "finish", "summary": "实际写入声明的模块再完成，独立验收未执行。"}])
+    result = await CodingAgent(client, store, workspace).run_feature(rid,
+        {"id": "finish-missing-output-repair", "owned_paths": ["src/game/SkillSystem.ts"]}, {})
+    assert result["status"] == "implemented" and result["changed_files"] == ["src/game/SkillSystem.ts"]
+    assert client.inputs[1]["data"]["recent_observations"][-1]["result"]["accepted"] is False
+    assert workspace.builds == 1  # No compile spend for a known missing output.
+
+
+async def test_glob_owner_can_finish_with_existing_safe_source_and_build_without_claiming_game_acceptance(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    workspace.write_file("src/game/SkillSystem.ts", "export const skillCount = 12;")
+    client = ScriptedClient([{"tool": "finish", "summary": "归属glob有安全源码，主机确认可构建。"}])
+    result = await CodingAgent(client, store, workspace).run_feature(rid,
+        {"id": "glob-existing-output", "owned_paths": ["src/**", "public/**"]}, {})
+    assert result["status"] == "implemented" and result["acceptance"]["status"] == "not_run"
+
+
+async def test_legacy_implemented_checkpoint_cannot_bypass_a_missing_owned_output(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    feature = {"id": "legacy-empty-implementation", "owned_paths": ["src/game/SkillSystem.ts"]}
+    first = await CodingAgent(ScriptedClient([{"tool": "blocked", "summary": "旧框架状态夹具，无实际功能文件。"}]),
+                              store, workspace).run_feature(rid, feature, {})
+    checkpoint = store.read_json(rid, first["checkpoint"])
+    checkpoint.update(status="implemented", stop_reason="implemented")  # Simulate a pre-fix host checkpoint.
+    store.write(rid, first["checkpoint"], checkpoint)
+    client = ScriptedClient([
+        {"tool": "finish", "summary": "旧缓存声称完成，但应重新检查文件。"},
+        {"tool": "write_file", "path": "src/game/SkillSystem.ts", "content": "export const skillCount = 12;"},
+        {"tool": "finish", "summary": "补交真实归属模块后才恢复implemented。"}])
+    result = await CodingAgent(client, store, workspace).run_feature(rid, feature, {})
+    assert result["status"] == "implemented" and len(client.inputs) == 3
+    assert client.inputs[1]["data"]["recent_observations"][-1]["result"]["accepted"] is False
+    assert workspace.resolve("src/game/SkillSystem.ts").is_file()
 
 
 async def test_segment_result_preserves_precise_handoff_for_a_productive_continuation(store, request_data, tmp_path):

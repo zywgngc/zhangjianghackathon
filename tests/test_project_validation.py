@@ -8,10 +8,10 @@ from types import SimpleNamespace
 import unittest
 from urllib.error import HTTPError
 from urllib.request import urlopen
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
-from game_harness.project_validation import ProjectValidator, RUN_SCENARIO, verified_server
-from game_harness.specifications import load_case
+from game_harness.project_validation import INSTRUMENT_RENDERER, ProjectValidator, RUN_SCENARIO, verified_server
+from game_harness.specifications import ingest_text, load_case
 
 
 class FixtureStore:
@@ -46,6 +46,12 @@ class FixtureWorkspace:
 
 
 class VerifiedServerTests(unittest.TestCase):
+    def test_numeric_loopback_listener_does_not_depend_on_reverse_dns(self):
+        with patch("socket.getfqdn", side_effect=AssertionError("DNS is unrelated to local artifact validation")):
+            with verified_server(FixtureWorkspace(Path("/unused"))) as origin:
+                with urlopen(origin + "/", timeout=2) as response:
+                    self.assertEqual(response.status, 200)
+
     def test_serves_only_manifest_assets_on_an_ephemeral_loopback_port(self):
         workspace = FixtureWorkspace(Path("/unused"))
         with verified_server(workspace) as origin:
@@ -99,24 +105,57 @@ class ProjectValidationGates(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(report["acceptance"]["complete"])
         self.assertEqual(report["acceptance"]["counts"]["passed"], 0)
 
+    async def test_custom_spec_uses_generic_smoke_and_cannot_publish_without_executor(self):
+        self.validator._execute = AsyncMock()
+        self.validator._generic_execute = AsyncMock()
+        spec = ingest_text("请生成中文贪吃蛇，方向键移动，碰墙失败。", case_id="CUSTOM-SNAKE")
+        report = await self.validator.validate("test", spec, self.workspace,
+            {"passed": True, "source_sha256": self.workspace.sha, "artifact_manifest": []}, 0)
+        self.assertFalse(report["passed"])
+        self.assertEqual(report["errors"], [])
+        self.assertTrue(report["missing_executors"])
+        self.validator._generic_execute.assert_awaited_once()
+        self.validator._execute.assert_not_awaited()
+
 
 @unittest.skipUnless(os.getenv("RUN_BROWSER_TESTS") == "1", "Real Chromium tests are opt-in")
 class RealProjectBrowserTests(unittest.IsolatedAsyncioTestCase):
+    async def test_function_polling_works_under_unrelaxed_production_csp(self):
+        from playwright.async_api import async_playwright
+        with tempfile.TemporaryDirectory() as folder:
+            workspace = FixtureWorkspace(Path(folder))
+            with verified_server(workspace) as origin:
+                async with async_playwright() as playwright:
+                    browser = await playwright.chromium.launch(headless=True, chromium_sandbox=True)
+                    try:
+                        page = await browser.new_page()
+                        response = await page.goto(origin + "/")
+                        policy = response.headers["content-security-policy"]
+                        self.assertNotIn("unsafe-eval", policy)
+                        self.assertIn("script-src 'self'", policy)
+                        await page.evaluate("() => {window.__HARNESS__={snapshot:()=>({phase:'MENU'})};}")
+                        await page.wait_for_function("() => Boolean(window.__HARNESS__ && typeof window.__HARNESS__.snapshot==='function')")
+                        self.assertEqual(await page.evaluate("() => window.__HARNESS__.snapshot().phase"), "MENU")
+                    finally:
+                        await browser.close()
+
     async def test_trusted_dsl_executes_independent_handles_and_retains_observations(self):
         from playwright.async_api import async_playwright
         async with async_playwright() as playwright:
             browser = await playwright.chromium.launch(headless=True, chromium_sandbox=True)
             try:
                 page = await browser.new_page()
-                await page.goto("about:blank")
+                await page.route("http://protocol.test/**", lambda route: route.fulfill(body="<!doctype html><body>protocol</body>", content_type="text/html"))
+                await page.goto("http://protocol.test/")
                 await page.evaluate("""() => {
                   window.disposed=0;
                   class Simulation {
                     constructor(f={}){this.time=0;this.player={x:0,z:0,...f.player};this.phase='PLAYING';}
                     snapshot(){return {simTime:this.time,phase:this.phase,player:{...this.player},entities:[{id:'target',x:3,z:0}]};}
-                    dispatch(c){if(!['start','move'].includes(c.type))throw Error('Unexpected non-user command');if(c.type==='move')this.player.x=c.x;}
+                    dispatch(c){if(!['start','move','pause','resume'].includes(c.type))throw Error('Unexpected non-user command');if(c.type==='move')this.player.x=c.x;if(c.type==='pause')this.phase='PAUSED';if(c.type==='resume')this.phase='PLAYING';}
                     advance(ms){this.time+=ms/1000;this.player.z+=ms/1000;if(this.time>=0.5)this.phase='INTERACTING';}
                     events(){return [];}
+                    config(){return {};}
                     dispose(){window.disposed++;}
                   }
                   window.__HARNESS__=new Simulation();window.__HARNESS__.caseId='PROTOCOL-TEST';
@@ -134,6 +173,59 @@ class RealProjectBrowserTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(trace["after"]["_entities"]["target"]["x"], 3)
                 self.assertEqual(await page.evaluate("window.disposed"), 2)
                 self.assertEqual(await page.evaluate("window.__HARNESS__.snapshot().simTime"), 0)
+                self.assertTrue(trace["noninterference"]["liveStateUnchanged"])
+                await page.evaluate("() => {window.__HARNESS__.isolatedSimulation=()=>{throw Error('creation failed')}}")
+                with self.assertRaises(Exception):
+                    await page.evaluate(RUN_SCENARIO, {"scenario": scenario, "sourceHash": "a" * 64, "specHash": "b" * 64})
+                self.assertEqual(await page.evaluate("window.__HARNESS__.snapshot().phase"), "PLAYING")
+                await page.evaluate("""() => {window.__HARNESS__.isolatedSimulation=({fixture})=>{
+                  const sim=new window.__HARNESS__.constructor(fixture);sim.dispose=()=>{throw Error('bad dispose')};return sim;};}""")
+                broken_dispose = {**scenario, "steps": [{"call": "snapshot", "save": "after"}]}
+                trace = await page.evaluate(RUN_SCENARIO, {"scenario": broken_dispose, "sourceHash": "a" * 64, "specHash": "b" * 64})
+                self.assertIn("dispose failed", trace["adapter_error"])
+                self.assertEqual(await page.evaluate("window.__HARNESS__.snapshot().phase"), "PLAYING")
+            finally:
+                await browser.close()
+
+    async def test_rendered_endurance_collects_real_cdp_metrics_and_disposes_isolated_canvas(self):
+        from playwright.async_api import async_playwright
+        async with async_playwright() as playwright:
+            browser = await playwright.chromium.launch(headless=True, chromium_sandbox=True)
+            try:
+                context = await browser.new_context()
+                await context.add_init_script("(" + INSTRUMENT_RENDERER + ")()")
+                page = await context.new_page()
+                await page.route("http://protocol.test/**", lambda route: route.fulfill(body="<!doctype html><body>protocol</body>", content_type="text/html"))
+                await page.goto("http://protocol.test/")
+                await page.evaluate("""()=>{
+                  class Simulation {
+                    constructor(f={}){this.phase='PLAYING';this.time=0;this.damage=0;this.player={hp:300,...f.player};this.entities=f.enemies||[];}
+                    snapshot(){return {phase:this.phase,simTime:this.time,player:{...this.player},entities:this.entities,metrics:{totalDamage:this.damage}};}
+                    dispatch(c){if(c.type==='pause')this.phase='PAUSED';if(c.type==='resume')this.phase='PLAYING';}
+                    advance(ms){if(this.phase==='PLAYING'){this.time+=ms/1000;this.damage+=this.entities.length;}}
+                  }
+                  const live=new Simulation();window.__HARNESS__=live;
+                  live.isolatedSimulation=({fixture})=>{
+                    const sim=new Simulation(fixture),canvas=document.createElement('canvas');document.body.appendChild(canvas);
+                    const ctx=canvas.getContext('2d');let animation;
+                    function draw(){ctx.clearRect(0,0,300,150);for(const e of sim.entities)ctx.fillRect(e.x+150,e.y+75,2,2);animation=requestAnimationFrame(draw);}draw();
+                    sim.engineInfo=()=>({name:'test-canvas',version:'1',running:true,resources:{canvases:1,entities:sim.entities.length,contexts:1}});
+                    sim.dispose=()=>{cancelAnimationFrame(animation);canvas.remove();};return sim;
+                  };
+                }""")
+                with tempfile.TemporaryDirectory() as folder:
+                    validator = ProjectValidator(SimpleNamespace(browser_sandbox=True), FixtureStore(Path(folder)))
+                    scenario = {"id": "endurance-protocol", "seed": 1, "fixture": {"player": {"hp": 300},
+                        "enemyGenerator": {"count": 200, "radius": 50, "hp": 100000, "damage": 0, "speed": 0}},
+                        "steps": [{"durationSeconds": 3, "minimumWallSeconds": .1, "sampleEvery": 1}]}
+                    trace = await validator._renderer_memory(page, context, SimpleNamespace(case_id="PROTOCOL", engine="test-canvas"), scenario)
+                    self.assertEqual(len(trace["samples"]), 4)
+                    self.assertGreater(trace["samples"][-1]["snapshot"]["metrics"]["totalDamage"], 0)
+                    self.assertGreater(trace["drawCalls"], 0)
+                    self.assertTrue(all(trace["noninterference"].values()))
+                    self.assertNotIn("adapter_error", trace)
+                    self.assertEqual(await page.locator("canvas").count(), 0)
+                    self.assertGreater(trace["samples"][-1]["heap"]["usedSize"], 0)
             finally:
                 await browser.close()
 

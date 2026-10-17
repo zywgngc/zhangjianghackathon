@@ -88,7 +88,20 @@ RUN_PROJECT_BUILDS=1 .venv/bin/python -m pytest -q tests/test_project_runtime.py
 .venv/bin/python scripts/probe_model.py
 ```
 
+已有工程可独立重建并逐项验收，默认不请求模型、不修改已有源码；构建会更新该工程的 `node_modules/`、`dist/` 和 `.harness/`。缺少模板文件或保护配置不一致会如实失败，报告目录必须独立且为空。未全部通过（包括人工或视觉待验）退出码为 1；只有显式添加 `--vision` 才会使用已配置的 QA 模型审查真实截图。
+
+```bash
+.venv/bin/python scripts/validate_project.py --case-id GAME-TEST-003 \
+  --workspace data/runs/<run-id>/project --output data/independent-validation/<new-id>
+.venv/bin/python scripts/export_project.py --run-dir data/runs/<run-id> \
+  --output examples/<case-name>
+```
+
+导出不重建或修复源码：必须已有与当前源码 SHA 一致的成功构建。输出目录非空时拒绝覆盖；源码、`playable.html`、原始报告和逐文件 SHA 清单在临时目录校验完成后原子发布，不包含 `node_modules/`、`.env` 或 `.harness/`。`delivery-status.json` 独立重算证据与候选／正式状态，原始报告保留原字节和来源 hash；导出成功不表示游戏已通过全部验收。
+
 项目 ZIP 的 `project/` 包含源码与 `dist/`，`evidence/` 包含规格、计划和报告。进入 `project/` 后可运行 `npm ci --ignore-scripts`、`npm run build`、`npm run preview`。已构建的 `dist/` 可通过本地静态 HTTP 服务离线运行；多文件 ES 模块不要求直接双击 HTML。
+
+已有有效构建的交付包另附可离线双击的 `playable.html` 和绑定产物 SHA 的 `delivery-manifest.json`；可运行候选仍须依据逐项报告判断是否完成正式验收。
 
 工作台使用 `sandbox="allow-scripts"` 的 opaque iframe，不开启 `allow-same-origin`。仅当前 run 的游戏存档通过受限桥持久化，父页口令、其他任务的存档和其他本地存储不会注入游戏。
 

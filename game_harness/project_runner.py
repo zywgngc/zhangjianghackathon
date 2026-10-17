@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .agents import AgentClient
 from .project_state import ProjectLedger
-from .specifications import ingest_text, load_case, runtime_protocol
+from .specifications import CASES, ingest_text, load_case, runtime_protocol
 
 
 ARCHITECTURE_CONTRACT = """
@@ -26,23 +26,29 @@ ARCHITECTURE_CONTRACT = """
 UI由React实现，场景由真实引擎绘制原创角色/地形/粒子；中文、离线、横竖屏、鼠标与触屏。
 禁止用按钮直接改变power/HP或按测试编号返回预制成功。必须有真实移动、碰撞、攻击、导航与成长。
 必须注册window.__HARNESS__={snapshot,config,dispatch,advance,events,isolatedSimulation}，version=1。
-snapshot统一包含phase('MENU'/'PLAYING'/'PAUSED'/'UPGRADE'或'LEVEL_UP'/'VICTORY'/'DEFEAT'/'DEADLOCK'),level,simTime（秒）,
+snapshot统一包含phase('MENU'/'PLAYING'/'PAUSED'/'UPGRADES'/'UPGRADE'或'LEVEL_UP'/'VICTORY'/'DEFEAT'/'DEADLOCK'),level,simTime（秒）,
 player{x,y,z,hp,maxHp,power,soldiers},entities[{id,kind,x,y,z,hp,power,active}],
 skills{active:[{id,level}],passive:[{id,level}],ultimate:[{id}]},
 progress{gold,unlockedLevel,completedLevels,upgrades,audio},metrics{updateLoops,projectiles,enemies,events}。
 skills字段必须包含upgradeChoices可见的真实候选；effectiveStats包含maxHp,damageMultiplier,damageReduction,moveSpeed,cooldownReduction,healOnKillChance,xpMultiplier,rangeMultiplier。
 metrics还包括shotsFired,totalDamage,enemiesDefeated,skillAttacks:{W01:次数,...}，entities保留group/operator/operand/bonus等真实属性。
-engineInfo()返回实际引擎name/version/实例状态，projectEntity(id)使用真实camera/scene投影返回viewport坐标{x,y}，供真实鼠标/触屏picking验证。
+engineInfo()返回实际引擎name/version/running与真实实例/资源状态，projectEntity(id)使用真实camera/scene投影返回viewport坐标{x,y}，供真实鼠标/触屏picking验证。
 config()返回生产中实际使用的完整levels/skills/passives/evolutions/enemies/weapon/upgrade配置。
 dispatch({type,...args})必须调用UI同一命令入口：start{level,seed},selectLevel{level},pause,resume,restart,
 move{x,y,z|dx,dy},selectTarget{id|ground:{x,z}},chooseUpgrade{id},purchase{id},setAudio{music,sfx}。
 advance(milliseconds)在同一固定步进Simulation上执行，首次测试推进停用RAF时钟，不能并行双更新。
 测试协议中的runner前进方向为+Z，轨道/门/敌人位置与fixture使用同一公开坐标系；渲染器可自行变换视图，不可仅测试实例反转。
 events(afterSequence=0)为真实事件日志，包含seq,simTime,type,data；事件有伤害/死亡/门/经验/升级/胜负/导航。
+damage事件data包含targetId,amount,skillId；drop_created包含id,kind('gold'/'healing'/'magnet'),value，均在真实生产命中/掉落处发出，不能为测试补造。
 isolatedSimulation({caseId,seed,fixture})构造同一生产Simulation类的独立实例，返回同样snapshot/config/dispatch/advance/events/dispose方法。
 fixture只用于独立单元边界测试的初始player、skills/passives、enemies、weapons、gates、obstacles、boss、trackEnd，不含结果。
+仅数值单元实例还可初始化合法菜单/升级phase(MENU/UPGRADES/UPGRADE/LEVEL_UP)及progress{gold,upgrades,unlockedLevel}以验证购买价格、上限与进化拒绝；禁止注入VICTORY/DEFEAT/DEADLOCK。
+上述初始金币/解锁不算正常获金、购买持久化或三关获胜证据；UI端购买仍必须依赖正常通关获得的实际金币。
 独立fixture也可初始化simTime、freeUpgradesGranted、gems/drops和enemy.statuses以验证边界条件，不能注入胜负结果。
-可选isolatedSimulation({...,render:true})必须用同一生产Renderer绑定独立Simulation，engineInfo()报告真实实例/实体/资源数，dispose()释放。
+正式三case须支持isolatedSimulation({...,render:true})：用同一生产Renderer绑定独立Simulation，engineInfo()报告真实实例/实体/资源数，dispose()释放。
+若同时ui:true，挂载同一生产React游戏视图到独立容器并返回containerId，不能另写test-only UI或预制结果文案。
+此隔离视图可测试真实初始fixture导致的失败/死锁/升级进化卡；不能计作正常三关通关、正常获金或正式存档。
+隔离实例与活动游戏的状态、存档、音频必须隔离，dispose释放React根/引擎/DOM，不能污染活动游戏。
 200实体压力验收须有真实引擎绘制和资源观察；仅创建200个逻辑对象不能证明渲染性能，不得伪造帧率。
 普通三关获胜轨迹必须从start开始，只能正常控制、移动、选目标/升级，不能注入fixture/跳关/杀敌/赠送能力。
 真实渲染和普通UI必须使用同一Simulation，不允许仅测试API里实现机制。
@@ -119,6 +125,21 @@ class ProjectOrchestrator:
         request = self.store.request(rid)
         return ingest_text(request['specification'], case_id=request.get('case_id'),
             source_path=request.get('source_path', 'user-input.txt'), reference_images=request.get('reference_images', []))
+
+    def proposed_repairs(self, rid):
+        path = self.store.path(rid, 'proposed-repairs.json')
+        if not path.is_file():
+            return {}
+        raw = path.read_bytes()
+        proposal = json.loads(raw)
+        digest = hashlib.sha256(raw).hexdigest()
+        journal = self.store.read_json(rid, 'reviewed-repair-' + digest[:20] + '.journal.json') or {}
+        if journal.get('status') == 'complete' and journal.get('proposal_sha256') == digest:
+            return {'status': 'already_applied', 'do_not_reapply': True, 'proposal_sha256': digest,
+                'applied_source_sha256': journal['source_after'], 'official_acceptance': False,
+                'remaining_findings': proposal.get('remaining_findings', []),
+                'integration_requirements': proposal.get('integration_requirements', [])}
+        return proposal
 
     def plan_errors(self, spec, plan):
         features = [feature.model_dump() for feature in plan.features]
@@ -250,9 +271,10 @@ class ProjectOrchestrator:
                 'production_contract': ARCHITECTURE_CONTRACT + SHARED_INTERFACES, 'spec_excerpts': excerpts,
                 'scope_index': {'assigned_sections': assigned, 'active_excerpt_sections': numbers,
                     'full_scope_preserved': True, 'read_full_source': 'read_context(__specification__)'},
-                'trusted_acceptance_plan': scenario_plan(spec.case_id) if spec.case_id.startswith('GAME-TEST-') else {},
-                'approved_configuration': scenario_plan(spec.case_id)['expected_configuration'] if spec.case_id.startswith('GAME-TEST-') else {},
+                'trusted_acceptance_plan': scenario_plan(spec.case_id) if spec.case_id in CASES else {},
+                'approved_configuration': scenario_plan(spec.case_id)['expected_configuration'] if spec.case_id in CASES else {},
                 'review_feedback': self.store.read_json(rid, 'independent-code-review.json') or {},
+                'proposed_repairs': self.proposed_repairs(rid),
                 'source_archive': 'specification.txt', 'acceptance': [t for t in spec.acceptance_tests if t['id'] in feature.get('acceptance_ids', [])]}
 
     async def run(self, rid):
@@ -261,7 +283,7 @@ class ProjectOrchestrator:
         self.ledger.recover(rid)
         for saved in self.ledger.features(rid):
             result = saved.get('result') or {}
-            continuing = (result.get('stop_reason') == 'action_limit'
+            continuing = (result.get('stop_reason') in {'action_limit', 'non_progress'}
                           and result.get('host_progress', {}).get('source_changed') is True)
             limit = self.continuation_limit if continuing else 3
             if saved['status'] in {'needs_work', 'blocked'} and saved['attempts'] < limit:
@@ -322,11 +344,11 @@ class ProjectOrchestrator:
             self.ledger.finish(rid, feature['id'], result)
             self.store.write(rid, 'project-progress.json', self.ledger.summary(rid))
             if result.get('status') not in {'implemented', 'verified'}:
-                if (attempt < self.continuation_limit and result.get('stop_reason') == 'action_limit'
+                if (attempt < self.continuation_limit and result.get('stop_reason') in {'action_limit', 'non_progress'}
                         and result['host_progress']['source_changed']):
                     self.ledger.retry(rid, feature['id'])
                     self.store.event(rid, 'project_recovery', 'feature_continuation', {
-                        'feature': feature['id'], 'lease': attempt + 1, 'reason': 'bounded lease ended with verified source progress',
+                        'feature': feature['id'], 'lease': attempt + 1, 'reason': 'bounded lease ended after verified partial source progress',
                         'progress': result['host_progress'], 'budget_reset': False})
                     continue
                 if attempt < 3:
@@ -335,9 +357,17 @@ class ProjectOrchestrator:
                         'owned_paths': ['src/**', 'public/**', 'index.html']}
                     repair_context = {**context, 'review_feedback': {'failed_session': result, 'independent_review': context.get('review_feedback')},
                         'blocked_feature': feature, 'source_index': workspace.snapshot()}
-                    repaired = await CodingAgent(self.agents, self.store, workspace,
-                        max_steps=16, context_chars=32000, history_limit=3).run_feature(rid, coordinator, repair_context,
-                            role='repair', owner='integration_coordinator')
+                    self.stage(rid, 'project_dependency_repair', feature=feature['id'], attempt=attempt,
+                               owner='integration_coordinator')
+                    try:
+                        repaired = await CodingAgent(self.agents, self.store, workspace,
+                            max_steps=16, context_chars=32000, history_limit=3).run_feature(rid, coordinator, repair_context,
+                                role='repair', owner='integration_coordinator')
+                    except RuntimeError as exc:
+                        repaired = {'status': 'needs_work', 'summary': str(exc),
+                                    'source_sha256': workspace.snapshot()['sha256']}
+                        self.store.event(rid, 'project_recovery', 'coordinator_error', {
+                            'feature': feature['id'], 'attempt': attempt, 'message': str(exc)[:1500]})
                     self.store.write(rid, coordinator['id'] + '.json', repaired)
                     self.ledger.retry(rid, feature['id'])
                     self.store.event(rid, 'project_recovery', 'feature_retry', {'feature': feature['id'], 'attempt': attempt + 1})
@@ -346,7 +376,16 @@ class ProjectOrchestrator:
         pending = [f for f in self.ledger.features(rid) if f['status'] not in {'implemented', 'verified'}]
         if pending:
             raise RuntimeError('依赖尚未完成，项目未进入验收')
-        for round_no in range(self.settings.project_repair_rounds + 1):
+        def artifact_numbers(prefix):
+            pattern = re.compile(re.escape(prefix) + r'([0-9]+)\.json$')
+            return [int(match.group(1)) for path in self.store.directory(rid).iterdir()
+                    if (match := pattern.fullmatch(path.name))]
+
+        # Evidence is append-only across worker restarts and explicit resumes.
+        # Completed repair leases count against the original limit each time.
+        round_no = max(artifact_numbers('project-build-'), default=-1) + 1
+        repairs_used = max(artifact_numbers('project-repair-'), default=0)
+        while True:
             self.stage(rid, 'project_verification', round=round_no)
             build = await workspace.build()
             self.store.write(rid, f'project-build-{round_no}.json', build)
@@ -356,7 +395,8 @@ class ProjectOrchestrator:
             from .acceptance import evaluate_evidence
             evidence = self.store.read_json(rid, f'project-evidence-{round_no}.json')
             if evidence and Path(evidence.get('artifact_root', '')).resolve() == self.store.directory(rid).resolve():
-                screenshots = [row for row in report.get('browser', []) if row.get('screenshot') or row.get('path')]
+                screenshots = [row for row in [*report.get('browser', []), *report.get('captured_screenshots', [])]
+                               if row.get('screenshot') or row.get('path')]
                 if (screenshots and build.get('passed') and current == build.get('source_sha256')
                         and report.get('source_sha256') == evidence.get('project_sha256') == current
                         and report.get('spec_sha256') == evidence.get('spec_sha256') == spec.sha256):
@@ -368,7 +408,8 @@ class ProjectOrchestrator:
             else:
                 acceptance = {'complete': False, 'tests': [], 'reason': 'Missing independent evidence ledger'}
             report['acceptance'] = acceptance
-            report['passed'] = acceptance.get('complete') is True and not report.get('errors')
+            report['passed'] = (acceptance.get('complete') is True
+                                and not report.get('errors') and not report.get('adapter_failures'))
             report['actionable_failures'] = [{'id': item['id'], 'text': item.get('text'), 'errors': item.get('errors', [])}
                 for item in acceptance.get('tests', []) if item.get('status') == 'failed'] or report.get('actionable_failures', [])
             report['evidence_manifest'] = [{'requirement_id': check['requirement_id'],
@@ -396,25 +437,34 @@ class ProjectOrchestrator:
                 self.store.update(rid, status='passed', stage='complete', approved_version=revision, error=None)
                 self.store.event(rid, 'complete', 'passed', manifest)
                 return
-            if round_no == self.settings.project_repair_rounds:
+            if repairs_used >= self.settings.project_repair_rounds:
                 break
-            if not report.get('errors') and not report.get('actionable_failures'):
+            if not report.get('errors') and not report.get('actionable_failures') and not report.get('adapter_failures'):
                 self.store.event(rid, 'project_verification', 'verification_pending', {
                     'reason': 'Remaining checks need additional executors or observation, not ungrounded code repair',
                     'counts': acceptance.get('counts', {}), 'missing_executors': report.get('missing_executors', []),
                     'manual_required': report.get('manual_required', []), 'visual_required': report.get('visual_required', [])})
                 break
-            repair = {'id': f'integration-repair-{round_no + 1}', 'title': '修复真实验收缺陷', 'owner': 'integration_repair',
+            repair_index = repairs_used + 1
+            repair = {'id': f'integration-repair-{repair_index}', 'title': '修复真实验收缺陷', 'owner': 'integration_repair',
                 'objective': '根据真实构建、运行与逐项验收报告修复未满足要求，不得删除/改写测试或伪造状态。',
                 'owned_paths': ['src/**', 'public/**', 'index.html'], 'acceptance_ids': [t['id'] for t in spec.acceptance_tests]}
-            self.stage(rid, 'project_repair', round=round_no + 1)
+            self.stage(rid, 'project_repair', round=round_no, repair=repair_index)
             context = {'project_summary': {'case_id': spec.case_id}, 'production_contract': ARCHITECTURE_CONTRACT,
                 'interfaces': plan.interfaces, 'validation_report': report, 'source_archive': 'specification.txt',
-                'trusted_acceptance_plan': __import__('game_harness.acceptance', fromlist=['scenario_plan']).scenario_plan(spec.case_id),
+                'review_feedback': self.store.read_json(rid, 'independent-code-review.json') or {},
+                'proposed_repairs': self.proposed_repairs(rid),
+                'source_index': workspace.snapshot(),
+                'approved_configuration': (__import__('game_harness.acceptance', fromlist=['scenario_plan']).scenario_plan(spec.case_id)['expected_configuration']
+                    if spec.case_id in CASES else {}),
+                'trusted_acceptance_plan': (__import__('game_harness.acceptance', fromlist=['scenario_plan']).scenario_plan(spec.case_id)
+                    if spec.case_id in CASES else {}),
                 'spec_excerpts': [{'text': spec.text, 'source': {'sha256': spec.sha256}}]}
             result = await CodingAgent(self.agents, self.store, workspace, max_steps=self.settings.project_feature_steps,
                 context_chars=32000, history_limit=3).run_feature(rid, repair, context, role='repair', owner='integration_repair')
-            self.store.write(rid, f'project-repair-{round_no + 1}.json', result)
+            self.store.write(rid, f'project-repair-{repair_index}.json', result)
+            repairs_used = repair_index
+            round_no += 1
         self.store.update(rid, status='needs_attention', stage='project_verification',
             error='项目验收仍有未通过项，候选源码和逐项证据已保留；未发布为已验收版本')
 
@@ -422,8 +472,17 @@ class ProjectOrchestrator:
         target = self.store.path(rid, 'project-delivery.zip')
         temporary = target.with_name('.delivery-' + uuid.uuid4().hex + '.zip')
         before = workspace.snapshot()
+        validation = self.store.read_json(rid, 'project-validation.json') or {}
         try:
           with zipfile.ZipFile(temporary, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+            playable = workspace.inline_preview()
+            playable_sha = hashlib.sha256(playable.encode()).hexdigest()
+            archive.writestr('playable.html', playable)
+            archive.writestr('delivery-manifest.json', json.dumps({'source_sha256': before['sha256'],
+                'playable': {'path': 'playable.html', 'sha256': playable_sha},
+                'acceptance_status': (validation.get('acceptance', {}).get('status', 'incomplete')
+                    if validation.get('source_sha256') == before['sha256'] else 'incomplete'),
+                'acceptance_report': 'evidence/project-validation.json'}, ensure_ascii=False, indent=2))
             for relative in workspace.list_files():
                 archive.write(workspace.root / relative, 'project/' + relative)
             dist = workspace.root / 'dist'
@@ -431,6 +490,20 @@ class ProjectOrchestrator:
                 for path in dist.rglob('*'):
                     if path.is_file() and not path.is_symlink():
                         archive.write(path, 'project/dist/' + str(path.relative_to(dist)))
+            lockfile = workspace.root / 'package-lock.json'
+            if lockfile.is_file():
+                dependencies = json.loads(lockfile.read_text()).get('packages', {})
+                for location, metadata in dependencies.items():
+                    if not location.startswith('node_modules/') or metadata.get('dev') or '..' in Path(location).parts:
+                        continue
+                    package = workspace.root / location
+                    if package.is_symlink():
+                        continue
+                    name = location.removeprefix('node_modules/')
+                    for filename in ('LICENSE', 'LICENSE.txt', 'LICENSE.md', 'license.md', 'COPYING', 'NOTICE'):
+                        license_path = package / filename
+                        if license_path.is_file() and not license_path.is_symlink():
+                            archive.write(license_path, 'licenses/npm/' + name + '/' + filename)
             evidence_patterns = ['specification.txt', 'specification.json', 'implementation-plan.json',
                 'project-validation.json', 'project-build-*.json', 'project-evidence-*.json',
                 'project-r*.json', 'project-r*.png', 'manifest.json']
@@ -439,7 +512,6 @@ class ProjectOrchestrator:
                 if path.is_file() and not path.is_symlink() and any(fnmatch.fnmatchcase(path.name, pattern) for pattern in evidence_patterns):
                     archive.write(path, 'evidence/' + path.name)
                     archived.add(path.name)
-            validation = self.store.read_json(rid, 'project-validation.json') or {}
             references = [artifact for test in validation.get('acceptance', {}).get('tests', []) for artifact in test.get('evidence', [])]
             references += [artifact for record in validation.get('evidence_manifest', []) for artifact in record.get('artifacts', [])]
             for reference in references:
@@ -450,7 +522,8 @@ class ProjectOrchestrator:
                     archive.write(path, 'evidence/' + path.name)
                     archived.add(path.name)
             archive.writestr('DELIVERY.md', '# 项目交付\n\n'
-                '安装依赖：`npm ci --ignore-scripts`。构建：`npm run build`。本地预览：`npm run preview`。\n\n'
+                '解压后直接打开 playable.html 可离线运行；源码与正式构建位于 project/。\n\n'
+                '重新开发：进入 project/，安装依赖 `npm ci --ignore-scripts`，构建 `npm run build`，本地预览 `npm run preview`。\n\n'
                 '源码和离线浏览器资源位于 project/，原始规格、计划和逐项测试证据位于 evidence/。\n'
                 '请依据验收报告区分已执行通过与尚待人工复验的条目；构建成功不等于全部游戏验收通过。\n')
             archive.writestr('ASSET-LICENSES.md', '# 素材与依赖\n\n'

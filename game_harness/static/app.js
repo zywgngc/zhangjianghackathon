@@ -19,6 +19,8 @@ const stageNames = {
   project_planning: "完整项目规划",
   project_verification: "逐项验收",
   project_repair: "集成缺陷修复",
+  project_dependency_repair: "模块接口修复",
+  project_visual_review: "独立画面审查",
 };
 let activeId = null,
   activeRun = null,
@@ -403,6 +405,7 @@ const acceptanceLabels = {
   failed: "失败",
   not_run: "未运行",
   manual_required: "待人工复核",
+  visual_required: "待视觉验证",
   incomplete: "未完成",
 };
 async function projectDocument(run, name) {
@@ -556,6 +559,8 @@ async function renderProject(run, details) {
     not_run: tests.filter((test) => test.status === "not_run").length,
     manual_required: tests.filter((test) => test.status === "manual_required")
       .length,
+    visual_required: tests.filter((test) => test.status === "visual_required")
+      .length,
   };
   paragraph(
     qa,
@@ -563,7 +568,7 @@ async function renderProject(run, details) {
     "构建成功与功能已实现不代表测试通过。失败、未运行和待人工复核会分别保留。",
   );
   const summary = node("div", undefined, "report-summary");
-  for (const state of ["passed", "failed", "not_run", "manual_required"])
+  for (const state of ["passed", "failed", "not_run", "visual_required", "manual_required"])
     summary.append(
       node("span", `${acceptanceLabels[state]} ${counts[state] || 0}`, state),
     );
@@ -666,7 +671,8 @@ async function refreshRun() {
     $("usage").textContent =
       `${stageNames[run.stage] || (run.stage.endsWith(".review") ? "QA 审查" : run.stage)} · ${run.calls} 次调用 · ${run.tokens.toLocaleString()} tokens · ${duration} 分钟`;
     $("cancel").hidden = !["queued", "running"].includes(run.status);
-    $("resume").hidden = run.status !== "failed";
+    $("resume").hidden = run.status !== "failed" &&
+      !(isProject && ["needs_attention", "cancelled"].includes(run.status));
     $("download").hidden = !isProject && run.status !== "passed";
     $("download").textContent = isProject
       ? run.status === "passed"
