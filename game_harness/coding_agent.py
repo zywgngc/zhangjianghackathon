@@ -188,25 +188,19 @@ class CodingAgent:
 
     @contextmanager
     def _workspace_lock(self, rid, feature_id, owner):
-        # fcntl is available on the macOS development host and Linux 210 server.
         # A file lock survives Python coroutine cancellation and is released by
         # the kernel if a process dies; no stale in-memory lease is trusted.
-        import fcntl
+        from .locking import exclusive_lock
         lock_path = Path(self.workspace.root) / ".harness-coding.lock"
         lock_path.parent.mkdir(parents=True, exist_ok=True)
-        with lock_path.open("a+") as handle:
-            try:
-                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError:
-                raise RuntimeError("workspace already has a coding owner; use a separate workspace or serial integration") from None
+        with exclusive_lock(lock_path, busy_message="workspace already has a coding owner; use a separate workspace or serial integration") as handle:
+            metadata = _json({"run_id": rid, "feature": feature_id, "owner": owner, "pid": os.getpid()}).encode("utf-8")
             handle.seek(0)
+            handle.write(metadata)
+            # Never truncate to zero while Windows holds the first-byte lock.
             handle.truncate()
-            handle.write(_json({"run_id": rid, "feature": feature_id, "owner": owner, "pid": os.getpid()}))
             handle.flush()
-            try:
-                yield
-            finally:
-                fcntl.flock(handle, fcntl.LOCK_UN)
+            yield
 
     def _save(self, rid, prefix, state):
         state["updated"] = time.time()

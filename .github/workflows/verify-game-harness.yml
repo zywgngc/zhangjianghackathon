@@ -1,0 +1,56 @@
+name: Verify game harness
+
+on:
+  push:
+    branches: [prompting, "codex/merge-zx-assets-*"]
+  pull_request:
+    branches: [prompting]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runtime:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    env:
+      OPENAI_API_KEY: ""
+      MATERIAL_PORTAL_URL: ""
+      WEBMCP_RESEARCH_URL: ""
+      WEBMCP_GITHUB_NETWORK: "off"
+      GAME_MODEL: qwen3.8-max
+      RUN_BROWSER_TESTS: "1"
+      RUN_RESEARCH_INTEGRATION: "1"
+      RUN_PROJECT_BUILDS: "1"
+      TYPESCRIPT_COMPILER_PATH: ${{ github.workspace }}/webmcp/node_modules/typescript/lib/typescript.js
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.14.1"
+      - name: Install locked research dependencies and Python package
+        run: |
+          npm install --global pnpm@11.25.0
+          pnpm --dir webmcp install --frozen-lockfile
+          python -m pip install -e '.[test]'
+          python -m playwright install --with-deps chromium
+      - name: Check and test the research service
+        run: |
+          pnpm --dir webmcp run check
+          pnpm --dir webmcp test
+      - name: Verify Python, browsers, engine builds and research integration
+        run: |
+          mkdir -p ci-results
+          python -X utf8 -m pytest -q --tb=short -p no:cacheprovider --basetemp=/tmp/game-harness-ci --junitxml=ci-results/python.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: runtime-verification
+          path: ci-results/
+          if-no-files-found: ignore

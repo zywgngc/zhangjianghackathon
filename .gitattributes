@@ -1,0 +1,11 @@
+*.py text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.sh text eol=lf
+# Original specifications and hashed example inputs keep exact bytes.
+case1-Number_Gate_Shooter/** -text
+case2-Wuxia_Survivors/** -text
+case3-Power_Hunter/** -text
+examples/game-harness-core/*.request.json -text
+examples/game-harness-assets/*.request.json -text

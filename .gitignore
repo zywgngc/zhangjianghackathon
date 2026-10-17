@@ -17,3 +17,7 @@ webmcp/coverage/
 *.tsbuildinfo
 .env.*
 !.env.example
+
+.asset-agent/
+agent.env
+output/

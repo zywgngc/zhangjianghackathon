@@ -1,0 +1,33 @@
+{
+  "scope": "One HTML core-play case, same gameplay as baseline; verified embedded artwork enabled by user.",
+  "provenance_scope": "Historical run settings and executed source hashes; generated reports and historical source snapshots are not included in this source checkout.",
+  "case": "number-gate",
+  "baseline_request": "examples/game-harness-core/number-gate.request.json",
+  "baseline_request_sha256": "096736f5e0380cdfc8251b6db1a29b279f270b7da3157e9dcfe740fa31c92931",
+  "request_sha256": "35d9eca5170aa2c559c92e2279a22b9eaecf6401eb38d72f6fdae67555cee32a",
+  "gameplay_changed": false,
+  "change": "Only original-procedural-art clause replaced with permission for verified offline embedded artwork.",
+  "max_total_tokens": 300000,
+  "build_output_tokens": 32000,
+  "max_repairs": 2,
+  "max_model_calls": 16,
+  "run_timeout_seconds": 1800,
+  "previous_budget": {
+    "max_total_tokens": 100000,
+    "max_repairs": 1
+  },
+  "baseline_report": "output/harness-real-20261017-073649-949292/report.json",
+  "causal_claim": "One qualitative before/after observation; both asset access and budget changed, not a controlled A/B experiment.",
+  "harness_code_changes": {
+    "material_portal.py": "bbb84b0b0535e2d8141823f26264c17bf71a8bc02797474aa36d085a4a8c7b24",
+    "agents.py": {
+      "baseline": "97c4d990a946b14500141e256117661f3871127963f376eaefc60818b6079e93",
+      "current": "b308849d542f19217b7210aa2edac3f6703f3b7ba1542b743e8a91afae1b4b4b"
+    },
+    "runner.py": {
+      "baseline": "42530c2a4e734d10a38a66931b5178bbdc95730e07c3f7a0a87fb86be5d62b7b",
+      "current": "b9add6470cddd00aefa41ce6dbc46e32a9d7daa019891db6602e545b328a15ca"
+    }
+  },
+  "host_patch": "Not applicable: current default uses a reviewed compatibility integration; historical zx patch omitted."
+}

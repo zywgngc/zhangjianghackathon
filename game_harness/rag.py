@@ -20,9 +20,16 @@ class Retriever:
     def __init__(self, settings):
         self.settings = settings
         self.portal = None
+        self.asset_portal = None
         if settings.portal_url:
-            from .material_portal import MaterialPortalClient
-            self.portal = MaterialPortalClient(settings)
+            # Keep the shared HTTP bridge and its research contract unchanged.
+            # Explicit built-in URLs opt into bounded art/reference retrieval.
+            if settings.portal_url in {"web://assets", "local://references"}:
+                from .asset_material_portal import MaterialPortalClient
+                self.asset_portal = MaterialPortalClient(settings)
+            else:
+                from .material_portal import MaterialPortalClient
+                self.portal = MaterialPortalClient(settings)
         roots = [Path(__file__).parent / "knowledge"]
         if settings.rag_dir:
             roots.append(Path(settings.rag_dir))
@@ -57,6 +64,15 @@ class Retriever:
         return sorted(scored, key=lambda d: d["score"], reverse=True)[:top_k]
 
     async def search(self, query: str, top_k=4, run_id=None):
+        # Project/research callers retain the shared knowledge/HTTP contract.
+        # They do not yet have an importer for the HTML-only art bundles.
+        return await self._search(query, top_k, run_id, include_art=False)
+
+    async def search_html(self, query: str, top_k=4, run_id=None):
+        """Explicit HTML retrieval; its runner resolves verified asset bundles."""
+        return await self._search(query, top_k, run_id, include_art=True)
+
+    async def _search(self, query, top_k, run_id, *, include_art):
         warnings = []
         local = self.local_search(query, top_k)
         remote = []
@@ -76,7 +92,10 @@ class Retriever:
             except (httpx.HTTPError, ValueError, KeyError, TypeError) as exc:
                 # Do not put remote URLs/tokens or response bodies in public logs.
                 warnings.append("外部 RAG 不可用，已回退本地知识库：" + type(exc).__name__)
-        portal = await self.portal.search(query, top_k, run_id=run_id) if self.portal else None
+        client = self.asset_portal if include_art and self.asset_portal else self.portal
+        portal = await client.search(query, top_k, run_id=run_id) if client else None
+        if self.asset_portal and not include_art:
+            warnings.append("内置素材检索与图片导入目前仅支持单文件 HTML；项目模式未启用自动素材导入，已保留本地知识和外部 RAG。")
         if portal:
             warnings.extend(portal["warnings"])
         result = {"query": query, "documents": ((portal["documents"] if portal else []) + remote + local)[:top_k], "warnings": warnings}

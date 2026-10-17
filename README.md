@@ -4,7 +4,7 @@
 
 v2 已补齐长规格入口、真实第三方引擎模板、工具式编码循环、功能 DAG、检查点恢复及项目交付。**三个官方大型 case 已在 210 使用完整原文开始真实实现，目前尚未全部验收通过。** 引擎模板或 Python 回归测试通过，不代表这些游戏已经完成。
 
-已合并团队新增的 [WebMCP 研究服务与工作台](webmcp/runtime.md)，包括持久任务、受限讨论及三份参考规格；GitHub 原型检索默认仅读本地缓存，显式开启后受持久请求预算和冷却保护。材料门户尚未配置，只有显式 fixtures 模式使用合成候选。组件边界见 [WebMCP 交接文档](webmcp/handoff.md)。
+已合并团队新增的 [WebMCP 研究服务与工作台](webmcp/runtime.md)，包括持久任务、受限讨论及三份参考规格；GitHub 原型检索默认仅读本地缓存，显式开启后受持久请求预算和冷却保护。Node 研究服务的材料门户尚未配置，只有显式 fixtures 模式使用合成候选。Python 单文件 HTML 流程现可显式启用真实美术检索，见 [素材组件](docs/material-assets.md)。组件边界见 [WebMCP 交接文档](webmcp/handoff.md)。
 
 本集成分支增加可选的 `/api/research` 适配器与 `/research` 工作台入口，见 [WebMCP 组件接入说明](docs/webmcp-integration.md)。研究组件不接管项目编排、编码、验收或发布；固定蓝图的接收钩子目前仅接入 v1 `/api/runs`，v2 `/api/projects` 仍由 harness 负责人维护。
 
@@ -18,6 +18,20 @@ v2 已补齐长规格入口、真实第三方引擎模板、工具式编码循�
 | 单文件小游戏（v1） | 最多 8,000 字符；Canvas / DOM | 需求改写 → RAG → 设计 → HTML 生成 → 三尺寸浏览器与截图 QA → 有限修复；交付 HTML |
 
 完整规格模式直接执行已批准的规则，不通过简短 rewrite 删减技能、关卡、数值或验收项。工作台支持完整 TXT 导入、三个官方 case 按钮、功能依赖进度、逐 T 验收状态、原文和详细报告下载。构建后的候选可以预览及下载，但会明确标注“尚未全部验收”；只有完整发布门禁通过才显示正式项目。
+
+## 可选素材组件与本地运行
+
+本次从 `zx` 精简合入联网素材收集与 HTML 交付接线，保留当前 v2 项目、研究服务、模板和工作台。`game_harness/asset_material_portal.py` 是新增的独立收集模块；现有 HTTP `material_portal.py` 保持兼容。旧 `asset_agent/` 原型、第三方源码缓存、重复协议与历史评测工具留在 `zx`，不属于默认分支的运行依赖。
+
+默认配置保持不联网。需要在单文件 HTML 流程中使用真实 PNG 时，在自己的 `.env` 中设置 `MATERIAL_PORTAL_URL=web://assets`；`local://references` 提供内置的离线源码元数据。v2 项目与 Node 研究服务继续使用各自原有接口，本次不自动向 Vite 工程写入素材。完整边界、直接 Python 调用及验证方法见 [素材接入说明](docs/material-assets.md)。
+
+Windows 本地运行需 Python 3.10+；研究侧车另需满足 `webmcp/package.json` 的 Node 版本。安装 `python -m pip install -e ".[test]"` 与 `python -m playwright install chromium` 后，复制 `.env.example` 为 `.env`，填写配置，再执行：
+
+```powershell
+python -X utf8 -m uvicorn game_harness.app:app --host 127.0.0.1 --port 18080 --workers 1
+```
+
+主服务、工程构建和编码工作区均保留独占文件锁。Windows 与 POSIX 使用各自内核锁，不能让两个进程同时占用同一目录。已审阅修复中新增源文件的原子发布仍依赖 POSIX 目录句柄；Windows 的基础服务与构建验证不代表所有项目管理路径都已跨平台，完整回归在 Linux 上执行。
 
 ## 在 210 启动
 

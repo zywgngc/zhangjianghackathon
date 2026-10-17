@@ -1,0 +1,246 @@
+{
+  "schemaVersion": "1.0",
+  "scope": "明确缩减的HTML Canvas核心玩法派生输入；不是原测试用例的完整实现或验收。",
+  "original_repository": "https://github.com/zywgngc/zhangjianghackathon",
+  "original_branch": "codex/game-harness",
+  "original_revision": "470bdfebd46f9369d9fd614066ac99bdcb01c738",
+  "preferred_first_run": "wuxia-survivors",
+  "run_order": [
+    "wuxia-survivors",
+    "number-gate",
+    "power-hunter"
+  ],
+  "requested_main_model_provider": "DeepSeek",
+  "model_id_source": "主harness运行配置；模型配置与凭据不写入RunRequest。",
+  "request_contract": {
+    "fields": [
+      "description",
+      "engine"
+    ],
+    "engine": "canvas",
+    "maximum_description_characters": 8000
+  },
+  "common_scope": {
+    "original_specifications_modified": false,
+    "original_case_acceptance": false,
+    "reference_images_supplied": false,
+    "external_art_assets_required": false,
+    "execution": "not_run",
+    "model_api_calls": 0,
+    "generated_game_artifacts": false,
+    "self_contained_single_html": true,
+    "responsive_viewports": [
+      [
+        1280,
+        800
+      ],
+      [
+        390,
+        844
+      ],
+      [
+        844,
+        390
+      ]
+    ],
+    "input_modes": [
+      "keyboard",
+      "pointer",
+      "touch"
+    ],
+    "states": [
+      "ready",
+      "running",
+      "paused",
+      "won",
+      "lost"
+    ],
+    "lifecycle_actions": [
+      "start",
+      "pause",
+      "resume",
+      "restart"
+    ],
+    "integration": "GAME_CONTRACT与window.__GAME__实时state/score/ticks；暂停冻结模拟，restart归零且清理旧状态。",
+    "unspecified_parameters": "未明确列出的视觉尺寸、速度换算、碰撞尺寸等可由生成器合理实现；它们属于派生实现假设，不冒充原规格数值。",
+    "verification_scope": "仅校验请求JSON结构、字符长度和文件哈希；未调用模型、未生成或运行游戏。"
+  },
+  "cases": [
+    {
+      "slug": "wuxia-survivors",
+      "original_case_id": "GAME-TEST-002",
+      "original_source_path": "case2:Wuxia_Survivors/002武林幸存者.txt",
+      "original_local_path": "case2-Wuxia_Survivors/002武林幸存者.txt",
+      "original_spec_sha256": "6a4997f5514742664443d03237231c06137596e8fd90e14048d2974040be5c01",
+      "request_file": "wuxia-survivors.request.json",
+      "request_sha256": "0be7f1d5213bf78fd7c33201d074c6d21da97c2cd6281874e4b6c9365a17845c",
+      "description_characters": 814,
+      "description_chinese_characters": 382,
+      "priority": 1,
+      "preserved_mechanics": [
+        "WASD/方向键与触屏移动",
+        "自动御剑攻击、真实弹丸命中与HP变化",
+        "定时波次追击",
+        "经验掉落、范围拾取、等级与三选一升级",
+        "升级冻结模拟、存活胜利与HP归零失败"
+      ],
+      "retained_original_numbers": [
+        {
+          "reference": "04.3 / 08.6",
+          "rules": [
+            "初始HP100、移速220设计像素/秒、受伤无敌0.6秒"
+          ]
+        },
+        {
+          "reference": "05.2 山贼",
+          "rules": [
+            "HP20、接触伤害8、速度75、击败经验1"
+          ]
+        },
+        {
+          "reference": "06.1 W01 御剑术 Lv.1",
+          "rules": [
+            "每1.5秒1剑、基础伤害12"
+          ]
+        },
+        {
+          "reference": "07.1 / 07.2 / 07.5",
+          "rules": [
+            "初始等级1",
+            "XP_next(L)=ceil(4+1.5L+0.12L²)，溢出经验保留",
+            "拾取半径80"
+          ]
+        }
+      ],
+      "derived_assumptions": [
+        "原第一关6分钟与Boss胜利缩为60秒生存胜利，HP归零失败。",
+        "0、20、40秒分三阶段，刷怪间隔分别2、1.4、1秒；敌人最多24个。",
+        "只使用山贼一种普通敌人。",
+        "升级固定三选一：伤害+20%、射击间隔×0.8、移速+10%；这是派生升级方案，不是完整原技能树。",
+        "分数只累计击败敌人数。"
+      ],
+      "simplified_or_omitted": [
+        "Phaser及TypeScript/Vite工程改为原生Canvas 2D单文件，不要求React或3D。",
+        "不做三完整关卡、最终Boss、全技能/被动五级体系、技能进化和大量敌人类型。",
+        "不做永久金币经济、商店、存档与完整音频/美术资源。",
+        "不执行完整原规格验收；仅观察明确缩减核心玩法的生成与测试链路。"
+      ]
+    },
+    {
+      "slug": "number-gate",
+      "original_case_id": "GAME-TEST-001",
+      "original_source_path": "case1:Number_Gate_Shooter/001数字门枪手.txt",
+      "original_local_path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+      "original_spec_sha256": "b99717267f61fdac53bbc6e3508c4e9128017284387fa5ae6819f768d7b23f1b",
+      "request_file": "number-gate.request.json",
+      "request_sha256": "096736f5e0380cdfc8251b6db1a29b279f270b7da3157e9dcfe740fa31c92931",
+      "description_characters": 771,
+      "description_chinese_characters": 363,
+      "priority": 2,
+      "preserved_mechanics": [
+        "自动前进与横向选道",
+        "每组一次的加减乘除门、整数与人数边界",
+        "队伍变化实际改变自动射击火力",
+        "障碍损兵、装甲车Boss与可达胜负"
+      ],
+      "retained_original_numbers": [
+        {
+          "reference": "06.1 / 06.6",
+          "rules": [
+            "初始1人",
+            "人数上限200，下限0",
+            "除法向下取整"
+          ]
+        },
+        {
+          "reference": "09.7 Level 1",
+          "rules": [
+            "四组门：+5/+2、×2/-3、+10/÷2、×2/-5"
+          ]
+        },
+        {
+          "reference": "07.1 / 07.4 / 07.5",
+          "rules": [
+            "每名士兵每秒2次射击、每发伤害1",
+            "普通敌人10HP",
+            "沙袋损失2人、铁丝网损失3人"
+          ]
+        },
+        {
+          "reference": "08.5 / 09.1",
+          "rules": [
+            "第一关Boss150HP",
+            "目标时长45秒"
+          ]
+        }
+      ],
+      "derived_assumptions": [
+        "用单关45秒作为确定性的派生终点时限。",
+        "四组门分别在6、12、18、24秒出现，30秒进入Boss段，45秒到达终点。",
+        "固定2D纵向道路布局，保留至少一条有利可通关路线；图形与布局尺寸由生成器合理设定。",
+        "分数只累计击败敌人数。"
+      ],
+      "simplified_or_omitted": [
+        "Babylon与3D低多边形模型改为原生Canvas 2D原创几何图形。",
+        "不要求TypeScript/Vite、多文件工程、原多关、永久队伍/伤害升级、金币奖励与音频资产。",
+        "不执行完整原规格的美术、表现、资源、性能及全部验收测试。"
+      ]
+    },
+    {
+      "slug": "power-hunter",
+      "original_case_id": "GAME-TEST-003",
+      "original_source_path": "case3:Power_Hunter/003百炼英雄.txt",
+      "original_local_path": "case3-Power_Hunter/003百炼英雄.txt",
+      "original_spec_sha256": "f220b6be3a0a7682fdd420ba8d64145208bd1e72d09f36a8a553df7a8fc9e8a0",
+      "request_file": "power-hunter.request.json",
+      "request_sha256": "776af8d164d4f7294b8303e7187bd911461c2dda7e0b4a46cd19ea3c49ec8c3a",
+      "description_characters": 809,
+      "description_chinese_characters": 410,
+      "priority": 3,
+      "preserved_mechanics": [
+        "开放平面场地与点击目标后自动移动接近",
+        "单一整数战力、严格P>E比较、100%吞噬",
+        "武器掉落/拾取及一次性数值增长",
+        "固定第一关敌人、战力标记和最终Boss",
+        "强敌仅提示战力不足，不扣战力、不死亡"
+      ],
+      "retained_original_numbers": [
+        {
+          "reference": "06.2 / 06.3 / 06.4",
+          "rules": [
+            "仅P>E可击败，P=E不行",
+            "击败后P_new=P+E",
+            "无效交互不扣战力、不移除敌人"
+          ]
+        },
+        {
+          "reference": "05.5 / 09.1",
+          "rules": [
+            "木剑+5、铁剑+10、精钢剑+20",
+            "每件武器只拾取一次"
+          ]
+        },
+        {
+          "reference": "09.1",
+          "rules": [
+            "初始P=10",
+            "八名普通敌人战力3、5、8、12、16、22、30、44",
+            "森林巨魔Boss战力150"
+          ]
+        }
+      ],
+      "derived_assumptions": [
+        "为演示武器掉落，木剑不预置；击败战力8敌人后在其位置掉落木剑+5，其余两件武器散落于场地。",
+        "增加120秒派生时限：时限内击败Boss胜，到时未胜败；这是新增失败条件，非原规格。",
+        "键盘方向键移动选择光标、Enter确认目标；鼠标与触摸保留点击交互。",
+        "分数只累计击败普通敌人数。"
+      ],
+      "simplified_or_omitted": [
+        "Babylon、3D、TypeScript/Vite与复杂寻路改为原生Canvas 2D单文件开放平面交互。",
+        "只做第一关，省去第二/第三关、更多敌人/武器类型、复杂环境阻挡、原动画与音频资源。",
+        "不引入常规HP、金币经济、塔楼或自动战斗替代战力点击决策。",
+        "不执行完整原规格验收。"
+      ]
+    }
+  ]
+}

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import asyncio
 import base64
-import fcntl
 import hashlib
 import html
 from html.parser import HTMLParser
@@ -17,11 +16,14 @@ import mimetypes
 import os
 from pathlib import Path, PurePosixPath
 import re
+import shutil
 import signal
 import time
 import uuid
 from typing import Any
 from urllib.parse import unquote
+
+from .locking import exclusive_lock, LockUnavailable
 
 
 TEMPLATES = Path(__file__).with_name("project_templates")
@@ -245,17 +247,53 @@ class ProjectWorkspace:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         # Deliberately do not forward OPENAI_*, provider credentials, NODE_OPTIONS,
         # SSH_AUTH_SOCK, npm tokens, proxy credentials, or a user's npmrc.
-        return {"PATH": os.defpath + ":/usr/local/bin:/opt/homebrew/bin", "HOME": str(home), "LANG": "C.UTF-8", "LC_ALL": "C.UTF-8", "CI": "1", "NO_COLOR": "1", "npm_config_cache": str(self.cache_dir), "npm_config_userconfig": str(self._internal("empty.npmrc")), "npm_config_ignore_scripts": "true", "npm_config_update_notifier": "false"}
+        environment = {"PATH": os.defpath + ":/usr/local/bin:/opt/homebrew/bin", "HOME": str(home), "LANG": "C.UTF-8", "LC_ALL": "C.UTF-8", "CI": "1", "NO_COLOR": "1", "npm_config_cache": str(self.cache_dir), "npm_config_userconfig": str(self._internal("empty.npmrc")), "npm_config_ignore_scripts": "true", "npm_config_update_notifier": "false"}
+        if os.name == "nt":
+            node = shutil.which("node")
+            if node is None:
+                raise WorkspaceError("Node.js is required for project builds")
+            system_root = Path(os.environ.get("SystemRoot", r"C:\Windows"))
+            temporary = self._internal("tmp")
+            temporary.mkdir(exist_ok=True)
+            environment.update(PATH=os.pathsep.join([str(Path(node).parent), str(system_root / "System32"), str(system_root)]),
+                               SystemRoot=str(system_root), USERPROFILE=str(home), TEMP=str(temporary), TMP=str(temporary))
+        return environment
 
     async def _command(self, name: str, command: list[str], deadline: float, environment: dict[str, str]) -> dict[str, Any]:
         started = time.monotonic()
-        process = await asyncio.create_subprocess_exec(*command, cwd=self.root, env=environment, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, start_new_session=True)
+        execution = command
+        if os.name == "nt":
+            # Execute only the host's installed Node and npm CLI, never cmd.exe,
+            # an npm.cmd shell string, or a model-written package script.
+            node = shutil.which("node")
+            if node is None:
+                raise WorkspaceError("Node.js is required for project builds")
+            if command[0] == "npm":
+                npm = shutil.which("npm.cmd")
+                cli = Path(npm).parent / "node_modules/npm/bin/npm-cli.js" if npm else None
+                if cli is None or not cli.is_file():
+                    raise WorkspaceError("The installed Node.js npm CLI is required for project builds")
+                execution = [node, str(cli), *command[1:]]
+            elif command[0] == "node":
+                execution = [node, *command[1:]]
+            else:
+                raise WorkspaceError("Only the pinned Node.js toolchain may execute")
+        process = await asyncio.create_subprocess_exec(*execution, cwd=self.root, env=environment, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, start_new_session=os.name != "nt")
         try:
             stdout, stderr = await asyncio.wait_for(process.communicate(), max(0.01, deadline - started))
             code, timed_out = process.returncode, False
         except (asyncio.TimeoutError, asyncio.CancelledError) as error:
             try:
-                os.killpg(process.pid, signal.SIGKILL)
+                if os.name == "nt":
+                    # Vite may start esbuild; terminate the owned process tree.
+                    taskkill = str(Path(environment["SystemRoot"]) / "System32/taskkill.exe")
+                    killer = await asyncio.create_subprocess_exec(taskkill, "/PID", str(process.pid), "/T", "/F",
+                        stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
+                    await killer.wait()
+                    if process.returncode is None:
+                        process.kill()
+                else:
+                    os.killpg(process.pid, signal.SIGKILL)
             except ProcessLookupError:
                 pass
             stdout, stderr = await process.communicate()
@@ -270,54 +308,57 @@ class ProjectWorkspace:
     async def build(self, *, install: bool = True, timeout: float = 180, offline: bool = False) -> dict[str, Any]:
         report: dict[str, Any] = {"passed": False, "engine": self.engine, "stages": [], "errors": [], "stdout": "", "stderr": "", "artifact_manifest": [], "entrypoint": None}
         self.root.mkdir(parents=True, exist_ok=True)
-        lock = self._internal("build.lock").open("a+")
         try:
-            try:
-                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError:
-                report["errors"].append("Another build owns this workspace")
-                return report
-            self.initialize()
-            self._validate_source()
-            if any((self.root / folder).is_symlink() for folder in ("node_modules", "dist")):
-                raise WorkspaceError("Dependencies and build output must not be symlinks")
-            before = self.snapshot()
-            report["source_sha256"] = before["sha256"]
-            environment = self._environment()
-            deadline = time.monotonic() + timeout
-            dependency_stamp = self._internal("dependencies.json")
-            lock_sha = _digest((self.root / "package-lock.json").read_bytes())
-            installed = dependency_stamp.exists() and json.loads(dependency_stamp.read_text()).get("lock_sha256") == lock_sha and all((self.root / p).is_file() for p in ("node_modules/typescript/bin/tsc", "node_modules/vite/bin/vite.js"))
-            if not installed:
-                if not install:
-                    raise WorkspaceError("Pinned dependencies have not been installed")
-                command = ["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund", "--prefer-offline"]
-                if offline:
-                    command.append("--offline")
-                stage = await self._command("install", command, deadline, environment)
-                report["stages"].append(stage)
-                if not stage["passed"]:
-                    report["errors"].append("Pinned npm dependency installation failed")
+            with exclusive_lock(self._internal("build.lock")):
+                try:
+                    return await self._build_locked(report, install=install, timeout=timeout, offline=offline)
+                except (WorkspaceError, OSError, json.JSONDecodeError) as error:
+                    report["errors"].append(str(error))
                     return self._finish(report)
-                _atomic(dependency_stamp, json.dumps({"lock_sha256": lock_sha}).encode())
-            for name, command in [("typecheck", ["node", "node_modules/typescript/bin/tsc", "--project", "tsconfig.json", "--noEmit"]), ("bundle", ["node", "node_modules/vite/bin/vite.js", "build", "--config", "vite.config.mjs", "--base", "./"] )]:
-                stage = await self._command(name, command, deadline, environment)
-                report["stages"].append(stage)
-                if not stage["passed"]:
-                    report["errors"].append(f"{name} failed; repair the source using the recorded diagnostics")
-                    return self._finish(report)
-            if self.snapshot()["sha256"] != before["sha256"]:
-                raise WorkspaceError("Source changed during build; result cannot be published")
-            report["artifact_manifest"] = self._artifact_manifest()
-            if not any(item["path"] == "index.html" for item in report["artifact_manifest"]):
-                raise WorkspaceError("Build produced no index.html")
-            report.update(passed=True, entrypoint="index.html", completed_at=time.time())
-            return self._finish(report)
+        except LockUnavailable:
+            report["errors"].append("Another build owns this workspace")
+            return report
         except (WorkspaceError, OSError, json.JSONDecodeError) as error:
             report["errors"].append(str(error))
             return self._finish(report)
-        finally:
-            lock.close()
+
+    async def _build_locked(self, report: dict[str, Any], *, install: bool, timeout: float, offline: bool) -> dict[str, Any]:
+        self.initialize()
+        self._validate_source()
+        if any((self.root / folder).is_symlink() for folder in ("node_modules", "dist")):
+            raise WorkspaceError("Dependencies and build output must not be symlinks")
+        before = self.snapshot()
+        report["source_sha256"] = before["sha256"]
+        environment = self._environment()
+        deadline = time.monotonic() + timeout
+        dependency_stamp = self._internal("dependencies.json")
+        lock_sha = _digest((self.root / "package-lock.json").read_bytes())
+        installed = dependency_stamp.exists() and json.loads(dependency_stamp.read_text()).get("lock_sha256") == lock_sha and all((self.root / p).is_file() for p in ("node_modules/typescript/bin/tsc", "node_modules/vite/bin/vite.js"))
+        if not installed:
+            if not install:
+                raise WorkspaceError("Pinned dependencies have not been installed")
+            command = ["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund", "--prefer-offline"]
+            if offline:
+                command.append("--offline")
+            stage = await self._command("install", command, deadline, environment)
+            report["stages"].append(stage)
+            if not stage["passed"]:
+                report["errors"].append("Pinned npm dependency installation failed")
+                return self._finish(report)
+            _atomic(dependency_stamp, json.dumps({"lock_sha256": lock_sha}).encode())
+        for name, command in [("typecheck", ["node", "node_modules/typescript/bin/tsc", "--project", "tsconfig.json", "--noEmit"]), ("bundle", ["node", "node_modules/vite/bin/vite.js", "build", "--config", "vite.config.mjs", "--base", "./"] )]:
+            stage = await self._command(name, command, deadline, environment)
+            report["stages"].append(stage)
+            if not stage["passed"]:
+                report["errors"].append(f"{name} failed; repair the source using the recorded diagnostics")
+                return self._finish(report)
+        if self.snapshot()["sha256"] != before["sha256"]:
+            raise WorkspaceError("Source changed during build; result cannot be published")
+        report["artifact_manifest"] = self._artifact_manifest()
+        if not any(item["path"] == "index.html" for item in report["artifact_manifest"]):
+            raise WorkspaceError("Build produced no index.html")
+        report.update(passed=True, entrypoint="index.html", completed_at=time.time())
+        return self._finish(report)
 
     def _finish(self, report: dict[str, Any]) -> dict[str, Any]:
         report["stdout"] = "\n".join(stage["stdout"] for stage in report["stages"])

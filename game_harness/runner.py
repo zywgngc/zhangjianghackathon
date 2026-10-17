@@ -5,6 +5,7 @@ import re
 import time
 
 from .agents import GAME_CONTRACT
+from .asset_material_portal import embed_asset_documents, prepare_asset_documents
 from .schemas import Brief, Design, Review
 
 
@@ -133,19 +134,33 @@ class Harness:
                 evidence = {"query": brief.rewritten_prompt, "documents": self.retriever.local_search(brief.rewritten_prompt),
                             "warnings": ["已绑定研究蓝图；素材门户查询和追问额度由研究 MAS 统一管理，Builder 不重复发起首轮查询。"]}
             else:
-                evidence = await self.retriever.search(brief.rewritten_prompt, run_id=rid)
+                search = getattr(self.retriever, "search_html", self.retriever.search)
+                evidence = await search(brief.rewritten_prompt, run_id=rid)
             self.store.write(rid, "retrieval.json", evidence)
         self.store.event(rid, "retrieval", "stage_done", {"ids": [d["id"] for d in evidence["documents"]], "warnings": evidence["warnings"]})
+        # Keep manifests and raw portal traces only in persisted backend evidence.
+        # Design/build receive verified metadata and compact references, not
+        # local paths, preview Base64, or transport/debugging payloads.
+        model_documents = prepare_asset_documents(evidence["documents"])
+        for document in model_documents:
+            document.pop("asset_manifest", None)
+            if document.get("verification") in {"downloaded_hash_checked_art", "asset_bundle_unavailable"}:
+                # Online artwork uses paths for local cache manifests, whereas
+                # code references use upstream-relative source paths.
+                for cache_path in document.pop("paths", []):
+                    document["content"] = document.get("content", "").replace(cache_path, "[本机素材缓存]")
+        model_evidence = {key: evidence[key] for key in ("query", "warnings") if key in evidence}
+        model_evidence["documents"] = model_documents
         design = await self.checkpoint(rid, "design", "design",
             "你是游戏设计与引擎路由代理。动作游戏选 canvas，棋盘/文字/卡牌选 dom；只支持这两个已安装的离线适配器。"
             "若用户锁定 engine 必须遵守。制定具体数值规则、胜负、中文视觉风格和移动布局。"
             "knowledge_ids 只可引用提供的文档 ID。不要扩展用户未要求的大型系统。设计要适合单文件游戏。",
-            {"request": requirements, "brief": brief.model_dump(), "retrieval": evidence}, Design)
+            {"request": requirements, "brief": brief.model_dump(), "retrieval": model_evidence}, Design)
         if request["engine"] != "auto" and design.engine != request["engine"]:
             raise RuntimeError("设计违反用户的引擎锁定")
         if not set(design.knowledge_ids) <= {d["id"] for d in evidence["documents"]}:
             raise RuntimeError("设计引用了未检索到的知识 ID")
-        context = {"brief": brief.model_dump(), "design": design.model_dump(), "retrieved_knowledge": evidence["documents"]}
+        context = {"brief": brief.model_dump(), "design": design.model_dump(), "retrieved_knowledge": model_documents}
         if research:
             context["research"] = research
         for version in range(1, self.settings.max_repairs + 2):
@@ -154,7 +169,9 @@ class Harness:
                 self.stage(rid, "build" if version == 1 else "repair")
                 data = context
                 if version > 1:
-                    data = {**context, "previous_html": self.store.path(rid, f"v{version - 1}.html").read_text(encoding="utf-8"),
+                    previous_source = self.store.path(rid, f"v{version - 1}.source.html")
+                    previous_path = previous_source if previous_source.exists() else self.store.path(rid, f"v{version - 1}.html")
+                    data = {**context, "previous_html": previous_path.read_text(encoding="utf-8"),
                             "test_report": self.store.read_json(rid, f"v{version - 1}.report.json"),
                             "qa_review": self.store.read_json(rid, f"v{version - 1}.review.json")}
                 role = "build" if version == 1 else "repair"
@@ -164,8 +181,14 @@ class Harness:
                                "你是游戏修复代理，按实测报告和 QA 缺陷修复全部严重问题，保留已正确实现的玩法。返回完整修复文件。")
                 html = await self.agents.complete(rid, role, role, instruction + GAME_CONTRACT, data, max_tokens=16000)
                 html = re.sub(r"^```(?:html)?\s*|\s*```$", "", html.strip())
+                self.store.write(rid, f"v{version}.source.html", html)
+                asset_ids = list(dict.fromkeys(re.findall(r"asset://([A-Za-z0-9_-]+)", html)))
+                html = embed_asset_documents(html, evidence["documents"])
+                self.store.write(rid, f"v{version}.asset-usage.json", {"asset_ids": asset_ids,
+                    "count": len(asset_ids), "embedded_html_bytes": len(html.encode("utf-8"))})
                 self.store.write(rid, f"v{version}.html", html)
-                self.store.event(rid, role, "stage_done", {"version": version, "artifact": f"v{version}.html"})
+                self.store.event(rid, role, "stage_done", {"version": version, "artifact": f"v{version}.html",
+                    "asset_count": len(asset_ids)})
             html = path.read_text(encoding="utf-8")
             self.stage(rid, "browser_test")
             report = self.store.read_json(rid, f"v{version}.report.json")
