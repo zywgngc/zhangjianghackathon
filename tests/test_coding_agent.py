@@ -511,7 +511,8 @@ async def test_five_identical_nonprogress_reads_stop_before_spending_the_session
     assert list(checkpoint["read_receipts"].values())[0]["characters"] == 100_000
 
 
-async def test_shared_types_and_interfaces_remain_complete_when_configuration_and_history_compete(store, request_data, tmp_path):
+@pytest.mark.parametrize("owned_path", ["src/game/InputManager.ts", "src/game/skills/ActiveSkillSystem.ts", "src/game/enemies/AI.ts"])
+async def test_shared_types_and_interfaces_remain_complete_when_configuration_and_history_compete(store, request_data, tmp_path, owned_path):
     rid = run_id(store, request_data)
     workspace = Workspace(tmp_path / "game")
     types = "export type PRNG = () => number;\nexport type EventSink = (event: string) => void;\n"
@@ -539,11 +540,11 @@ async def test_shared_types_and_interfaces_remain_complete_when_configuration_an
     client = InspectingClient([
         {"tool": "read_context", "section": "spec_excerpts", "limit": 16_000},
         {"tool": "note", "summary": "共享字段已经确认。", "memory": "下一文件InputManager.ts，PRNG/EventSink使用resident_files真实定义。"},
-        {"tool": "write_file", "path": "src/game/InputManager.ts", "content": "export const input = { dx: 0, dy: 0, active: false };"},
+        {"tool": "write_file", "path": owned_path, "content": "export const input = { dx: 0, dy: 0, active: false };"},
         {"tool": "finish", "summary": "不再反复读取共享类型。"},
     ])
     result = await CodingAgent(client, store, workspace, context_chars=32_000, history_limit=3).run_feature(rid,
-        {"id": "player-navigation", "owned_paths": ["src/game/InputManager.ts"], "objective": "实现移动输入"},
+        {"id": "player-navigation", "owned_paths": [owned_path], "objective": "实现移动输入"},
         {"interfaces": interfaces, "approved_configuration": configuration, "spec_excerpts": page,
          "review_feedback": page * 5, "production_contract": page * 5, "architecture": page * 5})
     assert result["status"] == "implemented" and result["steps"] == 4

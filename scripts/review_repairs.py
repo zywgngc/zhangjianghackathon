@@ -70,7 +70,11 @@ def verified_inputs(store, workspace, rid):
                                'source_unchanged', 'passed', 'failed', 'errors', 'browser_errors'}}
                 item['full_trace_included'] = False
         verified.append(item)
+    request = store.request(rid)
+    specification = request.get('specification', '')
     return {'proposal_sha256': hashlib.sha256(raw).hexdigest(), 'proposal': proposal,
+            'approved_specification': {'case_id': request.get('case_id'), 'text': specification,
+                                       'sha256': hashlib.sha256(specification.encode()).hexdigest()},
             'current_source_sha256': before['sha256'], 'expected_source_sha256': after,
             'verified_evidence': verified, 'official_acceptance': False,
             'scope': 'Source integration review; artifact hashes and exact patch replay are host-verified. '

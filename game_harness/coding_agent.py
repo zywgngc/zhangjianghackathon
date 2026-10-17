@@ -293,8 +293,13 @@ class CodingAgent:
     @staticmethod
     def _configuration_feature(feature):
         paths = feature.get("owned_paths") or []
-        return not paths or any(re.search(r"(?:^|/)(?:types|config|balance|levels|skills|passives|enemies|evolutions)(?:[./]|$)",
-                                         path, re.I) for path in paths)
+        # Runtime directories such as game/skills/ and game/enemies/ contain
+        # behavior, not configuration. Treating their owners as data authors
+        # suppressed the real shared types throughout their coding sessions.
+        return not paths or any(
+            re.search(r"(?:^|/)(?:config|configuration|data)/", path, re.I)
+            or re.search(r"(?:^|/)(?:types|config|balance|levels|skills|passives|enemies|evolutions)\.[^/]+$", path, re.I)
+            for path in paths)
 
     def _focus_target(self, feature, context, state=None):
         state = state or {}
