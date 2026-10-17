@@ -124,3 +124,24 @@ async def test_bad_creation_is_rejected_before_spending_review_call(settings,rep
     def forbidden(*args):pytest.fail('Invalid create must not spend a reviewer call')
     with pytest.raises(ValueError):await review_repairs(settings,rid,apply=True,agents_factory=forbidden)
     assert workspace.snapshot()==before and store.get(rid)['calls']==0
+
+
+def test_many_small_traces_are_all_verified_but_model_observations_stay_bounded(repair):
+    import json
+    store, workspace, rid, proposal = repair
+    proposal['evidence'] = []
+    for i in range(4):
+        name = f'trace-{i}.json'
+        digest = store.write(rid, name, {'scope': 'Actual trace, not game acceptance', 'payload': 'x' * 24000})
+        proposal['evidence'].append({'path': name, 'sha256': digest})
+    store.write(rid, 'proposed-repairs.json', proposal)
+    payload = verified_inputs(store, workspace, rid)
+    references = payload['verified_evidence']
+    assert len(references) == 4
+    assert len(json.dumps(references, ensure_ascii=False)) < 40000
+    assert references[0]['observations']['payload'] == 'x' * 24000
+    assert all(row['full_trace_included'] is False for row in references[1:])
+    assert all(row['summary']['scope'] == 'Actual trace, not game acceptance' for row in references[1:])
+    store.write(rid, 'trace-3.json', {'payload': 'changed after it was summarized'})
+    with pytest.raises(ValueError, match='hash or size changed'):
+        verified_inputs(store, workspace, rid)

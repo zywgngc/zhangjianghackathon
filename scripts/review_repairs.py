@@ -46,6 +46,9 @@ def verified_inputs(store, workspace, rid):
     if proposal.get('expected_patched_source_sha256', after) != after:
         raise ValueError('Proposed final source manifest differs from the exact patch replay')
     verified = []
+    # Read/hash every artifact, but bound the aggregate trace view. Hundreds of
+    # small JSON traces must not crowd the exact source patches out of review.
+    observation_characters = 0
     references = proposal.get('evidence', [])
     if not isinstance(references, list) or any(not isinstance(reference, dict) for reference in references):
         raise ValueError('Repair evidence must be an artifact reference list')
@@ -60,14 +63,21 @@ def verified_inputs(store, workspace, rid):
         item = {'path': reference['path'], 'sha256': reference['sha256'], 'bytes': len(content)}
         if path.suffix == '.json':
             data = json.loads(content)
-            if len(content) <= 32_000:
+            if len(content) <= 32_000 and observation_characters + len(content) <= 40_000:
                 item['observations'] = data
+                observation_characters += len(content)
             elif isinstance(data, dict):
                 # Preserve explicit limitations when a trace is too large for a
                 # one-call source review. Raw files remain available to humans.
                 item['summary'] = {key: value for key, value in data.items()
                     if key in {'scope', 'diagnostic', 'official_acceptance', 'source_sha256',
                                'source_unchanged', 'passed', 'failed', 'errors', 'browser_errors'}}
+                if isinstance(data.get('acceptance'), dict):
+                    item['summary']['acceptance_counts'] = data['acceptance'].get('counts')
+                if isinstance(data.get('checks'), list):
+                    item['summary']['check_count'] = len(data['checks'])
+                item['full_trace_included'] = False
+            else:
                 item['full_trace_included'] = False
         verified.append(item)
     request = store.request(rid)
