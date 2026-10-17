@@ -1,0 +1,1721 @@
+# GAME DEVELOPMENT TASK
+
+Test Case ID: GAME-TEST-001
+Game Name: 数字门枪手
+English Name: Number Gate Shooter
+Specification Version: 1.0
+
+You are responsible for implementing, testing,
+optimizing, and delivering the complete game
+according to this specification.
+
+This specification is the authoritative source
+of gameplay requirements.
+
+The game mechanics, numerical parameters, level
+design, visual direction, and implementation
+constraints have already been determined.
+
+Do not independently redesign the game.
+
+Do not replace the required mechanics with
+simplified alternatives.
+
+Do not omit required features.
+
+If implementation details are unspecified,
+make reasonable engineering decisions without
+changing the specified gameplay.
+
+All user-facing game content must be in
+Simplified Chinese.
+
+
+==================================================
+01. BASIC GAME INFORMATION
+==================================================
+
+Game Name:
+数字门枪手
+
+English Name:
+Number Gate Shooter
+
+Reference Prototype:
+https://minigame.com/en/game/soldier-assault
+
+Genre:
+3D Casual Runner
+Mathematical Gate Game
+Automatic Shooting
+Squad Growth
+
+Target Platform:
+HTML5 Browser Game
+
+Target Devices:
+Mobile Phones
+Tablets
+Desktop Browsers
+
+Screen Orientation:
+Portrait and Landscape
+
+Primary Language:
+Simplified Chinese
+
+Connectivity:
+Offline-first
+
+Required Technology:
+- HTML5
+- TypeScript
+- React
+- Babylon.js
+- Vite
+
+Rendering:
+WebGL through Babylon.js
+
+Backend:
+Not required
+
+Account System:
+Not required
+
+Payment:
+Not required
+
+Advertising:
+Not required
+
+Game Assets:
+Locally bundled, appropriately licensed assets
+or original procedural assets.
+
+
+==================================================
+02. RECREATION OBJECTIVES
+==================================================
+
+Recreate the complete core gameplay of
+Soldier Assault.
+
+The player controls a squad of armed soldiers.
+
+The squad moves forward automatically.
+
+The player controls horizontal movement.
+
+Mathematical gates change the number
+of soldiers in the squad.
+
+Every soldier automatically shoots enemies.
+
+The player must grow the squad, avoid hazards,
+and defeat the final Boss.
+
+Preserve the following systems:
+
+1. Automatic forward movement
+2. Horizontal squad movement
+3. Mathematical gates
+4. Soldier multiplication
+5. Soldier reduction
+6. Automatic shooting
+7. Enemies and obstacles
+8. Boss combat
+9. Level progression
+10. Gold rewards
+11. Permanent squad upgrades
+12. Weapon damage upgrades
+
+VISUAL MODIFICATION:
+
+Replace the original game's characters,
+environments, enemies, obstacles, and Boss
+with a modern military warfare theme.
+
+The gameplay should remain similar to
+the reference prototype.
+
+Use original or appropriately licensed
+assets rather than copying protected
+artwork from the original game.
+
+
+==================================================
+03. CORE GAMEPLAY LOOP
+==================================================
+
+The complete gameplay loop is:
+
+MAIN MENU
+    |
+    v
+SELECT / START LEVEL
+    |
+    v
+SPAWN INITIAL SOLDIER SQUAD
+    |
+    v
+AUTOMATIC FORWARD MOVEMENT
+    |
+    v
+PLAYER CONTROLS HORIZONTAL POSITION
+    |
+    v
+PASS MATHEMATICAL GATES
+    |
+    v
+INCREASE OR DECREASE SOLDIER COUNT
+    |
+    v
+AUTOMATIC SHOOTING
+    |
+    v
+DESTROY ENEMIES
+    |
+    v
+AVOID OBSTACLES
+    |
+    v
+REPEAT UNTIL BOSS AREA
+    |
+    v
+BOSS BATTLE
+    |
+    +---- BOSS DEFEATED
+    |          |
+    |          v
+    |       VICTORY
+    |          |
+    |          v
+    |     RECEIVE GOLD
+    |          |
+    |          v
+    |     NEXT LEVEL
+    |
+    +---- SQUAD ELIMINATED
+    |          |
+    |          v
+    |        DEFEAT
+    |
+    +---- BOSS REACHES END
+               |
+               v
+             DEFEAT
+
+The player may return to the main menu
+or retry after a failed level.
+
+A successful level unlocks the next level.
+
+
+==================================================
+04. PLAYER CONTROL SYSTEM
+==================================================
+
+04.1 Movement
+
+The squad moves forward automatically.
+
+The player controls horizontal movement
+using a single finger.
+
+Touch and drag left:
+Move the squad left.
+
+Touch and drag right:
+Move the squad right.
+
+Release:
+Stop horizontal movement.
+
+Forward movement continues automatically.
+
+Desktop users may use mouse dragging.
+
+04.2 Movement Parameters
+
+World coordinate system:
+
+X = horizontal road direction
+Y = vertical height
+Z = forward direction
+
+Road width:
+12 world units
+
+Initial squad position:
+X = 0
+
+Movement speed:
+6 world units per second
+
+Forward movement speed:
+8 world units per second
+
+Horizontal movement:
+Smooth interpolation toward input position.
+
+Input smoothing time:
+Approximately 0.10 seconds.
+
+Input must remain frame-rate independent.
+
+04.3 Road Boundaries
+
+The squad center must remain inside
+the valid road area.
+
+The player's horizontal position
+must be clamped to:
+
+-5.5 <= X <= 5.5
+
+Squad members may visually extend beyond
+the center position, but must not cause
+incorrect gate collisions.
+
+04.4 Shooting
+
+Shooting is fully automatic.
+
+The player does not manually aim or fire.
+
+All living soldiers participate in shooting.
+
+04.5 Pause
+
+The game must support pausing.
+
+While paused:
+
+- Forward movement stops
+- Soldier movement stops
+- Enemy updates stop
+- Shooting stops
+- Collision processing stops
+- Timers stop
+- Animations stop where appropriate
+
+
+==================================================
+05. GAME OBJECTS
+==================================================
+
+05.1 Player Soldiers
+
+Each soldier must have:
+
+- 3D character representation
+- Military uniform
+- Helmet
+- Rifle
+- Running animation
+- Shooting animation
+- Hit feedback
+- Removal or death animation
+
+All soldiers belong to one player-controlled squad.
+
+The squad must visually expand or shrink
+when its soldier count changes.
+
+05.2 Mathematical Gates
+
+Four types:
+
+Addition
+Subtraction
+Multiplication
+Division
+
+Each gate displays:
+
+- Operator
+- Numeric operand
+- Positive or negative visual feedback
+
+05.3 Enemy Soldiers
+
+Enemy soldiers appear along the road.
+
+They have:
+
+- Health
+- Hit reaction
+- Death animation
+- Collision behavior
+
+05.4 Obstacles
+
+Required obstacles:
+
+- Sandbag barricades
+- Barbed-wire barriers
+- Mine fields
+
+05.5 Boss
+
+The final Boss is an armored military vehicle.
+
+It must have:
+
+- 3D vehicle model
+- Health bar
+- Damage feedback
+- Destruction animation
+- Explosion effects
+- Defeat state
+
+05.6 Projectiles
+
+Soldiers shoot visible projectiles.
+
+Projectiles must have:
+
+- Direction
+- Speed
+- Damage
+- Hit detection
+- Visual representation
+- Automatic cleanup
+
+
+==================================================
+06. MATHEMATICAL GATE SYSTEM
+==================================================
+
+06.1 Soldier Count
+
+Let:
+
+N = current number of soldiers
+
+Initial soldier count:
+
+N = 1
+
+Permanent upgrades may increase
+the initial soldier count.
+
+Maximum soldier count:
+
+N_MAX = 200
+
+Minimum soldier count:
+
+N_MIN = 0
+
+If N reaches zero, the player loses.
+
+06.2 Addition Gates
+
+Example:
+
++5
+
+N_new = N + 5
+
+06.3 Subtraction Gates
+
+Example:
+
+-3
+
+N_new = N - 3
+
+06.4 Multiplication Gates
+
+Example:
+
+×2
+
+N_new = N × 2
+
+06.5 Division Gates
+
+Example:
+
+÷2
+
+N_new = floor(N / 2)
+
+06.6 Boundary Rules
+
+After every operation:
+
+N_new = max(0, min(200, N_new))
+
+The result must always be an integer.
+
+Division uses floor rounding.
+
+Division by zero is prohibited.
+
+06.7 Gate Activation
+
+Each gate can activate only once.
+
+Each gate group can trigger only
+one selected gate.
+
+When the squad passes a gate group,
+the selected gate is determined by
+the horizontal position of the squad center.
+
+The selected gate applies to the
+entire squad.
+
+Individual soldiers must not
+trigger the same gate independently.
+
+After activation:
+
+- Update soldier count
+- Update squad formation
+- Display numerical feedback
+- Play an appropriate effect
+- Mark the gate as consumed
+
+06.8 Gate Presentation
+
+Positive gates:
+
+Green or cyan.
+
+Negative gates:
+
+Red.
+
+Positive or negative classification
+must be based on the actual result
+for the current soldier count.
+
+For example:
+
+Current soldiers = 10
+
+×2 is positive.
+
+÷2 is negative.
+
+06.9 Example
+
+Initial squad:
+1 soldier
+
+Gate 1:
++5
+
+Result:
+6 soldiers
+
+Gate 2:
+×3
+
+Result:
+18 soldiers
+
+Gate 3:
+-4
+
+Result:
+14 soldiers
+
+All 14 soldiers automatically shoot.
+
+
+==================================================
+07. COMBAT AND COLLISION SYSTEM
+==================================================
+
+07.1 Soldier Weapon
+
+Weapon:
+Assault Rifle
+
+Base attack frequency:
+2 attacks per second per soldier
+
+Base bullet damage:
+1
+
+Projectile speed:
+30 world units per second
+
+Maximum projectile lifetime:
+3 seconds
+
+07.2 Damage Calculation
+
+Let:
+
+N = soldier count
+R = attacks per second
+D = damage per bullet
+
+Theoretical total damage per second:
+
+DPS = N × R × D
+
+With:
+
+N = 20
+R = 2
+D = 1
+
+DPS = 40
+
+Actual damage must respect
+projectile hit detection.
+
+07.3 Targeting
+
+Soldiers automatically target
+the nearest valid enemy ahead.
+
+When several enemies are available:
+
+1. Prioritize the closest enemy ahead.
+2. Prefer enemies within the soldier's lane.
+3. Retarget when the current enemy dies.
+4. Target the Boss when no ordinary enemy
+   remains in the Boss area.
+
+07.4 Enemy Soldiers
+
+Normal enemy health:
+10 HP
+
+Normal enemies do not shoot
+in the initial release.
+
+When an enemy collides with the squad:
+
+- Remove one living player soldier.
+- Remove the colliding enemy.
+- Trigger hit feedback.
+- Prevent multiple losses from the
+  same collision event.
+
+07.5 Obstacles
+
+Sandbag barricade:
+Lose 2 soldiers on collision.
+
+Barbed-wire barrier:
+Lose 3 soldiers on collision.
+
+Mine field:
+Lose 5 soldiers on collision.
+
+Each obstacle activates only once.
+
+Apply the soldier loss immediately.
+
+Do not allow soldier count below zero.
+
+07.6 Squad Elimination
+
+If N <= 0:
+
+- Stop forward movement
+- Stop shooting
+- Disable active gameplay input
+- Trigger defeat animation
+- Open defeat screen
+
+07.7 Projectile Performance
+
+Use projectile object pooling.
+
+Avoid creating large numbers
+of unnecessary independent objects.
+
+The visual projectile system may use
+batching or simplified rendering.
+
+However, gameplay damage calculations
+must remain correct.
+
+Do not reduce actual weapon damage
+to improve rendering performance.
+
+
+==================================================
+08. BOSS SYSTEM
+==================================================
+
+08.1 Boss Theme
+
+The Boss is an armored military vehicle.
+
+Use a low-poly military vehicle model.
+
+The Boss should be significantly larger
+than normal enemies.
+
+08.2 Boss Behavior
+
+The Boss appears in the final section
+of each level.
+
+The player's squad continues moving forward.
+
+Soldiers automatically target the Boss.
+
+The Boss receives projectile damage.
+
+The Boss has a visible health bar.
+
+08.3 Victory
+
+If Boss HP <= 0 before the squad reaches
+the end of the road:
+
+The level is completed.
+
+08.4 Defeat
+
+If the squad reaches the end of the road
+while Boss HP > 0:
+
+The player loses.
+
+If the soldier count reaches zero:
+
+The player loses immediately.
+
+08.5 Boss Parameters
+
+Level 1:
+150 HP
+
+Level 2:
+300 HP
+
+Level 3:
+500 HP
+
+08.6 Boss Destruction
+
+When Boss HP reaches zero:
+
+- Stop combat
+- Play destruction animation
+- Trigger explosion particles
+- Stop level progression
+- Calculate rewards
+- Display victory screen
+
+
+==================================================
+09. LEVEL DESIGN
+==================================================
+
+The initial release contains three levels.
+
+Levels must be defined using
+separate configuration data.
+
+Do not hardcode level content directly
+inside the rendering loop.
+
+09.1 Level 1
+
+Name:
+沙漠前线
+
+Theme:
+Desert battlefield
+
+Initial soldiers:
+1, before permanent upgrade modifiers
+
+Gate groups:
+4
+
+Obstacles:
+Sandbags and barbed wire
+
+Boss:
+Armored military vehicle
+
+Boss HP:
+150
+
+Target duration:
+45 seconds
+
+Purpose:
+Introduce movement and mathematical gates.
+
+09.2 Level 2
+
+Name:
+战地防线
+
+Theme:
+Military defensive line
+
+Gate groups:
+5
+
+Obstacles:
+Sandbags, barbed wire, mines
+
+Boss HP:
+300
+
+Target duration:
+60 seconds
+
+Purpose:
+Introduce more complex mathematical
+gate combinations.
+
+09.3 Level 3
+
+Name:
+军事基地
+
+Theme:
+Military base
+
+Gate groups:
+6
+
+Obstacles:
+All three types
+
+Boss HP:
+500
+
+Target duration:
+75 seconds
+
+Purpose:
+Combine all mathematical operations
+with more difficult obstacle placement.
+
+09.4 Level Progression
+
+Level 1 is initially unlocked.
+
+Completing Level 1 unlocks Level 2.
+
+Completing Level 2 unlocks Level 3.
+
+Completing Level 3 displays a completion
+message and allows replay.
+
+09.5 Fixed Level Layout
+
+The first release uses fixed levels.
+
+Random level generation is not required.
+
+The same level must produce the same
+gate and obstacle layout when restarted.
+
+09.6 Difficulty
+
+Difficulty increases through:
+
+- More gate groups
+- More obstacles
+- More difficult choices
+- Higher Boss health
+
+Each level must be beatable with
+reasonable player decisions.
+
+Create automated simulations or
+equivalent tests to verify that
+at least one valid path can win.
+
+09.7 Gate Configuration
+
+Level 1 gate groups:
+
+Group 1:
++5 / +2
+
+Group 2:
+×2 / -3
+
+Group 3:
++10 / ÷2
+
+Group 4:
+×2 / -5
+
+Level 2 gate groups:
+
+Group 1:
++8 / +3
+
+Group 2:
+×2 / -5
+
+Group 3:
++12 / ÷2
+
+Group 4:
+×2 / -8
+
+Group 5:
++20 / ÷3
+
+Level 3 gate groups:
+
+Group 1:
++10 / +4
+
+Group 2:
+×3 / -8
+
+Group 3:
+÷2 / +15
+
+Group 4:
+×2 / -10
+
+Group 5:
++20 / ÷3
+
+Group 6:
+×2 / -15
+
+Gate group ordering must follow
+the specified sequence.
+
+Distribute gate groups along
+the level track.
+
+Place obstacles between gate groups.
+
+Ensure the player has sufficient
+time to react to each gate choice.
+
+For every level, set a deterministic
+track length and gate/obstacle positions
+in the level configuration.
+
+Choose positions consistent with the
+target duration and forward speed.
+
+The final layout must be tested for
+playability and completion.
+
+
+==================================================
+10. ECONOMY AND PERMANENT UPGRADES
+==================================================
+
+10.1 Gold
+
+Gold is earned after completing levels.
+
+Level 1 reward:
+100 gold
+
+Level 2 reward:
+200 gold
+
+Level 3 reward:
+300 gold
+
+A failed level gives:
+0 gold
+
+10.2 Permanent Upgrades
+
+Two upgrade types are required.
+
+Upgrade A:
+Initial Soldier Count
+
+Upgrade B:
+Weapon Damage
+
+10.3 Initial Soldier Upgrade
+
+Default initial soldiers:
+1
+
+Each purchased upgrade adds:
++1 initial soldier
+
+Maximum upgrade level:
+10
+
+Maximum initial soldiers:
+11
+
+10.4 Weapon Damage Upgrade
+
+Default bullet damage:
+1
+
+Each purchased upgrade adds:
++1 bullet damage
+
+Maximum upgrade level:
+10
+
+Maximum bullet damage:
+11
+
+10.5 Upgrade Costs
+
+Base upgrade cost:
+100 gold
+
+Cost formula:
+
+Cost(level) = 100 × (level + 1)
+
+The level represents upgrades
+already purchased.
+
+Examples:
+
+Level 0 -> 1:
+100 gold
+
+Level 1 -> 2:
+200 gold
+
+Level 2 -> 3:
+300 gold
+
+10.6 Purchasing
+
+An upgrade can be purchased only if:
+
+- The player has sufficient gold.
+- The upgrade has not reached max level.
+- The game is in a menu or upgrade state.
+
+On successful purchase:
+
+- Deduct gold.
+- Increase upgrade level.
+- Update the displayed value.
+- Save progress.
+
+10.7 Persistence
+
+Use localStorage.
+
+Save:
+
+- Gold balance
+- Current unlocked level
+- Completed levels
+- Initial soldier upgrade level
+- Weapon damage upgrade level
+- Audio settings
+
+Do not require a user account.
+
+The game must remain playable offline.
+
+
+==================================================
+11. GAME INTERFACE AND STATES
+==================================================
+
+11.1 Main Menu
+
+Display:
+
+- Game title
+- Current level
+- Start button
+- Upgrade button
+- Settings button
+- Current gold balance
+
+11.2 Gameplay HUD
+
+Display:
+
+- Current level
+- Current soldier count
+- Level progress
+- Boss health
+- Pause button
+
+The Boss health bar appears
+when the Boss is active.
+
+11.3 Pause Menu
+
+Buttons:
+
+继续游戏
+重新开始
+返回主页
+
+11.4 Victory Screen
+
+Display:
+
+闯关成功
+
+Gold earned
+
+Current level
+
+Buttons:
+
+下一关
+返回主页
+再玩一次
+
+11.5 Defeat Screen
+
+Display:
+
+挑战失败
+
+Reason for failure
+
+Buttons:
+
+重新挑战
+返回主页
+
+11.6 Upgrade Screen
+
+Display:
+
+- Current gold
+- Initial soldier upgrade
+- Weapon damage upgrade
+- Current values
+- Next upgrade values
+- Upgrade prices
+- Purchase buttons
+
+11.7 Settings Screen
+
+Provide:
+
+- Music on/off
+- Sound effects on/off
+
+11.8 Game States
+
+Required states:
+
+MENU
+UPGRADE
+PLAYING
+PAUSED
+VICTORY
+DEFEAT
+SETTINGS
+
+11.9 State Management
+
+Only permitted actions should execute
+in each game state.
+
+Gameplay updates must stop
+after victory or defeat.
+
+Restarting a level must reset
+all temporary gameplay data.
+
+Permanent upgrades and gold
+must remain unchanged when retrying.
+
+
+==================================================
+12. VISUAL AND AUDIO DESIGN
+==================================================
+
+12.1 Visual Theme
+
+Low-poly military warfare.
+
+Use a clean, stylized,
+non-photorealistic appearance.
+
+Primary colors:
+
+Military green
+Desert yellow
+Dark gray
+Steel gray
+
+Use red and green primarily
+for gameplay feedback.
+
+12.2 Player Soldiers
+
+Military-green uniforms.
+
+Helmets.
+
+Assault rifles.
+
+Simple but recognizable
+human proportions.
+
+12.3 Enemy Soldiers
+
+Use visually distinct uniforms.
+
+Enemies must be easy to distinguish
+from player soldiers.
+
+12.4 Environments
+
+Level 1:
+Desert battlefield
+
+Level 2:
+Defensive trench environment
+
+Level 3:
+Military base
+
+Include decorative objects such as:
+
+- Sandbags
+- Military crates
+- Barricades
+- Watchtowers
+- Military vehicles
+- Defensive structures
+
+Decorative objects must not
+interfere with gameplay visibility.
+
+12.5 Camera
+
+Use a third-person elevated perspective.
+
+The camera follows the player squad.
+
+The camera must display:
+
+- The squad
+- The road ahead
+- Upcoming mathematical gates
+- Nearby enemies and obstacles
+
+Avoid camera movement that causes
+motion sickness or obscures controls.
+
+12.6 Required Animations
+
+Soldier running
+
+Soldier shooting
+
+Soldier spawning
+
+Soldier removal
+
+Projectile motion
+
+Enemy hit reaction
+
+Enemy death
+
+Gate activation
+
+Boss damage
+
+Boss destruction
+
+Victory celebration
+
+12.7 Particle Effects
+
+Required:
+
+- Muzzle flashes
+- Projectile hits
+- Soldier growth effect
+- Soldier loss effect
+- Explosions
+- Boss destruction effect
+
+12.8 Audio
+
+Required sound events:
+
+Game start
+Shooting
+Gate positive
+Gate negative
+Enemy hit
+Soldier loss
+Explosion
+Boss destruction
+Victory
+Defeat
+
+Provide a looping background track.
+
+All audio must be locally bundled.
+
+Respect mobile browser audio
+autoplay restrictions.
+
+Audio begins only after valid
+user interaction.
+
+
+==================================================
+13. TECHNICAL REQUIREMENTS
+==================================================
+
+13.1 Framework
+
+Use:
+
+React
+Babylon.js
+TypeScript
+Vite
+
+React manages menus and UI.
+
+Babylon.js manages:
+
+- 3D scenes
+- Characters
+- Camera
+- Projectiles
+- Obstacles
+- Collision visualization
+- Animation
+
+Gameplay calculations should be
+implemented in TypeScript systems.
+
+13.2 Architecture
+
+Separate modules for:
+
+Game initialization
+
+Scene management
+
+Game state
+
+Input handling
+
+Player squad
+
+Soldier formation
+
+Mathematical gates
+
+Shooting
+
+Projectiles
+
+Enemies
+
+Obstacles
+
+Boss
+
+Levels
+
+Economy
+
+Upgrades
+
+Persistence
+
+UI
+
+Audio
+
+13.3 Level Data
+
+Store level configuration separately.
+
+Prefer JSON or TypeScript configuration.
+
+Level configuration must include:
+
+- Environment theme
+- Road length
+- Gate group positions
+- Gate operations
+- Obstacles
+- Enemy positions
+- Boss parameters
+- Rewards
+
+13.4 Performance
+
+Target:
+
+60 FPS on mainstream mobile devices.
+
+Provide graceful degradation for
+lower-performance devices.
+
+Use:
+
+- Instancing
+- Object pooling
+- Material reuse
+- Geometry reuse
+- Particle limits
+- Efficient collision processing
+
+Do not perform unnecessary allocations
+inside the main frame update loop.
+
+13.5 Screen Adaptation
+
+Support both:
+
+Portrait
+Landscape
+
+Portrait design reference:
+390 × 844
+
+Landscape design reference:
+844 × 390
+
+Ensure:
+
+- Full gameplay visibility
+- Readable UI
+- Functional touch controls
+- Proper safe-area handling
+- No clipped essential elements
+- No distorted character scaling
+
+13.6 Orientation Changes
+
+When orientation changes:
+
+- Recalculate rendering dimensions.
+- Recalculate UI layout.
+- Update camera framing.
+- Preserve current gameplay state.
+- Preserve current soldier count.
+- Preserve Boss health.
+- Prevent duplicate event listeners.
+
+13.7 Offline Requirements
+
+All assets must be local.
+
+Do not load essential gameplay resources
+from external servers.
+
+The built game must be able to run
+without network access once deployed
+and cached or served locally.
+
+13.8 Build Requirements
+
+Provide working commands for:
+
+Development
+
+Production build
+
+Local production preview
+
+The production build must be suitable
+for deployment to a static web host.
+
+
+==================================================
+14. ACCEPTANCE TESTS
+==================================================
+
+The following tests are mandatory.
+
+GAMEPLAY TESTS
+
+T01:
+The game starts normally.
+
+T02:
+The squad moves forward automatically.
+
+T03:
+Horizontal touch dragging controls the squad.
+
+T04:
+Releasing touch stops horizontal movement.
+
+T05:
+All soldiers shoot automatically.
+
+T06:
+Passing +5 with 1 soldier results in 6 soldiers.
+
+T07:
+Passing ×3 with 6 soldiers results in 18 soldiers.
+
+T08:
+Passing -4 with 18 soldiers results in 14 soldiers.
+
+T09:
+Passing ÷2 with 5 soldiers results in 2 soldiers.
+
+T10:
+A mathematical gate activates only once.
+
+T11:
+Only one gate per gate group can activate.
+
+T12:
+Soldier count never exceeds 200.
+
+T13:
+Soldier count reaching zero causes defeat.
+
+COMBAT TESTS
+
+T14:
+Each soldier contributes to shooting damage.
+
+T15:
+Projectiles damage valid enemies.
+
+T16:
+Enemy health reaches zero correctly.
+
+T17:
+Enemy death removes the enemy.
+
+T18:
+Obstacle collisions remove the correct
+number of soldiers.
+
+T19:
+Boss health decreases according
+to actual projectile hits.
+
+T20:
+Boss health reaching zero causes victory.
+
+T21:
+Reaching the end with Boss HP above zero
+causes defeat.
+
+LEVEL TESTS
+
+T22:
+Level 1 can be completed.
+
+T23:
+Level 2 can be completed.
+
+T24:
+Level 3 can be completed.
+
+T25:
+Completing a level unlocks the next level.
+
+T26:
+Restarting restores the level's original
+temporary state.
+
+ECONOMY TESTS
+
+T27:
+Gold rewards are added correctly.
+
+T28:
+Upgrade costs are calculated correctly.
+
+T29:
+Upgrades modify the correct attributes.
+
+T30:
+Gold and upgrades persist after refresh.
+
+UI TESTS
+
+T31:
+Main menu works.
+
+T32:
+Pause and resume work.
+
+T33:
+Victory screen works.
+
+T34:
+Defeat screen works.
+
+T35:
+Upgrade screen works.
+
+T36:
+Audio settings work.
+
+COMPATIBILITY TESTS
+
+T37:
+Portrait layout works.
+
+T38:
+Landscape layout works.
+
+T39:
+Touch controls work on mobile.
+
+T40:
+Mouse controls work on desktop.
+
+T41:
+Orientation changes preserve game state.
+
+T42:
+The game does not require runtime
+third-party API calls.
+
+PERFORMANCE TESTS
+
+T43:
+The game remains functional with
+200 soldiers.
+
+T44:
+Projectiles do not accumulate indefinitely.
+
+T45:
+Restarting repeatedly does not create
+duplicate update loops.
+
+T46:
+Game resources are cleaned up correctly.
+
+PROTOTYPE FIDELITY TESTS
+
+T47:
+Mathematical gates change soldier count,
+not weapon count.
+
+T48:
+Soldiers automatically shoot.
+
+T49:
+Squad growth visibly increases total firepower.
+
+T50:
+The player can choose between gate alternatives.
+
+T51:
+Enemies and hazards reduce squad effectiveness.
+
+T52:
+Boss combat and victory conditions work.
+
+T53:
+Permanent upgrades function across levels.
+
+T54:
+The game uses the required warfare theme.
+
+All applicable tests must pass before
+the project is considered complete.
+
+For tests that cannot be automatically
+executed, provide clear manual verification
+instructions.
+
+Never claim an unexecuted test passed.
+
+
+==================================================
+15. DEVELOPMENT EXECUTION REQUIREMENTS
+==================================================
+
+The gameplay specification is already fixed.
+
+Do not repeat the prototype-analysis
+and requirements-inference stage.
+
+Begin implementation only after this
+specification has been approved
+for development.
+
+Follow this order:
+
+PHASE 1:
+Project initialization and architecture.
+
+PHASE 2:
+Core squad movement and mathematical gates.
+
+PHASE 3:
+Shooting, enemies, obstacles, and Boss.
+
+PHASE 4:
+Three complete levels and progression.
+
+PHASE 5:
+Gold, upgrades, and persistence.
+
+PHASE 6:
+Complete UI and game-state handling.
+
+PHASE 7:
+Military visual assets, animations,
+particles, and audio.
+
+PHASE 8:
+Portrait and landscape adaptation.
+
+PHASE 9:
+Automated and interactive testing.
+
+PHASE 10:
+Bug fixing, optimization, and delivery.
+
+Do not deliver a nonfunctional mockup.
+
+Do not substitute visual demonstrations
+for actual gameplay mechanics.
+
+Do not remove important systems
+to simplify development.
+
+DELIVERABLES:
+
+1. Complete source code
+2. Local game assets
+3. Three playable levels
+4. Configuration files
+5. Package and build configuration
+6. Development instructions
+7. Production build instructions
+8. Testing report
+9. Known limitations
+10. Asset attribution and license details
+
+FINAL SUCCESS CRITERIA:
+
+A complete, functional HTML5 game named
+"数字门枪手" that reproduces the required
+Soldier Assault squad-growth shooting gameplay,
+uses a low-poly military warfare theme,
+supports portrait and landscape screens,
+operates offline, and passes the specified
+acceptance tests.
