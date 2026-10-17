@@ -381,7 +381,7 @@ class ProjectValidator:
             with verified_server(workspace) as origin:
                 execution = self._execute(rid, spec, workspace, report, evidence, plan, origin, round_no) if registered else self._generic_execute(rid, spec, workspace, report, origin, round_no)
                 await asyncio.wait_for(execution,
-                                       timeout=float(getattr(self.settings, "project_browser_timeout", 600)))
+                                       timeout=float(getattr(self.settings, "project_browser_timeout", 1800)))
             if not registered:
                 report["executor_gaps"].append({"acceptance_ids": [spec.case_id + "/task-specific-acceptance"],
                     "reason": "No reviewed gameplay acceptance executor is registered for this complete custom specification/version; generic browser smoke cannot certify gameplay"})

@@ -34,6 +34,7 @@ class Settings:
     project_max_calls: int = field(default_factory=lambda: int(os.getenv("PROJECT_MAX_MODEL_CALLS", "600")))
     project_max_tokens: int = field(default_factory=lambda: int(os.getenv("PROJECT_MAX_TOTAL_TOKENS", "6000000")))
     project_timeout: int = field(default_factory=lambda: int(os.getenv("PROJECT_TIMEOUT_SECONDS", "21600")))
+    project_browser_timeout: float = field(default_factory=lambda: float(os.getenv("PROJECT_BROWSER_TIMEOUT_SECONDS", "1800")))
     project_feature_steps: int = field(default_factory=lambda: int(os.getenv("PROJECT_FEATURE_STEPS", "36")))
     project_repair_rounds: int = field(default_factory=lambda: int(os.getenv("PROJECT_REPAIR_ROUNDS", "8")))
 

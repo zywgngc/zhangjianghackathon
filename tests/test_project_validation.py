@@ -106,6 +106,18 @@ class ProjectValidationGates(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(report["acceptance"]["complete"])
         self.assertEqual(report["acceptance"]["counts"]["passed"], 0)
 
+    async def test_configured_browser_deadline_still_stops_execution_without_acceptance(self):
+        async def wait_forever(*_):
+            await asyncio.Event().wait()
+        self.validator.settings.project_browser_timeout = .02
+        self.validator._execute = wait_forever
+        report = await self.validator.validate("test", self.spec, self.workspace,
+            {"passed": True, "source_sha256": self.workspace.sha, "artifact_manifest": []}, 0)
+        self.assertFalse(report["passed"])
+        self.assertFalse(report["acceptance"]["complete"])
+        self.assertEqual(report["acceptance"]["counts"]["passed"], 0)
+        self.assertTrue(any("TimeoutError" in error for error in report["errors"]))
+
     async def test_custom_spec_uses_generic_smoke_and_cannot_publish_without_executor(self):
         self.validator._execute = AsyncMock()
         self.validator._generic_execute = AsyncMock()
