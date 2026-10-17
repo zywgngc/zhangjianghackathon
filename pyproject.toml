@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zhangjiang-game-harness"
+version = "0.1.0"
+description = "Durable Chinese HTML game generation harness"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "uvicorn>=0.30,<1",
+  "openai>=1.60,<3",
+  "pydantic>=2.9,<3",
+  "python-dotenv>=1.0,<2",
+  "httpx>=0.27,<1",
+  "playwright>=1.49,<2",
+  "jsonschema>=4.23,<5",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8,<10", "pytest-asyncio>=0.24,<2"]
+
+[tool.setuptools.package-data]
+game_harness = ["static/*", "knowledge/*.md"]
+
+[tool.setuptools.packages.find]
+include = ["game_harness*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

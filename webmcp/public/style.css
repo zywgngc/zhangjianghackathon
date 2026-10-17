@@ -12,6 +12,12 @@
 body {
   margin: 0;
 }
+a {
+  color: #91cfc3;
+}
+[hidden] {
+  display: none !important;
+}
 main {
   max-width: 1180px;
   margin: auto;

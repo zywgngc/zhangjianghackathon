@@ -7,3 +7,11 @@ webmcp/coverage/
 .env
 .env.*
 !.env.example
+.venv/
+.bootstrap/
+data/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.egg-info/
+.DS_Store

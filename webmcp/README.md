@@ -4,6 +4,8 @@
 
 **Run it:** see [runtime.md](runtime.md) for setup, API routes, demonstration results, and the portal integration hook. From this directory: `pnpm install --frozen-lockfile`, `pnpm check`, `pnpm test`, then `pnpm start`.
 
+**Harness integration:** [Combined startup and adapter contract](../docs/webmcp-integration.md). The FastAPI workbench now hosts this studio at `/research`, forwards authenticated commands to this runtime, and gates Builder admission on the pinned blueprint's readiness, evidence, and engine compatibility.
+
 **Start here: [Recipient handoff — current state, ownership, worked example, and next steps](handoff.md).** It explains what has been delivered, what still needs implementation, and what information we need from the portal owner.
 
 **Follow-up discussion:** [Up to three rounds on each boundary](discussion-policy.md), with separate run-wide budgets for main → MAS and MAS → material portal. v0.2 adds conversation correlation and a `needs_clarification` response; the initial request is round zero.

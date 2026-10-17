@@ -36,7 +36,7 @@ The output is a plan backed by traceable sources and explicit validation evidenc
 | Browser WebMCP | Feature detection, tool registration, local authenticated API, and simulated adapter tests | Native browser/agent interoperability verification |
 | Source research and review | Evidence levels and composition rules documented | Real searches, source inspection, pinned revisions, and verification workers |
 | Durable execution | SQLite run/job history, leases, bounded retries, cancellation, and safe restart recovery | Postgres/distributed workers and provider asynchronous-job reconciliation |
-| Builder handoff | Versioned partial blueprints with candidates, gaps, and all 225 unexecuted benchmark checks | Verified source combinations and downstream Builder/QA integration |
+| Builder handoff | Versioned partial blueprints; harness adapter with revision/evidence/engine admission and pinned-context hooks | Verified source combinations and a real compatible ready blueprint for Builder/QA |
 
 The top-level contract `.ts` files contain declarations; [src](src) contains the executable runtime. The example JSON and default portal use synthetic materials. `architecture.html` remains a static diagram export; `pnpm start` serves the working research studio. Setup, commands, and limitations are in [runtime.md](runtime.md).
 
@@ -172,7 +172,7 @@ Unknown metadata is acceptable if reported explicitly. If source-file retrieval 
 | D. Demonstrate the research slice | Our team | One engine and archetype family, four to six mechanics, zero optional answers, multiple alternatives where available, and an honest readiness result |
 | E. Integrate the builder | Our team + builder owner | Builder consumes a versioned blueprint and reports integration/test outcomes against its mechanic checks |
 
-Milestone B is implemented for the three reference cases and can run while the portal details in A are finalized. It validates our workflow, not live retrieval or source quality. C–E remain pending. Milestone D requires real source evidence and a declared readiness policy; candidate shortfalls must be visible rather than filled with fixtures.
+Milestone B is implemented for the three reference cases and can run while the portal details in A are finalized. It validates our workflow, not live retrieval or source quality. C–D remain pending. E now has a harness adapter and fixed-version handoff hooks, tested using explicitly synthetic integration fixtures; a real ready blueprint and compatible engine are still required. See [harness integration](../docs/webmcp-integration.md). Milestone D requires real source evidence and a declared readiness policy; candidate shortfalls must be visible rather than filled with fixtures.
 
 For the first live slice, acceptance should cover automatic defaults, one preference change and dependency invalidation, a portal error or timeout, cancellation/recovery behavior, incompatible candidate rejection, and a blueprint whose claimed evidence can be traced to sources and checks. Also demonstrate three-round limits on both boundaries, idempotent retries, concurrent last-slot contention, and partial output at exhaustion. Broad genre coverage and all three engine routes follow this slice.
 

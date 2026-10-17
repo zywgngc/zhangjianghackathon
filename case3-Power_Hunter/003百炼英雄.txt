@@ -1,0 +1,2687 @@
+# GAME DEVELOPMENT TASK
+
+Test Case ID: GAME-TEST-003
+Game Name: 百炼英雄
+English Name: Power Hunter
+Specification Version: 1.0
+
+You are responsible for implementing, testing,
+optimizing, and delivering the complete game
+according to this specification.
+
+This specification is the authoritative source
+of gameplay requirements.
+
+The game mechanics, numerical parameters, level
+design, visual direction, and implementation
+constraints have already been determined.
+
+Do not independently redesign the game.
+
+Do not replace the required mechanics with
+simplified alternatives.
+
+Do not omit required features.
+
+If implementation details are unspecified,
+make reasonable engineering decisions without
+changing the specified gameplay.
+
+All user-facing game content must be in
+Simplified Chinese.
+
+
+==================================================
+01. BASIC GAME INFORMATION
+==================================================
+
+Game Name:
+战力吞噬者
+
+English Name:
+Power Hunter
+
+Reference Prototype:
+
+Hero Wars: Alliance
+https://play.google.com/store/apps/details?id=com.nexters.herowars
+
+Reference Gameplay:
+Hero Wars advertisement-style numerical
+power growth and enemy selection gameplay.
+
+Additional Reference:
+
+Hero Tower Wars
+
+IMPORTANT:
+
+Use the open-field click interaction mode.
+
+Do not implement a tower-floor game.
+
+Genre:
+3D Casual Puzzle
+Numerical Power Growth
+Click-to-Interact Adventure
+Enemy Absorption
+Progression Puzzle
+
+Gameplay Mode:
+Open-field click interaction
+
+Target Platform:
+HTML5 Browser Game
+
+Target Devices:
+Mobile Phones
+Tablets
+Desktop Browsers
+
+Screen Orientation:
+Portrait and Landscape
+
+Primary Language:
+Simplified Chinese
+
+Connectivity:
+Offline-first
+
+Required Technology:
+- HTML5
+- TypeScript
+- React
+- Babylon.js
+- Vite
+
+Rendering:
+WebGL through Babylon.js
+
+Backend:
+Not required
+
+Account System:
+Not required
+
+Payment:
+Not required
+
+Advertising:
+Not required
+
+Game Assets:
+Locally bundled, appropriately licensed assets
+or original procedural assets.
+
+
+==================================================
+02. RECREATION OBJECTIVES
+==================================================
+
+Recreate the core numerical power comparison
+gameplay commonly shown in Hero Wars advertisements.
+
+The player controls one hero.
+
+Every hero and enemy has a visible
+numerical combat power value.
+
+The player can defeat an enemy only when
+the player's current power is strictly
+greater than the enemy's power.
+
+After defeating an enemy, the player's power
+increases by the defeated enemy's entire power.
+
+Weapons are distributed around the level.
+
+Collecting a weapon increases player power
+by a fixed numerical amount.
+
+The player must determine a suitable sequence
+of enemy defeats and weapon pickups.
+
+The final objective is to become powerful enough
+to defeat the level Boss.
+
+Preserve the following gameplay systems:
+
+1. Numerical combat power
+2. Visible power labels above characters
+3. Power comparison
+4. Click-to-select interaction
+5. Automatic movement
+6. Automatic attack animation
+7. Enemy defeat
+8. Enemy power absorption
+9. Weapon collection
+10. Weapon power bonuses
+11. Progressive enemy selection
+12. Boss battle
+13. Level completion
+14. Level progression
+15. Restart and replay
+
+GAMEPLAY STRUCTURE:
+
+Use a freely navigable open field.
+
+Enemies and weapons are distributed
+across the map.
+
+The player can click any reachable
+enemy or collectible.
+
+The hero automatically travels
+toward the selected target.
+
+Do not use fixed tower floors.
+
+Do not use continuous automatic attacking.
+
+Do not use automatic enemy selection.
+
+Do not use a virtual joystick as
+the primary control method.
+
+The player must actively choose
+which enemy or weapon to interact with.
+
+VISUAL REQUIREMENT:
+
+Use a stylized 3D fantasy adventure theme.
+
+The main character is a fantasy hero.
+
+Enemies include monsters, skeletons,
+armored enemies, and other fantasy creatures.
+
+Use original or appropriately licensed
+assets instead of copying protected
+artwork from the reference game.
+
+
+==================================================
+03. CORE GAMEPLAY LOOP
+==================================================
+
+The complete gameplay loop is:
+
+MAIN MENU
+    |
+    v
+SELECT / START LEVEL
+    |
+    v
+SPAWN HERO
+    |
+    v
+DISPLAY INITIAL COMBAT POWER
+    |
+    v
+DISPLAY ENEMY POWER VALUES
+    |
+    v
+PLAYER SELECTS TARGET
+    |
+    +---- ENEMY
+    |       |
+    |       v
+    |    COMPARE POWER
+    |       |
+    |       +---- PLAYER POWER > ENEMY POWER
+    |       |              |
+    |       |              v
+    |       |         AUTO MOVE
+    |       |              |
+    |       |              v
+    |       |         ATTACK ENEMY
+    |       |              |
+    |       |              v
+    |       |         ENEMY DEFEATED
+    |       |              |
+    |       |              v
+    |       |         ABSORB ENEMY POWER
+    |       |
+    |       +---- PLAYER POWER <= ENEMY POWER
+    |                      |
+    |                      v
+    |                SHOW WARNING
+    |                      |
+    |                      v
+    |                SELECT AGAIN
+    |
+    +---- WEAPON
+    |       |
+    |       v
+    |    AUTO MOVE
+    |       |
+    |       v
+    |    COLLECT WEAPON
+    |       |
+    |       v
+    |    INCREASE POWER
+    |
+    +---- EMPTY GROUND
+            |
+            v
+         AUTO MOVE
+    |
+    v
+SELECT STRONGER ENEMIES
+    |
+    v
+INCREASE COMBAT POWER
+    |
+    v
+DEFEAT FINAL BOSS
+    |
+    v
+VICTORY
+    |
+    v
+UNLOCK NEXT LEVEL
+
+The game does not use a survival timer.
+
+The game does not require manually
+controlling combat animations.
+
+The player wins by defeating the Boss.
+
+There is no conventional HP-based combat.
+
+Power comparison determines
+whether combat is successful.
+
+Invalid enemy selections must not
+immediately kill the player.
+
+The player may restart at any time.
+
+
+==================================================
+04. PLAYER CONTROL SYSTEM
+==================================================
+
+04.1 Primary Interaction
+
+The primary interaction is tapping
+or clicking objects.
+
+Supported targets:
+
+- Enemy
+- Weapon
+- Empty ground
+- Boss
+- UI controls
+
+04.2 Click Enemy
+
+When the player selects an enemy:
+
+Read the current player power P.
+
+Read the selected enemy power E.
+
+If P > E:
+
+Set the selected enemy as the active target.
+
+Move the hero automatically toward the enemy.
+
+Stop within attack range.
+
+Play the attack animation.
+
+Apply the power absorption result.
+
+Remove the defeated enemy.
+
+If P <= E:
+
+Do not initiate movement toward the enemy.
+
+Display:
+
+战力不足
+
+Highlight the enemy power label in red.
+
+Allow the player to choose another target.
+
+04.3 Click Weapon
+
+When the player clicks a weapon:
+
+Set the weapon as the current target.
+
+Find a valid path to the weapon.
+
+Move automatically toward it.
+
+Stop within pickup range.
+
+Play the pickup animation.
+
+Increase player power.
+
+Remove the collected weapon.
+
+04.4 Click Ground
+
+Clicking an empty reachable location
+moves the hero to that location.
+
+Ground movement does not trigger combat.
+
+The hero must not automatically attack
+nearby enemies.
+
+04.5 Movement Parameters
+
+World coordinate system:
+
+X = horizontal ground direction
+Y = vertical height
+Z = ground depth
+
+Player movement speed:
+5 world units per second
+
+Player collision radius:
+0.4 world units
+
+Enemy interaction range:
+1.2 world units
+
+Weapon pickup range:
+0.8 world units
+
+Movement must be frame-rate independent.
+
+04.6 Automatic Pathfinding
+
+Use a navigation grid or equivalent
+pathfinding system.
+
+The hero must navigate around
+static obstacles.
+
+The hero must not pass through
+walls or impassable terrain.
+
+If a target cannot be reached:
+
+Cancel movement.
+
+Display:
+
+无法到达目标
+
+04.7 Target Changes
+
+If the player clicks a different target
+while moving:
+
+Cancel the previous movement target.
+
+Calculate a new path.
+
+Move toward the newly selected target.
+
+Do not teleport.
+
+04.8 Interaction Lock
+
+During the final attack animation
+and power calculation:
+
+Temporarily prevent conflicting interactions.
+
+After the interaction completes,
+restore normal input.
+
+04.9 Desktop Controls
+
+Mouse clicking must perform
+the same actions as mobile tapping.
+
+04.10 Camera
+
+Use an elevated isometric-style
+third-person camera.
+
+The camera should follow the player
+with smooth movement.
+
+The player must remain clearly visible.
+
+04.11 Pause
+
+When paused:
+
+- Player movement stops
+- Target interactions stop
+- Animations pause
+- Game timers pause
+- Combat resolution stops
+- UI remains interactive
+
+
+==================================================
+05. GAME OBJECTS
+==================================================
+
+05.1 Player Hero
+
+The player controls one hero.
+
+Appearance:
+
+- Fantasy adventurer
+- Light armor
+- Sword
+- Distinctive hero silhouette
+- Clear combat power label
+
+Required animations:
+
+Idle
+Running
+Attacking
+Collecting weapon
+Power increase
+Victory
+
+05.2 Normal Enemies
+
+Six enemy categories are required.
+
+Enemy Type 1:
+哥布林
+
+Appearance:
+Small green fantasy creature.
+
+Behavior:
+Stationary until defeated.
+
+Combat:
+Power comparison.
+
+
+Enemy Type 2:
+骷髅兵
+
+Appearance:
+Skeleton with basic equipment.
+
+Behavior:
+Stationary until defeated.
+
+Combat:
+Power comparison.
+
+
+Enemy Type 3:
+巨型蜘蛛
+
+Appearance:
+Large stylized spider.
+
+Behavior:
+Stationary until defeated.
+
+Combat:
+Power comparison.
+
+
+Enemy Type 4:
+兽人战士
+
+Appearance:
+Large green armored enemy.
+
+Behavior:
+Stationary until defeated.
+
+Combat:
+Power comparison.
+
+
+Enemy Type 5:
+黑暗骑士
+
+Appearance:
+Armored fantasy knight.
+
+Behavior:
+Stationary until defeated.
+
+Combat:
+Power comparison.
+
+
+Enemy Type 6:
+恶魔守卫
+
+Appearance:
+Large dark fantasy creature.
+
+Behavior:
+Stationary until defeated.
+
+Combat:
+Power comparison.
+
+Enemy power is determined by
+the level configuration.
+
+Enemy type does not independently
+determine power.
+
+05.3 Enemy Behavior
+
+Normal enemies remain at their
+configured positions.
+
+They do not pursue the player.
+
+They do not attack automatically.
+
+They react only when selected
+and successfully defeated.
+
+This game is a numerical selection puzzle,
+not a conventional action RPG.
+
+05.4 Boss
+
+Each level has one Boss.
+
+The Boss follows the same numerical
+comparison rule as normal enemies.
+
+The Boss must have:
+
+- Large character model
+- Combat power label
+- Special attack animation
+- Defeat animation
+- Victory trigger
+
+05.5 Weapons
+
+Implement six weapon types.
+
+Weapon 1:
+木剑
+
+Power Bonus:
++5
+
+
+Weapon 2:
+铁剑
+
+Power Bonus:
++10
+
+
+Weapon 3:
+精钢剑
+
+Power Bonus:
++20
+
+
+Weapon 4:
+战斧
+
+Power Bonus:
++30
+
+
+Weapon 5:
+魔法剑
+
+Power Bonus:
++50
+
+
+Weapon 6:
+圣剑
+
+Power Bonus:
++100
+
+Weapons are collectibles.
+
+Weapons do not introduce
+additional damage attributes.
+
+All weapon bonuses increase
+the same combat power value.
+
+05.6 Environment Objects
+
+Required:
+
+Trees
+Rocks
+Crates
+Walls
+Decorative structures
+Path boundaries
+
+Static obstacles must use
+appropriate collision boundaries.
+
+Decorative objects should not
+prevent selecting enemies.
+
+05.7 Combat Power Labels
+
+Every hero and enemy has a
+numerical label above its head.
+
+The label must:
+
+- Remain readable
+- Follow the character
+- Update when power changes
+- Avoid extreme scaling
+- Be visible in both orientations
+
+Player labels:
+Distinct positive color.
+
+Defeatable enemy labels:
+Green.
+
+Undefeatable enemy labels:
+Red.
+
+Boss label:
+Distinct Boss presentation.
+
+
+==================================================
+06. CORE GAMEPLAY MECHANICS
+==================================================
+
+06.1 Combat Power
+
+Let:
+
+P = player combat power
+
+E = enemy combat power
+
+Both must be positive integers.
+
+06.2 Enemy Defeat Condition
+
+The player can defeat an enemy only if:
+
+P > E
+
+Strict inequality is required.
+
+If:
+
+P = E
+
+The player cannot defeat the enemy.
+
+If:
+
+P < E
+
+The player cannot defeat the enemy.
+
+06.3 Successful Combat
+
+After a successful enemy defeat:
+
+P_new = P + E
+
+Example:
+
+Player power:
+10
+
+Enemy power:
+6
+
+Result:
+
+10 + 6 = 16
+
+Player power becomes:
+16
+
+06.4 Invalid Combat
+
+When:
+
+P <= E
+
+The attack must not execute.
+
+No power is lost.
+
+No enemy is removed.
+
+The player remains alive.
+
+Show:
+
+战力不足
+
+06.5 Weapon Collection
+
+Let:
+
+W = weapon bonus
+
+After collecting a weapon:
+
+P_new = P + W
+
+Example:
+
+Player power:
+16
+
+Weapon:
+精钢剑 +20
+
+Result:
+
+16 + 20 = 36
+
+06.6 Weapon Rules
+
+Every weapon is collectible once.
+
+After collection:
+
+- Apply the bonus
+- Play the pickup animation
+- Update the power label
+- Remove the weapon
+- Record the item as collected
+
+The same weapon cannot be collected twice.
+
+06.7 Power Growth Feedback
+
+After a successful kill:
+
+Display:
+
++E
+
+Animate the player power label
+from its previous value to the new value.
+
+After collecting a weapon:
+
+Display:
+
++W
+
+Play a distinct weapon pickup effect.
+
+06.8 Attack Animation
+
+A successful combat interaction must include:
+
+1. Hero approaches target.
+2. Hero stops in attack range.
+3. Hero faces the target.
+4. Hero plays a short melee attack.
+5. Target plays a hit animation.
+6. Target is defeated.
+7. Combat power increases.
+
+Default attack animation duration:
+0.6 seconds.
+
+Power absorption animation duration:
+0.5 seconds.
+
+06.9 Enemy Defeat
+
+After a successful attack:
+
+- Enemy becomes inactive.
+- Enemy plays defeat animation.
+- Enemy disappears.
+- Enemy cannot be selected again.
+- Player receives enemy power.
+
+06.10 Boss Defeat
+
+Bosses use the same comparison rule.
+
+If P > BossPower:
+
+The Boss can be defeated.
+
+After defeating the Boss:
+
+- Trigger Boss defeat animation
+- Stop gameplay movement
+- Display victory effects
+- Open victory screen
+
+06.11 Boss Selection
+
+If player power is insufficient:
+
+Display:
+
+战力不足，继续提升战力
+
+The player must collect weapons
+or defeat weaker enemies first.
+
+06.12 Selection Highlight
+
+When the player selects a valid target:
+
+Show a selection indicator.
+
+When a target is defeated or collected:
+
+Remove the indicator.
+
+06.13 Numerical Display
+
+Display all combat power values
+as integers.
+
+Do not display decimals.
+
+Do not use abbreviations such as K
+for values below 10000.
+
+Maximum supported combat power:
+999999
+
+06.14 Power Comparison Integrity
+
+All gameplay systems must use
+the same authoritative combat power value.
+
+Do not use separate hidden HP,
+attack, or defense values
+to determine combat success.
+
+
+==================================================
+07. NUMERICAL SYSTEM
+==================================================
+
+07.1 Initial Combat Power
+
+Level 1:
+10
+
+Level 2:
+20
+
+Level 3:
+30
+
+07.2 Power Growth
+
+Defeating an enemy:
+
+P_new = P + E
+
+Collecting a weapon:
+
+P_new = P + W
+
+07.3 Power Limits
+
+Minimum power:
+1
+
+Maximum power:
+999999
+
+07.4 Invalid Target Selection
+
+If the enemy power is greater than
+or equal to player power:
+
+Do not modify combat power.
+
+Do not remove the enemy.
+
+Do not move toward the target.
+
+07.5 Successful Kill
+
+A defeated enemy contributes
+100% of its combat power.
+
+No random modifiers.
+
+No critical hits.
+
+No damage reduction.
+
+07.6 Weapon Bonuses
+
+木剑:
++5
+
+铁剑:
++10
+
+精钢剑:
++20
+
+战斧:
++30
+
+魔法剑:
++50
+
+圣剑:
++100
+
+07.7 No Random Combat Outcomes
+
+Combat results must be deterministic.
+
+The same player power and enemy power
+must always produce the same result.
+
+07.8 No Conventional Health System
+
+The game does not use:
+
+HP
+Defense
+Critical damage
+Attack speed
+Mana
+Stamina
+
+The single combat power value
+determines combat success.
+
+07.9 Combat Examples
+
+Example A:
+
+Player:
+10
+
+Enemy:
+3
+
+Result:
+Victory
+
+New power:
+13
+
+
+Example B:
+
+Player:
+10
+
+Enemy:
+10
+
+Result:
+Cannot attack successfully.
+
+
+Example C:
+
+Player:
+10
+
+Enemy:
+15
+
+Result:
+Cannot attack successfully.
+
+
+Example D:
+
+Player:
+13
+
+Weapon:
++20
+
+Result:
+New power 33.
+
+
+==================================================
+08. COMBAT AND COLLISION SYSTEM
+==================================================
+
+08.1 Combat Trigger
+
+Combat begins only through
+an intentional enemy selection.
+
+08.2 Combat Validation
+
+Validate combat power both:
+
+- When the enemy is selected
+- Immediately before resolving the attack
+
+This prevents stale target state.
+
+08.3 Attack Range
+
+The hero must stop within
+1.2 world units of the enemy.
+
+08.4 Attack Direction
+
+Before attacking, rotate the hero
+toward the target.
+
+08.5 Attack Resolution
+
+If player power is greater than enemy power:
+
+Play attack animation.
+
+Play enemy defeat animation.
+
+Increase player power.
+
+Remove enemy.
+
+08.6 Invalid Combat
+
+If player power is insufficient:
+
+Do not initiate an attack.
+
+Show warning feedback.
+
+08.7 Collision
+
+The hero cannot pass through:
+
+Walls
+Large rocks
+Impassable structures
+
+Enemies must be treated as
+obstacles during pathfinding.
+
+The selected enemy can be approached
+to a valid interaction point.
+
+08.8 Weapon Pickup
+
+Weapons are collected when the hero
+reaches the configured pickup radius.
+
+Pickup range:
+0.8 world units.
+
+08.9 Interaction Cancellation
+
+Changing the active target cancels
+the previous movement action.
+
+Interactions already in the
+final resolution phase must complete
+before accepting another target.
+
+08.10 Enemy Removal
+
+Defeated enemies must be removed
+from collision and selection systems.
+
+08.11 Target Selection
+
+Use Babylon.js scene picking
+or an equivalent picking mechanism.
+
+Touch and mouse selection must
+identify the correct game object.
+
+08.12 No Automatic Enemy Aggression
+
+Enemies do not attack the player
+unless a future version explicitly
+introduces such behavior.
+
+08.13 Failure Handling
+
+An invalid enemy selection does not
+immediately cause game over.
+
+If the level reaches a state where:
+
+- The Boss cannot be defeated
+- No weaker enemy remains
+- No uncollected weapon can improve power
+
+Display:
+
+当前无法继续提升战力
+
+Offer:
+
+重新开始
+返回主页
+
+Do not silently leave the player
+in an unsolvable level state.
+
+
+==================================================
+09. LEVEL DESIGN
+==================================================
+
+The initial release contains three levels.
+
+All levels must use deterministic
+configuration data.
+
+Do not use random enemy power values.
+
+Do not use random weapon bonuses.
+
+09.1 Level 1
+
+Name:
+森林营地
+
+Theme:
+Fantasy forest
+
+Initial Player Power:
+10
+
+Normal Enemy Count:
+8
+
+Enemy Power Values:
+
+3
+5
+8
+12
+16
+22
+30
+44
+
+Enemy Types:
+
+哥布林
+骷髅兵
+巨型蜘蛛
+兽人战士
+
+Weapons:
+
+木剑 +5
+铁剑 +10
+精钢剑 +20
+
+Boss:
+
+森林巨魔
+
+Boss Power:
+150
+
+09.2 Level 1 Valid Solution
+
+One valid progression:
+
+Initial power:
+10
+
+Defeat enemy 3:
+13
+
+Defeat enemy 5:
+18
+
+Defeat enemy 8:
+26
+
+Defeat enemy 12:
+38
+
+Defeat enemy 16:
+54
+
+Defeat enemy 22:
+76
+
+Defeat enemy 30:
+106
+
+Defeat enemy 44:
+150
+
+Collect 木剑 +5:
+155
+
+Defeat Boss 150:
+Victory
+
+This is only one valid solution.
+
+The player may collect weapons earlier
+or choose another valid order.
+
+09.3 Level 2
+
+Name:
+荒漠遗迹
+
+Theme:
+Ancient desert ruins
+
+Initial Player Power:
+20
+
+Normal Enemy Count:
+12
+
+Enemy Power Values:
+
+6
+9
+14
+20
+28
+40
+55
+70
+90
+115
+145
+180
+
+Enemy Types:
+
+哥布林
+骷髅兵
+巨型蜘蛛
+兽人战士
+黑暗骑士
+
+Weapons:
+
+铁剑 +10
+精钢剑 +20
+战斧 +30
+魔法剑 +50
+
+Boss:
+
+遗迹守卫
+
+Boss Power:
+500
+
+09.4 Level 2 Valid Solution
+
+Initial power:
+20
+
+Defeat 6:
+26
+
+Defeat 9:
+35
+
+Defeat 14:
+49
+
+Defeat 20:
+69
+
+Defeat 28:
+97
+
+Defeat 40:
+137
+
+Defeat 55:
+192
+
+Defeat 70:
+262
+
+Defeat 90:
+352
+
+Defeat 115:
+467
+
+Defeat 145:
+612
+
+Defeat Boss 500:
+Victory
+
+This route does not require
+collecting every weapon or defeating
+every normal enemy.
+
+Alternative routes must also remain valid.
+
+09.5 Level 3
+
+Name:
+魔王城堡
+
+Theme:
+Dark fantasy castle
+
+Initial Player Power:
+30
+
+Normal Enemy Count:
+16
+
+Enemy Power Values:
+
+8
+12
+18
+27
+40
+60
+85
+120
+170
+230
+310
+420
+550
+700
+900
+1200
+
+Enemy Types:
+
+All six enemy categories.
+
+Weapons:
+
+铁剑 +10
+精钢剑 +20
+战斧 +30
+魔法剑 +50
+圣剑 +100
+
+Boss:
+
+深渊魔王
+
+Boss Power:
+1500
+
+09.6 Level 3 Valid Solution
+
+Initial power:
+30
+
+Defeat 8:
+38
+
+Defeat 12:
+50
+
+Defeat 18:
+68
+
+Defeat 27:
+95
+
+Defeat 40:
+135
+
+Defeat 60:
+195
+
+Defeat 85:
+280
+
+Defeat 120:
+400
+
+Defeat 170:
+570
+
+Defeat 230:
+800
+
+Defeat 310:
+1110
+
+Defeat 420:
+1530
+
+Defeat Boss 1500:
+Victory
+
+The player may use weapons to
+accelerate this progression.
+
+09.7 Level Layout
+
+Each level must contain:
+
+- Spawn area
+- Multiple enemy clusters
+- Weapon locations
+- Navigable paths
+- Decorative obstacles
+- Boss area
+
+09.8 Level Size
+
+Level 1:
+30 × 30 world units
+
+Level 2:
+36 × 36 world units
+
+Level 3:
+42 × 42 world units
+
+09.9 Entity Placement
+
+Place enemies and weapons in
+predefined world positions.
+
+Use configuration files to define:
+
+- Entity type
+- Power value
+- X position
+- Z position
+- Interaction radius
+
+For each level:
+
+Generate a deterministic placement
+that preserves the required enemy values
+and weapon inventory.
+
+Place the player near the map center
+or a clearly designated starting area.
+
+Distribute enemies across the map
+so their power progression is understandable.
+
+Place the Boss in a distinct
+visually identifiable area.
+
+Do not place objects where
+they cannot be reached.
+
+09.10 Level Difficulty
+
+Level 1:
+Introduction to numerical power.
+
+Level 2:
+More complex selection order.
+
+Level 3:
+Higher power values and larger map.
+
+09.11 Puzzle Solvability
+
+Every level must have at least
+one valid winning sequence.
+
+Verify solvability automatically.
+
+The player must not need
+random luck to complete a level.
+
+09.12 Level Completion
+
+Defeating the Boss completes the level.
+
+Level 1 unlocks Level 2.
+
+Level 2 unlocks Level 3.
+
+Level 3 displays the final
+game completion screen.
+
+Completed levels remain replayable.
+
+
+==================================================
+10. ECONOMY AND PERMANENT UPGRADES
+==================================================
+
+10.1 Economy Scope
+
+The first release uses numerical combat
+power as its primary progression system.
+
+Do not introduce a separate currency
+or complex equipment economy.
+
+10.2 Combat Power
+
+Combat power is temporary
+and resets at the start of each level.
+
+10.3 Weapons
+
+Weapons provide power bonuses
+for the current level only.
+
+Collected weapons do not persist
+between levels.
+
+10.4 Level Unlocking
+
+Level 1 is initially unlocked.
+
+Level 2 unlocks after completing Level 1.
+
+Level 3 unlocks after completing Level 2.
+
+10.5 Persistence
+
+Use localStorage.
+
+Save:
+
+- Highest unlocked level
+- Completed levels
+- Audio preferences
+
+10.6 Restart
+
+Restarting the current level must reset:
+
+- Player combat power
+- Defeated enemies
+- Collected weapons
+- Enemy positions
+- Weapon positions
+- Boss state
+- Current movement target
+
+10.7 Replay
+
+Previously completed levels
+may be replayed.
+
+Replaying does not remove
+previously unlocked levels.
+
+10.8 No Permanent Combat Upgrades
+
+Do not implement permanent power upgrades
+in the initial release.
+
+The level puzzle must retain
+its intended fixed starting power.
+
+10.9 No Accounts
+
+Do not require registration,
+login, or remote storage.
+
+
+==================================================
+11. GAME INTERFACE AND STATES
+==================================================
+
+11.1 Main Menu
+
+Display:
+
+- Game title
+- Start button
+- Level selection
+- Settings
+
+11.2 Level Selection
+
+Display three levels.
+
+Locked levels must be visually distinct.
+
+11.3 Gameplay HUD
+
+Display:
+
+- Current level
+- Current combat power
+- Remaining enemies
+- Pause button
+
+11.4 Character Power Labels
+
+The player must always display
+current combat power above the character.
+
+Every enemy must display its power.
+
+Use readable numbers.
+
+11.5 Enemy Power Colors
+
+Enemy power lower than player:
+Green.
+
+Enemy power equal to or higher:
+Red.
+
+Update colors dynamically after
+every power increase.
+
+11.6 Weapon Labels
+
+Every weapon must display its bonus.
+
+Examples:
+
++5
++10
++20
++30
++50
++100
+
+11.7 Interaction Feedback
+
+Valid enemy selection:
+
+Show selection indicator.
+
+Invalid enemy selection:
+
+Show red warning.
+
+Weapon selection:
+
+Show pickup target indicator.
+
+11.8 Power Growth Animation
+
+After a successful interaction:
+
+Display floating text.
+
+Animate the player's combat
+power number increasing.
+
+11.9 Pause Menu
+
+Buttons:
+
+继续游戏
+重新开始
+返回主页
+
+11.10 Victory Screen
+
+Display:
+
+闯关成功
+
+Final combat power
+
+Enemies defeated
+
+Weapons collected
+
+Buttons:
+
+下一关
+再玩一次
+返回主页
+
+11.11 Failure / Deadlock Screen
+
+Display:
+
+无法继续提升战力
+
+Buttons:
+
+重新开始
+返回主页
+
+11.12 Settings Screen
+
+Provide:
+
+- Background music on/off
+- Sound effects on/off
+
+11.13 Game States
+
+Required states:
+
+MENU
+PLAYING
+MOVING
+INTERACTING
+PAUSED
+VICTORY
+DEADLOCK
+SETTINGS
+
+11.14 State Management
+
+During MOVING:
+
+The hero follows the active target.
+
+During INTERACTING:
+
+Prevent conflicting actions.
+
+During PAUSED:
+
+Freeze gameplay.
+
+During VICTORY:
+
+Disable normal gameplay interaction.
+
+During DEADLOCK:
+
+Offer restart and return options.
+
+
+==================================================
+12. VISUAL AND AUDIO DESIGN
+==================================================
+
+12.1 Visual Theme
+
+Stylized 3D fantasy adventure.
+
+Use a colorful low-poly appearance.
+
+The game should resemble a
+modern mobile casual puzzle game.
+
+12.2 Character
+
+Fantasy adventurer.
+
+Required:
+
+- Sword
+- Light armor
+- Idle animation
+- Running animation
+- Attack animation
+- Victory animation
+
+12.3 Enemies
+
+Use visually distinct fantasy creatures.
+
+Required:
+
+- Goblins
+- Skeletons
+- Spiders
+- Orcs
+- Dark knights
+- Demonic guards
+
+12.4 Environments
+
+Level 1:
+森林营地
+
+Visual elements:
+
+Trees
+Grass
+Rocks
+Wooden fences
+Fantasy camp
+
+
+Level 2:
+荒漠遗迹
+
+Visual elements:
+
+Sand
+Ancient ruins
+Stone pillars
+Broken walls
+
+
+Level 3:
+魔王城堡
+
+Visual elements:
+
+Dark castle
+Stone floors
+Torches
+Fantasy structures
+
+12.5 Camera
+
+Use an elevated isometric-style camera.
+
+The camera follows the player.
+
+Maintain clear visibility of nearby
+enemies and their combat power labels.
+
+12.6 Combat Power Labels
+
+Labels must remain readable
+at different zoom levels.
+
+Labels must not be hidden behind
+character models.
+
+12.7 Required Animations
+
+Player movement
+
+Player attack
+
+Enemy defeat
+
+Weapon pickup
+
+Power increase
+
+Invalid target warning
+
+Boss defeat
+
+Victory celebration
+
+12.8 Power Absorption Effect
+
+After defeating an enemy:
+
+Show a small energy effect traveling
+from the enemy toward the player.
+
+Increase the player's power label
+when absorption completes.
+
+12.9 Weapon Pickup Effect
+
+Show a brief glow.
+
+Display the weapon bonus.
+
+Update the player's power.
+
+12.10 Audio
+
+Required sound events:
+
+Game start
+
+Target selection
+
+Movement confirmation
+
+Weapon pickup
+
+Attack
+
+Enemy defeat
+
+Power increase
+
+Invalid target
+
+Boss defeat
+
+Victory
+
+12.11 Background Music
+
+Use light fantasy adventure music.
+
+All audio must be locally bundled.
+
+Respect mobile browser autoplay restrictions.
+
+Audio begins after valid user interaction.
+
+
+==================================================
+13. TECHNICAL REQUIREMENTS
+==================================================
+
+13.1 Framework
+
+Use:
+
+React
+Babylon.js
+TypeScript
+Vite
+
+React manages:
+
+- Menus
+- HUD
+- Power displays
+- Results screens
+- Level selection
+- Settings
+
+Babylon.js manages:
+
+- 3D scenes
+- Characters
+- Environments
+- Camera
+- Movement
+- Animation
+- Object selection
+- Interaction visualization
+
+13.2 Architecture
+
+Separate modules for:
+
+Game initialization
+
+Scene management
+
+Game state
+
+Player
+
+Input handling
+
+Click selection
+
+Pathfinding
+
+Navigation
+
+Enemy management
+
+Weapon management
+
+Power calculation
+
+Combat resolution
+
+Boss
+
+Levels
+
+Persistence
+
+UI
+
+Audio
+
+13.3 Recommended Structure
+
+src/
+├── game/
+│   ├── Game.ts
+│   ├── GameState.ts
+│   ├── Player.ts
+│   ├── Enemy.ts
+│   ├── Weapon.ts
+│   ├── Boss.ts
+│   ├── InteractionSystem.ts
+│   ├── NavigationSystem.ts
+│   ├── CombatSystem.ts
+│   ├── PowerSystem.ts
+│   ├── LevelManager.ts
+│   └── SaveManager.ts
+│
+├── scenes/
+│   ├── MenuScene.ts
+│   ├── GameScene.ts
+│   └── ResultScene.ts
+│
+├── ui/
+├── assets/
+└── config/
+    ├── game.ts
+    ├── levels.ts
+    ├── enemies.ts
+    └── weapons.ts
+
+13.4 Level Data
+
+Store level definitions separately.
+
+Each level must define:
+
+- Level name
+- Initial player power
+- Map size
+- Environment
+- Enemy types
+- Enemy power values
+- Enemy positions
+- Weapon types
+- Weapon positions
+- Boss power
+- Boss position
+
+13.5 Power Calculation
+
+Combat power calculations
+must be deterministic.
+
+Use integer arithmetic.
+
+Use one authoritative source
+for the player's current power.
+
+13.6 Navigation
+
+Implement automatic navigation
+toward clicked targets.
+
+Use a navigation grid,
+A* pathfinding,
+or an equivalent reliable method.
+
+Movement must handle obstacles.
+
+Do not teleport the player
+to selected objects.
+
+13.7 Object Picking
+
+Use Babylon.js picking
+or an equivalent approach.
+
+Touch and mouse selection must
+resolve to the correct target.
+
+13.8 Performance
+
+Target:
+
+60 FPS on mainstream mobile devices.
+
+Use:
+
+- Geometry reuse
+- Material reuse
+- Efficient collision detection
+- Appropriate mesh instancing
+- Controlled particle counts
+- Resource cleanup
+
+13.9 Screen Adaptation
+
+Support:
+
+Portrait
+Landscape
+
+Portrait reference:
+390 × 844
+
+Landscape reference:
+844 × 390
+
+Ensure:
+
+- Readable power labels
+- Functional touch interactions
+- Correct picking coordinates
+- Proper camera framing
+- Functional menus
+- No clipped essential UI
+
+13.10 Orientation Changes
+
+When orientation changes:
+
+- Resize rendering canvas.
+- Recalculate camera framing.
+- Reposition UI.
+- Preserve player power.
+- Preserve defeated enemies.
+- Preserve collected weapons.
+- Preserve current level state.
+- Prevent duplicate event listeners.
+
+13.11 Offline Requirements
+
+All essential assets must be local.
+
+Do not require third-party APIs.
+
+Do not require an online database.
+
+Do not load essential gameplay resources
+from third-party CDNs.
+
+The game must remain functional
+without network access once deployed
+and its required resources are available.
+
+13.12 Build Requirements
+
+Provide working commands for:
+
+Development
+
+Production build
+
+Local production preview
+
+The production build must be suitable
+for static web hosting.
+
+13.13 Resource Management
+
+Clean up:
+
+Event listeners
+
+Animation timers
+
+Scene objects
+
+Temporary effects
+
+Pathfinding tasks
+
+Audio resources
+
+Do not create duplicate update loops
+after restarting.
+
+
+==================================================
+14. ACCEPTANCE TESTS
+==================================================
+
+The following tests are mandatory.
+
+GAMEPLAY TESTS
+
+T01:
+The game starts normally.
+
+T02:
+The hero displays its combat power.
+
+T03:
+Every enemy displays its combat power.
+
+T04:
+Clicking a valid enemy selects it.
+
+T05:
+Clicking an invalid enemy shows a warning.
+
+T06:
+The hero moves automatically toward
+a valid selected enemy.
+
+T07:
+The hero stops within attack range.
+
+T08:
+A successful attack plays an animation.
+
+T09:
+Defeating an enemy increases player power.
+
+T10:
+Defeated enemies are removed correctly.
+
+T11:
+Clicking a weapon starts automatic movement.
+
+T12:
+Weapon pickup increases player power.
+
+T13:
+Collected weapons cannot be collected again.
+
+T14:
+Clicking empty ground moves the hero.
+
+T15:
+The hero does not automatically attack
+without target selection.
+
+NUMERICAL TESTS
+
+T16:
+Player power 10 defeats enemy power 3.
+
+Expected result:
+13.
+
+T17:
+Player power 10 cannot defeat
+enemy power 10.
+
+T18:
+Player power 10 cannot defeat
+enemy power 15.
+
+T19:
+Player power 13 collecting +20
+becomes power 33.
+
+T20:
+Enemy power is absorbed at 100%.
+
+T21:
+Power values remain integers.
+
+T22:
+Invalid interactions do not change power.
+
+T23:
+Combat calculations are deterministic.
+
+T24:
+Power labels update immediately
+after a completed interaction.
+
+T25:
+Enemy label colors update after
+player power changes.
+
+NAVIGATION TESTS
+
+T26:
+The hero moves around obstacles.
+
+T27:
+The hero does not pass through walls.
+
+T28:
+The hero reaches valid interaction positions.
+
+T29:
+Changing targets updates navigation.
+
+T30:
+Unreachable targets produce a warning.
+
+T31:
+The hero does not teleport.
+
+COMBAT TESTS
+
+T32:
+The attack animation faces the target.
+
+T33:
+Combat resolves only within attack range.
+
+T34:
+Combat validation uses strict inequality.
+
+T35:
+Enemy defeat animation plays correctly.
+
+T36:
+Boss defeat triggers victory.
+
+T37:
+Invalid Boss selection does not
+incorrectly trigger victory or defeat.
+
+LEVEL TESTS
+
+T38:
+Level 1 can be completed.
+
+T39:
+Level 2 can be completed.
+
+T40:
+Level 3 can be completed.
+
+T41:
+Level 1 uses the required enemy power values.
+
+T42:
+Level 2 uses the required enemy power values.
+
+T43:
+Level 3 uses the required enemy power values.
+
+T44:
+Weapon bonuses match configuration.
+
+T45:
+Level 1 Boss power equals 150.
+
+T46:
+Level 2 Boss power equals 500.
+
+T47:
+Level 3 Boss power equals 1500.
+
+T48:
+Every level has at least one valid solution.
+
+T49:
+Completing a level unlocks the next level.
+
+T50:
+Completed levels remain replayable.
+
+T51:
+Restarting restores original level power values.
+
+PERSISTENCE TESTS
+
+T52:
+Unlocked levels persist after refresh.
+
+T53:
+Completed levels persist after refresh.
+
+T54:
+Audio settings persist after refresh.
+
+T55:
+Restarting does not remove unlocked progress.
+
+UI TESTS
+
+T56:
+Main menu works.
+
+T57:
+Level selection works.
+
+T58:
+Pause and resume work.
+
+T59:
+Victory screen works.
+
+T60:
+Deadlock screen works when appropriate.
+
+T61:
+Settings screen works.
+
+T62:
+All user-facing text is in Chinese.
+
+COMPATIBILITY TESTS
+
+T63:
+Portrait layout works.
+
+T64:
+Landscape layout works.
+
+T65:
+Mobile tapping selects correct targets.
+
+T66:
+Desktop clicking selects correct targets.
+
+T67:
+Orientation changes preserve game state.
+
+T68:
+The game does not require
+runtime third-party APIs.
+
+PERFORMANCE TESTS
+
+T69:
+Movement remains smooth on mobile.
+
+T70:
+Power labels remain readable.
+
+T71:
+Repeated target changes do not
+cause navigation errors.
+
+T72:
+Repeated restarts do not create
+duplicate update loops.
+
+T73:
+Scene resources are cleaned up correctly.
+
+PROTOTYPE FIDELITY TESTS
+
+T74:
+Combat power is displayed above characters.
+
+T75:
+Only weaker enemies can be defeated.
+
+T76:
+Defeated enemy power is added
+to the player's power.
+
+T77:
+Weapons increase player power.
+
+T78:
+The hero moves after target selection.
+
+T79:
+Combat is resolved automatically
+after approaching the target.
+
+T80:
+The game uses an open-field layout.
+
+T81:
+The game does not use fixed tower floors.
+
+T82:
+The final Boss requires sufficient power.
+
+T83:
+The game retains numerical
+power-growth puzzle gameplay.
+
+All applicable tests must pass before
+the project is considered complete.
+
+For tests that cannot be automatically
+executed, provide clear manual
+verification instructions.
+
+Never claim an unexecuted test passed.
+
+Additionally:
+
+Use automated simulations to verify
+that all three levels are solvable.
+
+Verify that the specified example
+solutions produce correct power values.
+
+Verify that every configured enemy
+and weapon can be reached.
+
+Verify that no invalid enemy selection
+can incorrectly trigger combat.
+
+Verify that collected weapons and
+defeated enemies cannot be reused.
+
+Verify that player power remains consistent
+across movement, combat, and UI updates.
+
+
+==================================================
+15. DEVELOPMENT EXECUTION REQUIREMENTS
+==================================================
+
+The gameplay specification is already fixed.
+
+Do not repeat the prototype-analysis
+and requirements-inference stage.
+
+Begin implementation according to
+this approved specification.
+
+Follow this order:
+
+PHASE 1:
+Project initialization and architecture.
+
+PHASE 2:
+3D scene, camera, and player movement.
+
+PHASE 3:
+Click selection and automatic navigation.
+
+PHASE 4:
+Combat power comparison
+and enemy defeat mechanics.
+
+PHASE 5:
+Weapon collection and power growth.
+
+PHASE 6:
+Implement all six enemy categories
+and the three Bosses.
+
+PHASE 7:
+Implement three complete levels
+and their numerical configurations.
+
+PHASE 8:
+Implement level progression
+and local persistence.
+
+PHASE 9:
+Implement complete UI
+and game-state handling.
+
+PHASE 10:
+Implement fantasy visual assets,
+animations, particles, and audio.
+
+PHASE 11:
+Implement portrait and landscape adaptation.
+
+PHASE 12:
+Perform automated and interactive testing.
+
+PHASE 13:
+Fix gameplay bugs,
+validate numerical solutions,
+and optimize performance.
+
+PHASE 14:
+Final delivery.
+
+Do not deliver a nonfunctional mockup.
+
+Do not substitute visual demonstrations
+for actual gameplay mechanics.
+
+Do not replace click-to-interact gameplay
+with direct numerical buttons.
+
+The hero must physically move
+toward selected targets.
+
+Do not remove important systems
+to simplify development.
+
+DELIVERABLES:
+
+1. Complete source code
+2. Local game assets
+3. Three playable levels
+4. Six enemy categories
+5. Three Bosses
+6. Six weapon types
+7. Click-to-interact controls
+8. Automatic pathfinding
+9. Numerical power comparison system
+10. Enemy power absorption system
+11. Weapon pickup system
+12. Level configuration files
+13. Save and load functionality
+14. Package and build configuration
+15. Development instructions
+16. Production build instructions
+17. Testing report
+18. Known limitations
+19. Asset attribution and license details
+
+FINAL SUCCESS CRITERIA:
+
+A complete, functional HTML5 game named
+"战力吞噬者" that recreates the required
+open-field numerical power comparison
+gameplay inspired by Hero Wars advertisements.
+
+The game must include:
+
+- Visible combat power values
+- Click-to-select interactions
+- Automatic hero movement
+- Automatic combat resolution
+- Strict power comparison
+- Enemy power absorption
+- Weapon power bonuses
+- Three playable levels
+- Six enemy categories
+- Three Bosses
+- Automatic navigation
+- Numerical puzzle progression
+- Local save data
+- Offline functionality
+- Portrait and landscape support
+- Complete Chinese interfaces
+
+The final game must pass the specified
+acceptance tests.
+
+Do not consider the project complete
+until all required gameplay systems
+are implemented and verified.
