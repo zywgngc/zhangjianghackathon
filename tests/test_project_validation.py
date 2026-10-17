@@ -165,11 +165,11 @@ class RealProjectBrowserTests(unittest.IsolatedAsyncioTestCase):
                 await page.goto("http://protocol.test/")
                 await page.evaluate("""() => {
                   class Simulation {
-                    constructor(){this.phase='MENU';this.time=0;this.log=[];this.boss=null;this.player={hp:100,power:200,x:0,y:0,z:0};}
-                    snapshot(){return {phase:this.phase,level:1,simTime:this.time,player:{...this.player,maxHp:100},entities:this.boss?[{...this.boss}]:[],skills:{active:[],passive:[],ultimate:[],upgradeChoices:[]},effectiveStats:{moveSpeed:220}};}
+                    constructor(){this.phase='MENU';this.time=0;this.log=[];this.boss=null;this.needsMove=false;this.didUpgrade=false;this.player={hp:100,power:200,x:0,y:0,z:0};}
+                    snapshot(){return {phase:this.phase,level:1,simTime:this.time,player:{...this.player,maxHp:100},entities:this.boss?[{...this.boss}]:[],skills:{active:[],passive:[],ultimate:[],upgradeChoices:[]},effectiveStats:{moveSpeed:220},upgradeChoices:this.phase==='LEVEL_UP'?[{id:'W01',type:'active',currentLevel:1,nextLevel:2}]:[]};}
                     config(){return {enemies:[],worldBounds:{minX:-800,maxX:800,minY:-800,maxY:800}};}
-                    command(name,args){if(name==='start'){this.phase='PLAYING';this.time=0;this.log=[];this.boss=null;}else if(name==='selectTarget')this.target=args.id;else if(name!=='move')throw Error('Only normal commands are supported');}
-                    advance(ms){this.time+=ms/1000;if(!this.boss)this.boss={id:'real-boss',kind:'boss',x:1,y:1,z:1,power:150,hp:3000,maxHp:3000,active:true};
+                    command(name,args){if(name==='start'){this.phase='PLAYING';this.time=0;this.log=[];this.boss=null;this.needsMove=false;this.didUpgrade=false;}else if(name==='chooseUpgrade'){this.phase='PLAYING';this.needsMove=true;}else if(name==='move')this.needsMove=false;else if(name==='selectTarget')this.target=args.id;else throw Error('Only normal commands are supported');}
+                    advance(ms){if(this.needsMove)throw Error('Must observe and choose a new movement after upgrading');this.time+=ms/1000;if(!this.didUpgrade&&this.time>=.2){this.didUpgrade=true;this.phase='LEVEL_UP';}if(!this.boss)this.boss={id:'real-boss',kind:'boss',x:1,y:1,z:1,power:150,hp:3000,maxHp:3000,active:true};
                       if(this.time>=0.4){this.boss.hp=0;this.boss.active=false;this.player.power+=150;this.phase='VICTORY';this.log.push({seq:1,type:'damage',data:{targetId:this.boss.id,amount:3000}},{seq:2,type:'death',data:{entityId:this.boss.id}});}}
                     events(after){return this.log.filter(event=>event.seq>after);}
                   }
@@ -179,6 +179,7 @@ class RealProjectBrowserTests(unittest.IsolatedAsyncioTestCase):
                     "sourceHash": "a" * 64, "specHash": "b" * 64, "caseId": "GAME-TEST-002"})
                 self.assertEqual(trace["final"]["phase"], "VICTORY")
                 self.assertEqual(len(trace["checkpoints"]), 1)
+                self.assertTrue(any(item["name"] == "chooseUpgrade" for item in trace["inputs"]))
                 self.assertEqual(trace["input_policy"]["decision_interval_ms"], 100)
                 self.assertEqual(trace["input_policy"]["checkpoint_interval_ms"], 10000)
                 self.assertEqual(len(trace["input_policy"]["controller_sha256"]), 64)
