@@ -63,7 +63,7 @@ v2 已调用该检索边界，而非只预留接口：每个功能节点生成 `
 
 [WebMCP 交接说明](../webmcp/handoff.md) 区分研究 MAS、浏览器 WebMCP 命令适配器和外部素材门户。合并的组件 `82862cf` 已提供可执行的独立研究服务，详见 [运行说明](../webmcp/runtime.md)。它为三个固定 case 分配机制，采用分离的 Researcher / Planner / Reviewer 组件、确定性参考规划和默认 synthetic 门户；尚未调用 LLM 规划、检查来源代码或验证候选之间的兼容组合。全部蓝图明确标记 `readiness: partial`，全部正式游戏测试仍为 `not_executed`。
 
-该服务已实现两套各最多三次的独立追问预算、必答澄清等待、可选问题默认值、修订与父请求关联、请求幂等、取消与迟到结果隔离，以及 SQLite 重启恢复和跨进程预算预留。门户请求只有在适配器明确保证 request-ID 幂等时才能安全重放。浏览器适配器提供六个研究工具，检测到 `modelContext` 才注册；普通 studio / HTTP API 可单独使用。自动化注册测试使用模拟 `modelContext`，不能作为本轮原生浏览器 WebMCP 注册成功的证据。
+该服务已实现两套各最多三次的独立追问预算、必答澄清等待、可选问题默认值、修订与父请求关联、请求幂等、取消与迟到结果隔离，以及 SQLite 重启恢复和跨进程预算预留。门户请求只有在适配器明确保证 request-ID 幂等时才能安全重放。浏览器适配器提供七个研究工具，检测到 `modelContext` 才注册；普通 studio / HTTP API 可单独使用。自动化注册测试使用模拟 `modelContext`，不能作为本轮原生浏览器 WebMCP 注册成功的证据。
 
 Python `MaterialPortalClient` 的 v0.2 素材搜索请求与研究服务的 `POST /api/runs` 是不同协议：后者接受 `StartRequest` 并返回研究任务 ID，随后提供 partial 蓝图。**不能将研究服务地址直接填入 `MATERIAL_PORTAL_URL`**。`MaterialPortalClient` 仍只执行首轮素材搜索；研究服务的追问、修订和蓝图经独立 `/api/research` 适配器访问。Node 状态机测试成功不意味着研究蓝图已接通 v2 游戏生成。
 
@@ -102,3 +102,6 @@ pnpm demo
 v2 运行时专项已在 210 验证两个引擎真实构建/渲染、opaque iframe、无外部资源请求、热缓存离线安装及编译错误阻断；工作台专项覆盖长 TXT 无损提交/下载、官方 case 创建、候选/正式区分、存档隔离及移动布局。这些是 harness 基础设施回归。
 
 v1 打地鼠 `b475570322d5409dadfc5549ceae0053` 已有真实生成、修复、浏览器/截图 QA 和正常胜负操作证据，见 [实测记录](harness.md#v1-打地鼠实测记录)。它不计入三份大型正式 case 的完成数量。大型 case 的完成结论只取决于各自原文验收与真实证据，不以模板演示或基础设施测试替代。
+
+
+2026-10-17 后续已合并 `af1b57d`、`0b419a7`：研究工作台中文化，普通创意支持保留用户已知条件、编辑默认提案、round-zero 选择和来源标记。三份 benchmark 仍保留完整原文。210 在隔离 Node 24 下完成更新后的 TypeScript check 与 47 项真实 Node 回归；Python 研究网关及编码上下文回归 76 项通过。该结果不包含游戏验收或真实外部门户。
