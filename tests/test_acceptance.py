@@ -253,6 +253,34 @@ class AcceptanceTests(unittest.TestCase):
         with self.assertRaises(KeyError):
             evaluate_assertion(trace, assertion)
 
+    def test_boss_cycle_fixture_isolates_contact_damage_without_replacing_normal_play(self):
+        plan = scenario_plan("GAME-TEST-002")
+        cycles = [s for s in plan["scenarios"] if "/boss-attacks-L" in s["id"]]
+        self.assertEqual(len(cycles), 3)
+        for scenario in cycles:
+            self.assertEqual(scenario["fixture"]["boss"]["damage"], 0)
+            self.assertFalse(scenario["fixture"]["spawnEnabled"])
+            check = scenario["assertions"][0]
+            events = []
+            for i, pattern in enumerate(check["expected"]["patterns"]):
+                events.extend([{"type": "boss_warning", "simTime": i * 3,
+                    "data": {"pattern": pattern, "duration": .8}},
+                    {"type": "boss_attack", "simTime": i * 3 + .8, "data": {"pattern": pattern}}])
+            self.assertTrue(evaluate_assertion({"events": events}, check))
+            for defect in ("missing_pattern", "no_warning", "short_warning"):
+                broken = copy.deepcopy(events)
+                if defect == "missing_pattern":
+                    broken.pop()
+                elif defect == "no_warning":
+                    broken = [e for e in broken if e["type"] != "boss_warning"]
+                else:
+                    broken[-1]["simTime"] -= .5
+                self.assertFalse(evaluate_assertion({"events": broken}, check))
+        self.assertEqual(len(plan["normal_play_routes"]), 3)
+        for route in plan["normal_play_routes"]:
+            self.assertIsNone(route.get("fixture"))
+            self.assertTrue(any(a["op"] == "normal_level_process" for a in route["assertions"]))
+
     def test_spawn_count_and_exact_two_shop_definitions(self):
         assertion = {"pointer": "", "op": "normal_spawn_count", "expected": {"count": 20, "tolerance": 1}}
         enemies = [{"kind": "enemy", "active": True}] * 20 + [{"kind": "elite"}]

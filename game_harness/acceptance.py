@@ -458,10 +458,13 @@ def scenario_plan(case_id: str, root: str | Path | None = None) -> dict[str, Any
                     {"level": index + 1, "simTime": when - 0.25, "skills": {"active": [], "passive": []},
                      "freeUpgradesGranted": [5, 15], "player": {"x": 0, "y": 0}}))
         for index, patterns in enumerate([["charge", "slash"], ["blades", "dash"], ["lightning", "summon", "shockwave"]]):
+            # Isolate the full attack cycle from contact lethality. Damage and
+            # survivability remain separately exercised with real definitions,
+            # including the fixture-free three-level completion routes.
             scenarios.append(_scenario(case_id, "boss-attacks-L" + str(index + 1), [40, 41], [advance(20000), snapshot("after")],
                 [{"pointer": "/events", "op": "telegraphed_attacks", "expected": {"patterns": patterns, "minimumWarning": 0.8}}],
                 {"level": index + 1, "skills": {"active": [], "passive": []}, "freeUpgradesGranted": [5, 15],
-                 "player": {"hp": 300, "maxHp": 300, "x": 0, "y": 0}, "boss": {"id": "boss", "hp": 1000000, "x": 150, "y": 0}, "spawnEnabled": False}))
+                 "player": {"hp": 300, "maxHp": 300, "x": 0, "y": 0}, "boss": {"id": "boss", "hp": 1000000, "damage": 0, "x": 150, "y": 0}, "spawnEnabled": False}))
         scenarios.append(_scenario(case_id, "maximum-density-runtime", [76], [advance(10000), snapshot("after")],
             [assertion("/after/metrics/enemies", "eq", 200), assertion("/after/metrics/projectiles", "lte", 300),
              assertion("/after/player/hp", "gt", 0), assertion("/after/metrics/updateLoops", "eq", 1)],
