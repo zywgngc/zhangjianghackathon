@@ -1,0 +1,15 @@
+*.py text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.sh text eol=lf
+# Catalog hashes describe the exact upstream bytes, independent of checkout OS.
+catalogs/**/assets/** -text
+catalogs/**/sources/** -text
+# Preserve original benchmark specifications and reference image bytes.
+case1_Number_Gate_Shooter/** -text
+case2_Wuxia_Survivors/** -text
+case3_Power_Hunter/** -text
+# Example manifests identify requests by their original byte hashes.
+examples/game-harness-core/*.request.json -text
+examples/game-harness-assets/*.request.json -text

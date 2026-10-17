@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.bootstrap/
+.env
+.env.*
+!.env.example
+agent.env
+.asset-agent/
+output/
+data/
+integrations/game-harness/validation.json
+# Local scripts that collect specific historical run directories.
+tools/collect_game_harness_results.py
+tools/collect_number_gate_comparison.py
+dist/
+build/
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal

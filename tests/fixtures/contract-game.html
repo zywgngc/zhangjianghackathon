@@ -1,0 +1,11 @@
+<!doctype html><html lang="zh-CN"><head><meta name="viewport" content="width=device-width,initial-scale=1"><meta charset="utf-8"><style>body{margin:0;font:16px system-ui;background:#173125;color:#fff}main{padding:15px}button{padding:10px;margin:4px}#field{height:120px;background:#326345;position:relative}#star{position:absolute;left:20px;top:30px;font-size:35px}</style></head><body><main data-testid="game-root"><h1>接星星契约测试</h1><div data-testid="score">0</div><div id="field"><span id="star">★</span></div><button type="button" data-action="start">开始</button><button type="button" data-action="pause">暂停</button><button type="button" data-action="resume">继续</button><button type="button" data-action="restart">重开</button><button type="button" data-action="left">左移</button><button type="button" data-action="right">右移</button></main><script>
+const g={state:'ready',score:0,ticks:0};window.__GAME__=g;
+document.querySelector('[data-action=start]').onclick=()=>g.state='running';
+document.querySelector('[data-action=pause]').onclick=()=>g.state='paused';
+document.querySelector('[data-action=resume]').onclick=()=>g.state='running';
+document.querySelector('[data-action=restart]').onclick=()=>{g.state='running';g.score=0;g.ticks=0};
+let x=20;function move(delta){if(g.state==='running'){x=Math.max(0,Math.min(230,x+delta));document.querySelector('#star').style.left=x+'px'}}
+document.querySelector('[data-action=left]').onclick=()=>move(-10);document.querySelector('[data-action=right]').onclick=()=>move(10);
+onkeydown=e=>{if(e.key.startsWith('Arrow')||e.code==='Space'){e.preventDefault();move(e.key==='ArrowLeft'?-10:10)}};
+function tick(){if(g.state==='running')g.ticks++;requestAnimationFrame(tick)}requestAnimationFrame(tick);
+</script></body></html>

@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "request_id": "character-gap-demo",
+  "prompt": "一个骑自行车的鹈鹕，需要带骑行动画的3D角色，以及暂停图标。",
+  "layout": {
+    "viewport": {"width": 1280, "height": 720},
+    "slots": [
+      {"slot_id": "player", "type": "model", "description": "骑自行车的鹈鹕 pelican bicycle", "required_animations": ["ride"], "formats": ["glb"]},
+      {"slot_id": "pause", "type": "icon", "description": "暂停 pause", "tags": ["pause"], "style": "silhouette", "bounds": {"x": 1200, "y": 20, "width": 48, "height": 48}}
+    ]
+  },
+  "constraints": {"licenses": ["CC0-1.0", "CC-BY-3.0"], "top_k": 3}
+}

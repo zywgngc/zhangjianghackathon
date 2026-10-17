@@ -1,0 +1,67 @@
+{
+  "repository": "https://github.com/zywgngc/zhangjianghackathon",
+  "branch": "Webmcp",
+  "revision": "437981e281281994c1f2377ab69b3c7871943b2e",
+  "artifacts": [
+    {
+      "source": "webmcp/material-portal.schema.json",
+      "local": "asset_agent/specs/material-portal-0.2.schema.json",
+      "sha256": "5d443e4a439d25bedc081c3cf136d3a0dd0ee997d2c326396ec8cda3f496151f"
+    },
+    {
+      "source": "webmcp/material-portal.ts",
+      "local": "integrations/webmcp/material-portal.ts",
+      "sha256": "d2f19a75ba2dd972bc15510c5ab6007ff005ac1fd8276d1df07a4a1e59c197b0"
+    },
+    {
+      "source": "webmcp/discussion.ts",
+      "local": "integrations/webmcp/discussion.ts",
+      "sha256": "ec877f3c59421b39b985fdeba2984fde8f5cb36b598a388fdb0bf3fbef65c885"
+    },
+    {
+      "source": "webmcp/examples/archetype-request.json",
+      "local": "examples/webmcp-v02/archetype-request.json",
+      "sha256": "4ed7c8eb90de72fc53dc294952f2746fd05ecfa48885fdb5d0b2e93bd145c3aa"
+    },
+    {
+      "source": "webmcp/examples/failure-response.json",
+      "local": "examples/webmcp-v02/failure-response.json",
+      "sha256": "31039dff500cb765d5e6ac5431c321f38a8c6994166ff2b500d4f8def842530d"
+    },
+    {
+      "source": "webmcp/examples/main-follow-up.json",
+      "local": "examples/webmcp-v02/main-follow-up.json",
+      "sha256": "f9657b7ee7c353ce48eabf6d12c9f0453c3c127e5501e6d53dadd78c6554a840"
+    },
+    {
+      "source": "webmcp/examples/mechanic-request.json",
+      "local": "examples/webmcp-v02/mechanic-request.json",
+      "sha256": "85d7076536529d8c4f5e46a6c280f20e270f90a37edd4d325f6534d70608171c"
+    },
+    {
+      "source": "webmcp/examples/mechanic-response.json",
+      "local": "examples/webmcp-v02/mechanic-response.json",
+      "sha256": "e85f44ff2beffad0c1426f196bc0153c7ad2de37f39ad0e00cba49bab431f798"
+    },
+    {
+      "source": "webmcp/examples/portal-clarification-response.json",
+      "local": "examples/webmcp-v02/portal-clarification-response.json",
+      "sha256": "c63f97e9739385f6e59335f07d61d119199a732603ac882e4309b992d2aa4f90"
+    },
+    {
+      "source": "webmcp/examples/portal-follow-up-request.json",
+      "local": "examples/webmcp-v02/portal-follow-up-request.json",
+      "sha256": "69367ce07ba4d4d688cf6972c90844c8a152e39c9051e57cd44b71c3b2c2d5e9"
+    },
+    {
+      "source": "webmcp/examples/portal-follow-up-response.json",
+      "local": "examples/webmcp-v02/portal-follow-up-response.json",
+      "sha256": "89f00a515a6871880e4d1a2871edce7454c79a9165f0ce46714bd15c7125cbaa"
+    },
+    {
+      "source": "webmcp/examples/README.md",
+      "local": "examples/webmcp-v02/README.md",
+      "sha256": "481b34ce11df8072f0fa3fbde93f261086eacd5919d1779e92038f424951b3a7"
+    }
+  ]
+}

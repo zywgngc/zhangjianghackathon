@@ -1,0 +1,1031 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:zhangjianghackathon:webmcp:material-portal:0.2",
+  "title": "Research discussion and material portal contract v0.2",
+  "description": "Proposed portal search, result, and main follow-up payloads. Durable round budgets and cross-record correlation require application validation.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/MaterialSearchRequest"
+    },
+    {
+      "$ref": "#/$defs/MaterialSearchResult"
+    },
+    {
+      "$ref": "#/$defs/MainFollowUpRequest"
+    }
+  ],
+  "$defs": {
+    "ImageReference": {
+      "type": "object",
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "uri",
+          "minLength": 1
+        },
+        "mimeType": {
+          "enum": [
+            "image/png",
+            "image/jpeg",
+            "image/webp"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "uri",
+        "mimeType",
+        "description"
+      ],
+      "additionalProperties": false
+    },
+    "SearchConstraints": {
+      "type": "object",
+      "properties": {
+        "engine": {
+          "enum": [
+            "html",
+            "phaser",
+            "babylon",
+            null
+          ]
+        },
+        "engineVersion": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "platform": {
+          "const": "web"
+        },
+        "language": {
+          "enum": [
+            "typescript",
+            "javascript",
+            "any"
+          ]
+        },
+        "inputModes": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "keyboard",
+              "pointer",
+              "touch"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "engine",
+        "engineVersion",
+        "platform",
+        "language",
+        "inputModes"
+      ],
+      "additionalProperties": false
+    },
+    "MaterialSearchRequest": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "contractVersion": {
+              "const": "0.2"
+            },
+            "requestId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "projectRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ImageReference"
+              },
+              "minItems": 0
+            },
+            "constraints": {
+              "$ref": "#/$defs/SearchConstraints"
+            },
+            "materialKinds": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "game_repository",
+                  "source_code",
+                  "algorithm_documentation",
+                  "reference_media"
+                ]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10
+            },
+            "purpose": {
+              "const": "archetype"
+            },
+            "discussion": {
+              "$ref": "#/$defs/DiscussionContext"
+            }
+          },
+          "required": [
+            "contractVersion",
+            "requestId",
+            "projectRevision",
+            "description",
+            "images",
+            "constraints",
+            "materialKinds",
+            "limit",
+            "purpose",
+            "discussion"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "contractVersion": {
+              "const": "0.2"
+            },
+            "requestId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "projectRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ImageReference"
+              },
+              "minItems": 0
+            },
+            "constraints": {
+              "$ref": "#/$defs/SearchConstraints"
+            },
+            "materialKinds": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "game_repository",
+                  "source_code",
+                  "algorithm_documentation",
+                  "reference_media"
+                ]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10
+            },
+            "purpose": {
+              "const": "mechanic"
+            },
+            "mechanicId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "requiredBehavior": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            },
+            "discussion": {
+              "$ref": "#/$defs/DiscussionContext"
+            }
+          },
+          "required": [
+            "contractVersion",
+            "requestId",
+            "projectRevision",
+            "description",
+            "images",
+            "constraints",
+            "materialKinds",
+            "limit",
+            "purpose",
+            "mechanicId",
+            "requiredBehavior",
+            "discussion"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "MaterialSource": {
+      "type": "object",
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "uri",
+          "minLength": 1
+        },
+        "repositoryUrl": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri",
+          "minLength": 1
+        },
+        "revision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "symbols": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "uri",
+        "repositoryUrl",
+        "revision",
+        "paths",
+        "symbols"
+      ],
+      "additionalProperties": false
+    },
+    "LicenseEvidence": {
+      "type": "object",
+      "properties": {
+        "identifier": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "sourceUri": {
+          "type": "string",
+          "format": "uri",
+          "minLength": 1
+        },
+        "scope": {
+          "enum": [
+            "source_code",
+            "assets",
+            "mixed",
+            "unknown"
+          ]
+        }
+      },
+      "required": [
+        "identifier",
+        "sourceUri",
+        "scope"
+      ],
+      "additionalProperties": false
+    },
+    "MaterialCandidate": {
+      "type": "object",
+      "properties": {
+        "candidateId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "game_repository",
+            "source_code",
+            "algorithm_documentation",
+            "reference_media"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "$ref": "#/$defs/MaterialSource"
+        },
+        "coverageHints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "license": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LicenseEvidence"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sourceUri": {
+                "type": "string",
+                "format": "uri",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "description",
+              "sourceUri"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "candidateId",
+        "kind",
+        "title",
+        "summary",
+        "source",
+        "coverageHints",
+        "license",
+        "evidence",
+        "limitations"
+      ],
+      "additionalProperties": false
+    },
+    "MaterialSearchResult": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "contractVersion": {
+              "const": "0.2"
+            },
+            "requestId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "provider": {
+              "type": "string",
+              "minLength": 1
+            },
+            "retrievedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "isMock": {
+              "type": "boolean"
+            },
+            "status": {
+              "const": "completed"
+            },
+            "candidates": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MaterialCandidate"
+              },
+              "minItems": 0,
+              "maxItems": 10
+            },
+            "limitations": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 0
+            },
+            "discussion": {
+              "$ref": "#/$defs/DiscussionReference"
+            }
+          },
+          "required": [
+            "contractVersion",
+            "requestId",
+            "provider",
+            "retrievedAt",
+            "isMock",
+            "status",
+            "candidates",
+            "limitations",
+            "discussion"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "contractVersion": {
+              "const": "0.2"
+            },
+            "requestId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "provider": {
+              "type": "string",
+              "minLength": 1
+            },
+            "retrievedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "isMock": {
+              "type": "boolean"
+            },
+            "status": {
+              "const": "partial"
+            },
+            "candidates": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MaterialCandidate"
+              },
+              "minItems": 0,
+              "maxItems": 10
+            },
+            "limitations": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            },
+            "discussion": {
+              "$ref": "#/$defs/DiscussionReference"
+            }
+          },
+          "required": [
+            "contractVersion",
+            "requestId",
+            "provider",
+            "retrievedAt",
+            "isMock",
+            "status",
+            "candidates",
+            "limitations",
+            "discussion"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "contractVersion": {
+              "const": "0.2"
+            },
+            "requestId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "provider": {
+              "type": "string",
+              "minLength": 1
+            },
+            "retrievedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "isMock": {
+              "type": "boolean"
+            },
+            "status": {
+              "const": "failed"
+            },
+            "error": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "enum": [
+                    "UNAVAILABLE",
+                    "TIMEOUT",
+                    "RATE_LIMITED",
+                    "INVALID_INPUT",
+                    "UNSUPPORTED_INPUT",
+                    "AUTH_REQUIRED"
+                  ]
+                },
+                "message": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "retryable": {
+                  "type": "boolean"
+                },
+                "retryAfterMs": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "code",
+                "message",
+                "retryable",
+                "retryAfterMs"
+              ],
+              "additionalProperties": false
+            },
+            "discussion": {
+              "$ref": "#/$defs/DiscussionReference"
+            }
+          },
+          "required": [
+            "contractVersion",
+            "requestId",
+            "provider",
+            "retrievedAt",
+            "isMock",
+            "status",
+            "error",
+            "discussion"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "contractVersion": {
+              "const": "0.2"
+            },
+            "requestId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "provider": {
+              "type": "string",
+              "minLength": 1
+            },
+            "retrievedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "isMock": {
+              "type": "boolean"
+            },
+            "status": {
+              "const": "needs_clarification"
+            },
+            "candidates": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MaterialCandidate"
+              },
+              "minItems": 0,
+              "maxItems": 10
+            },
+            "limitations": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 0
+            },
+            "discussion": {
+              "$ref": "#/$defs/DiscussionReference"
+            },
+            "clarificationId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "questions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ClarificationQuestion"
+              },
+              "minItems": 1
+            }
+          },
+          "required": [
+            "contractVersion",
+            "requestId",
+            "provider",
+            "retrievedAt",
+            "isMock",
+            "status",
+            "candidates",
+            "limitations",
+            "discussion",
+            "clarificationId",
+            "questions"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "DiscussionReference": {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "threadId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "round": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        }
+      },
+      "required": [
+        "runId",
+        "threadId",
+        "round"
+      ],
+      "additionalProperties": false
+    },
+    "DiscussionAnswer": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "questionId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "source": {
+              "enum": [
+                "system_default",
+                "saved_preference",
+                "developer_choice",
+                "research_context"
+              ]
+            },
+            "optionId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "text": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "questionId",
+            "source",
+            "optionId",
+            "text"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "questionId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "source": {
+              "enum": [
+                "system_default",
+                "saved_preference",
+                "developer_choice",
+                "research_context"
+              ]
+            },
+            "optionId": {
+              "type": "null"
+            },
+            "text": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "questionId",
+            "source",
+            "optionId",
+            "text"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "FollowUpContent": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "minLength": 1
+            },
+            "clarificationId": {
+              "type": "null"
+            },
+            "answers": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/DiscussionAnswer"
+              },
+              "minItems": 0,
+              "maxItems": 0
+            }
+          },
+          "required": [
+            "message",
+            "clarificationId",
+            "answers"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string",
+              "minLength": 1
+            },
+            "clarificationId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "answers": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/DiscussionAnswer"
+              },
+              "minItems": 1
+            }
+          },
+          "required": [
+            "message",
+            "clarificationId",
+            "answers"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "FollowUpDiscussionContext": {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "threadId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "round": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "inReplyToRequestId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "followUp": {
+          "$ref": "#/$defs/FollowUpContent"
+        }
+      },
+      "required": [
+        "runId",
+        "threadId",
+        "round",
+        "inReplyToRequestId",
+        "followUp"
+      ],
+      "additionalProperties": false
+    },
+    "DiscussionContext": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "runId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "threadId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "round": {
+              "const": 0
+            },
+            "inReplyToRequestId": {
+              "type": "null"
+            },
+            "followUp": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "runId",
+            "threadId",
+            "round",
+            "inReplyToRequestId",
+            "followUp"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "$ref": "#/$defs/FollowUpDiscussionContext"
+        }
+      ]
+    },
+    "ClarificationQuestion": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "questionId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1
+            },
+            "options": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "optionId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "optionId",
+                  "label"
+                ],
+                "additionalProperties": false
+              },
+              "minItems": 2
+            },
+            "required": {
+              "const": false
+            },
+            "defaultOptionId": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "questionId",
+            "prompt",
+            "options",
+            "required",
+            "defaultOptionId"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "questionId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "prompt": {
+              "type": "string",
+              "minLength": 1
+            },
+            "options": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "optionId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "optionId",
+                  "label"
+                ],
+                "additionalProperties": false
+              },
+              "minItems": 0
+            },
+            "required": {
+              "const": true
+            },
+            "defaultOptionId": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "questionId",
+            "prompt",
+            "options",
+            "required",
+            "defaultOptionId"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "MainFollowUpRequest": {
+      "type": "object",
+      "properties": {
+        "contractVersion": {
+          "const": "0.2"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "projectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expectedProjectRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "discussion": {
+          "$ref": "#/$defs/FollowUpDiscussionContext"
+        }
+      },
+      "required": [
+        "contractVersion",
+        "requestId",
+        "projectId",
+        "expectedProjectRevision",
+        "discussion"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

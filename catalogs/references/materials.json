@@ -1,0 +1,1094 @@
+{
+  "schemaVersion": "0.2",
+  "isMock": false,
+  "materials": [
+    {
+      "candidate": {
+        "candidateId": "ref-wukong-survivors",
+        "kind": "game_repository",
+        "title": "Wukong Survivors — Phaser/React survivor game repository",
+        "summary": "真实悟空题材幸存者游戏仓库：俯视角角色移动、自动武器、敌人波次、掉落拾取、局内升级和永久成长。Repository and source evidence are pinned, without claiming a tested playable build.",
+        "source": {
+          "uri": "https://github.com/nusr/wukong-survivors/tree/bb28e7091ca6072731d74a71a36c5d38877c761c",
+          "repositoryUrl": "https://github.com/nusr/wukong-survivors",
+          "revision": "bb28e7091ca6072731d74a71a36c5d38877c761c",
+          "paths": [
+            "README.md",
+            "package.json",
+            "src/game/GameScene.ts",
+            "src/game/weapon.ts",
+            "src/game/enemy.ts",
+            "src/game/experience.ts",
+            "src/store/save.ts"
+          ],
+          "symbols": [
+            "GameScene",
+            "WeaponManager",
+            "EnemySpawner",
+            "ExperienceManager",
+            "useSaveStore"
+          ]
+        },
+        "coverageHints": [
+          "survivors-like archetype",
+          "top-down automatic combat",
+          "enemy waves",
+          "experience pickups",
+          "permanent upgrades"
+        ],
+        "license": {
+          "identifier": "MIT",
+          "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/LICENSE",
+          "scope": "source_code"
+        },
+        "evidence": [
+          {
+            "description": "Author describes a survivor game built with Phaser, React and Vite.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/README.md#L11"
+          },
+          {
+            "description": "GameScene composes player, enemies, weapons, collectibles and UI.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/GameScene.ts#L42"
+          },
+          {
+            "description": "Pinned manifest declares Phaser ^4.2.1, rather than assuming Phaser 3 compatibility.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/package.json#L34"
+          },
+          {
+            "description": "Upstream source-code license evidence; this does not establish rights to third-party artwork, audio, or media.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/LICENSE"
+          }
+        ],
+        "limitations": [
+          "Static source inspection only: upstream code was not installed, built, played, or behavior-tested; coverageHints remain provider claims for reviewer investigation.",
+          "Only the listed small source/document excerpts are cached; this is not a runnable checkout or a packaged game/asset delivery.",
+          "Code license evidence does not establish permissions for artwork, sprites, music, trademarks, or other assets; those require separate review.",
+          "Pinned package.json declares Phaser ^4.2.1 with React/Zustand dependencies; compatibility with another engine version and independent reuse of named Wukong-themed media were not verified."
+        ]
+      },
+      "searchText": "Wukong Survivors — Phaser/React survivor game repository 真实悟空题材幸存者游戏仓库：俯视角角色移动、自动武器、敌人波次、掉落拾取、局内升级和永久成长。Repository and source evidence are pinned, without claiming a tested playable build. survivors-like archetype top-down automatic combat enemy waves experience pickups permanent upgrades survivors vampire survivors roguelike archetype 幸存者 割草 吸血鬼幸存者 肉鸽 局内成长",
+      "tags": [
+        "survivors",
+        "vampire survivors",
+        "roguelike",
+        "archetype",
+        "幸存者",
+        "割草",
+        "吸血鬼幸存者",
+        "肉鸽",
+        "局内成长"
+      ],
+      "engines": [
+        "phaser"
+      ],
+      "languages": [
+        "typescript"
+      ],
+      "inputModes": [
+        "keyboard",
+        "touch"
+      ],
+      "purposes": [
+        "archetype"
+      ]
+    },
+    {
+      "candidate": {
+        "candidateId": "ref-wukong-combat-targeting",
+        "kind": "source_code",
+        "title": "Wukong — cooldown attacks and nearest-enemy targeting",
+        "summary": "WeaponManager filters dead enemies and sorts by player distance before weapon updates; base Weapon fires on cooldown, creates projectiles and aims at sorted targets. 供自动攻击、最近敌人选取和弹道机制审查。",
+        "source": {
+          "uri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/weapon.ts",
+          "repositoryUrl": "https://github.com/nusr/wukong-survivors",
+          "revision": "bb28e7091ca6072731d74a71a36c5d38877c761c",
+          "paths": [
+            "src/game/weapon.ts",
+            "src/game/GameScene.ts"
+          ],
+          "symbols": [
+            "WeaponManager.update",
+            "Weapon.update",
+            "Weapon.fire",
+            "Weapon.generateProjectileAngle"
+          ]
+        },
+        "coverageHints": [
+          "automatic cooldown attack",
+          "nearest target ordering",
+          "projectile direction",
+          "damage collision integration"
+        ],
+        "license": {
+          "identifier": "MIT",
+          "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/LICENSE",
+          "scope": "source_code"
+        },
+        "evidence": [
+          {
+            "description": "WeaponManager.update sorts active targets by Euclidean distance.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/weapon.ts#L1739"
+          },
+          {
+            "description": "Weapon.update gates fire calls by cooldown.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/weapon.ts#L138"
+          },
+          {
+            "description": "GameScene contains collision and damage integration for weapons and enemies.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/GameScene.ts#L607"
+          },
+          {
+            "description": "Upstream source-code license evidence; this does not establish rights to third-party artwork, audio, or media.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/LICENSE"
+          }
+        ],
+        "limitations": [
+          "Static source inspection only: upstream code was not installed, built, played, or behavior-tested; coverageHints remain provider claims for reviewer investigation.",
+          "Only the listed small source/document excerpts are cached; this is not a runnable checkout or a packaged game/asset delivery.",
+          "Code license evidence does not establish permissions for artwork, sprites, music, trademarks, or other assets; those require separate review.",
+          "Pinned package.json declares Phaser ^4.2.1 with React/Zustand dependencies; compatibility with another engine version and independent reuse of named Wukong-themed media were not verified."
+        ]
+      },
+      "searchText": "Wukong — cooldown attacks and nearest-enemy targeting WeaponManager filters dead enemies and sorts by player distance before weapon updates; base Weapon fires on cooldown, creates projectiles and aims at sorted targets. 供自动攻击、最近敌人选取和弹道机制审查。 automatic cooldown attack nearest target ordering projectile direction damage collision integration combat target targeting auto attack cooldown projectile 自动攻击 最近敌人 选取目标 战斗 弹道 攻击间隔",
+      "tags": [
+        "combat",
+        "target",
+        "targeting",
+        "auto attack",
+        "cooldown",
+        "projectile",
+        "自动攻击",
+        "最近敌人",
+        "选取目标",
+        "战斗",
+        "弹道",
+        "攻击间隔"
+      ],
+      "engines": [
+        "phaser"
+      ],
+      "languages": [
+        "typescript"
+      ],
+      "inputModes": [],
+      "purposes": [
+        "mechanic"
+      ]
+    },
+    {
+      "candidate": {
+        "candidateId": "ref-wukong-wave-spawning",
+        "kind": "source_code",
+        "title": "Wukong — timed enemy waves with increasing difficulty",
+        "summary": "EnemySpawner accumulates delta time, spawns bounded waves, chooses enemy types and increases wave size/frequency and population cap over time. 适合波次生成、难度曲线与屏外刷怪参考。",
+        "source": {
+          "uri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/enemy.ts",
+          "repositoryUrl": "https://github.com/nusr/wukong-survivors",
+          "revision": "bb28e7091ca6072731d74a71a36c5d38877c761c",
+          "paths": [
+            "src/game/enemy.ts"
+          ],
+          "symbols": [
+            "EnemySpawner.update",
+            "EnemySpawner.spawnWave",
+            "EnemySpawner.increaseDifficulty",
+            "EnemySpawner.selectEnemyType"
+          ]
+        },
+        "coverageHints": [
+          "timed wave spawning",
+          "time-scaled difficulty",
+          "active enemy population cap",
+          "offscreen spawn position"
+        ],
+        "license": {
+          "identifier": "MIT",
+          "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/LICENSE",
+          "scope": "source_code"
+        },
+        "evidence": [
+          {
+            "description": "spawnWave computes a time-scaled count bounded by the population cap.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/enemy.ts#L230"
+          },
+          {
+            "description": "increaseDifficulty changes count, spawn interval and population bounds.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/enemy.ts#L215"
+          },
+          {
+            "description": "spawnEnemy calculates positions around the player.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/enemy.ts#L251"
+          },
+          {
+            "description": "Upstream source-code license evidence; this does not establish rights to third-party artwork, audio, or media.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/LICENSE"
+          }
+        ],
+        "limitations": [
+          "Static source inspection only: upstream code was not installed, built, played, or behavior-tested; coverageHints remain provider claims for reviewer investigation.",
+          "Only the listed small source/document excerpts are cached; this is not a runnable checkout or a packaged game/asset delivery.",
+          "Code license evidence does not establish permissions for artwork, sprites, music, trademarks, or other assets; those require separate review.",
+          "Pinned package.json declares Phaser ^4.2.1 with React/Zustand dependencies; compatibility with another engine version and independent reuse of named Wukong-themed media were not verified."
+        ]
+      },
+      "searchText": "Wukong — timed enemy waves with increasing difficulty EnemySpawner accumulates delta time, spawns bounded waves, chooses enemy types and increases wave size/frequency and population cap over time. 适合波次生成、难度曲线与屏外刷怪参考。 timed wave spawning time-scaled difficulty active enemy population cap offscreen spawn position wave spawn survival enemy difficulty director 波次 刷怪 怪物生成 敌人数量 难度递增 时间驱动",
+      "tags": [
+        "wave",
+        "spawn",
+        "survival",
+        "enemy",
+        "difficulty",
+        "director",
+        "波次",
+        "刷怪",
+        "怪物生成",
+        "敌人数量",
+        "难度递增",
+        "时间驱动"
+      ],
+      "engines": [
+        "phaser"
+      ],
+      "languages": [
+        "typescript"
+      ],
+      "inputModes": [],
+      "purposes": [
+        "mechanic"
+      ]
+    },
+    {
+      "candidate": {
+        "candidateId": "ref-wukong-collectibles-xp",
+        "kind": "source_code",
+        "title": "Wukong — magnetized experience gems and gold pickups",
+        "summary": "CollectibleItem checks player distance, attracts items in a magnet radius and collects nearby drops; ExperienceManager routes gems to player experience and coins to saved gold. 供击杀掉落、拾取半径与经验经济循环参考。",
+        "source": {
+          "uri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/experience.ts",
+          "repositoryUrl": "https://github.com/nusr/wukong-survivors",
+          "revision": "bb28e7091ca6072731d74a71a36c5d38877c761c",
+          "paths": [
+            "src/game/experience.ts",
+            "src/game/player.ts",
+            "src/game/GameScene.ts"
+          ],
+          "symbols": [
+            "CollectibleItem.update",
+            "CollectibleItem.collect",
+            "ExperienceManager.update",
+            "ExperienceManager.spawnGem",
+            "ExperienceManager.spawnCoin"
+          ]
+        },
+        "coverageHints": [
+          "magnetized pickup attraction",
+          "experience gem collection",
+          "gold coin collection",
+          "drop spawning hooks"
+        ],
+        "license": {
+          "identifier": "MIT",
+          "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/LICENSE",
+          "scope": "source_code"
+        },
+        "evidence": [
+          {
+            "description": "CollectibleItem.update activates attraction inside its adjusted magnet radius.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/experience.ts#L93"
+          },
+          {
+            "description": "ExperienceManager applies collected gem value to player experience.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/experience.ts#L149"
+          },
+          {
+            "description": "Collected coins increment persistent gold.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/experience.ts#L119"
+          },
+          {
+            "description": "Upstream source-code license evidence; this does not establish rights to third-party artwork, audio, or media.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/LICENSE"
+          }
+        ],
+        "limitations": [
+          "Static source inspection only: upstream code was not installed, built, played, or behavior-tested; coverageHints remain provider claims for reviewer investigation.",
+          "Only the listed small source/document excerpts are cached; this is not a runnable checkout or a packaged game/asset delivery.",
+          "Code license evidence does not establish permissions for artwork, sprites, music, trademarks, or other assets; those require separate review.",
+          "Pinned package.json declares Phaser ^4.2.1 with React/Zustand dependencies; compatibility with another engine version and independent reuse of named Wukong-themed media were not verified."
+        ]
+      },
+      "searchText": "Wukong — magnetized experience gems and gold pickups CollectibleItem checks player distance, attracts items in a magnet radius and collects nearby drops; ExperienceManager routes gems to player experience and coins to saved gold. 供击杀掉落、拾取半径与经验经济循环参考。 magnetized pickup attraction experience gem collection gold coin collection drop spawning hooks pickup collect magnet experience xp economy 掉落 经验球 金币 磁吸 拾取 收集半径",
+      "tags": [
+        "pickup",
+        "collect",
+        "magnet",
+        "experience",
+        "xp",
+        "economy",
+        "掉落",
+        "经验球",
+        "金币",
+        "磁吸",
+        "拾取",
+        "收集半径"
+      ],
+      "engines": [
+        "phaser"
+      ],
+      "languages": [
+        "typescript"
+      ],
+      "inputModes": [],
+      "purposes": [
+        "mechanic"
+      ]
+    },
+    {
+      "candidate": {
+        "candidateId": "ref-wukong-run-progression",
+        "kind": "source_code",
+        "title": "Wukong — experience thresholds and in-run upgrade choice",
+        "summary": "Player.levelUp carries excess XP, scales the next threshold and opens a choice menu; WeaponManager exposes upgrade options and GameScene applies the selected upgrade. 局内等级、武器成长和升级选择界面的源码参考。",
+        "source": {
+          "uri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/player.ts",
+          "repositoryUrl": "https://github.com/nusr/wukong-survivors",
+          "revision": "bb28e7091ca6072731d74a71a36c5d38877c761c",
+          "paths": [
+            "src/game/player.ts",
+            "src/game/weapon.ts",
+            "src/game/GameScene.ts"
+          ],
+          "symbols": [
+            "Player.addExperience",
+            "Player.levelUp",
+            "WeaponManager.getUpgradeOptions",
+            "GameScene.showLevelUpMenu",
+            "GameScene.selectUpgrade"
+          ]
+        },
+        "coverageHints": [
+          "experience level threshold",
+          "carry-over experience",
+          "weapon upgrade options",
+          "pause and select upgrade"
+        ],
+        "license": {
+          "identifier": "MIT",
+          "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/LICENSE",
+          "scope": "source_code"
+        },
+        "evidence": [
+          {
+            "description": "Player.levelUp updates level, XP carry-over and next threshold.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/player.ts#L200"
+          },
+          {
+            "description": "WeaponManager offers available weapon and upgrade options.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/weapon.ts#L1789"
+          },
+          {
+            "description": "GameScene applies a chosen weapon upgrade or acquisition.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/GameScene.ts#L912"
+          },
+          {
+            "description": "Upstream source-code license evidence; this does not establish rights to third-party artwork, audio, or media.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/LICENSE"
+          }
+        ],
+        "limitations": [
+          "Static source inspection only: upstream code was not installed, built, played, or behavior-tested; coverageHints remain provider claims for reviewer investigation.",
+          "Only the listed small source/document excerpts are cached; this is not a runnable checkout or a packaged game/asset delivery.",
+          "Code license evidence does not establish permissions for artwork, sprites, music, trademarks, or other assets; those require separate review.",
+          "Pinned package.json declares Phaser ^4.2.1 with React/Zustand dependencies; compatibility with another engine version and independent reuse of named Wukong-themed media were not verified.",
+          "The inspected addExperience implementation checks one level threshold per call; repeated multi-level gains were not behavior-tested."
+        ]
+      },
+      "searchText": "Wukong — experience thresholds and in-run upgrade choice Player.levelUp carries excess XP, scales the next threshold and opens a choice menu; WeaponManager exposes upgrade options and GameScene applies the selected upgrade. 局内等级、武器成长和升级选择界面的源码参考。 experience level threshold carry-over experience weapon upgrade options pause and select upgrade progression level up upgrade growth reward choice 升级 经验阈值 成长 局内升级 升级选项 武器升级",
+      "tags": [
+        "progression",
+        "level up",
+        "upgrade",
+        "growth",
+        "reward choice",
+        "升级",
+        "经验阈值",
+        "成长",
+        "局内升级",
+        "升级选项",
+        "武器升级"
+      ],
+      "engines": [
+        "phaser"
+      ],
+      "languages": [
+        "typescript"
+      ],
+      "inputModes": [],
+      "purposes": [
+        "mechanic"
+      ]
+    },
+    {
+      "candidate": {
+        "candidateId": "ref-wukong-persistent-economy",
+        "kind": "source_code",
+        "title": "Wukong — persistent gold economy and permanent upgrades",
+        "summary": "Zustand save state supplies addGold/spendGold, checks upgrade cost and level caps, records permanent upgrades and persists JSON to localStorage. 可用于金币消费、永久属性成长、退款与存档方案审查。",
+        "source": {
+          "uri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/store/save.ts",
+          "repositoryUrl": "https://github.com/nusr/wukong-survivors",
+          "revision": "bb28e7091ca6072731d74a71a36c5d38877c761c",
+          "paths": [
+            "src/store/save.ts",
+            "src/constant/rewards.ts",
+            "src/game/GameScene.ts"
+          ],
+          "symbols": [
+            "useSaveStore",
+            "spendGold",
+            "upgradePermanent",
+            "resetPermanentUpgrades"
+          ]
+        },
+        "coverageHints": [
+          "gold balance",
+          "cost-gated permanent upgrade",
+          "upgrade level cap",
+          "localStorage persistence",
+          "upgrade refund"
+        ],
+        "license": {
+          "identifier": "MIT",
+          "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/LICENSE",
+          "scope": "source_code"
+        },
+        "evidence": [
+          {
+            "description": "spendGold debits only when the stored balance covers the amount.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/store/save.ts#L14"
+          },
+          {
+            "description": "upgradePermanent checks cost and maximum level before spending gold.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/store/save.ts#L17"
+          },
+          {
+            "description": "Save store explicitly persists JSON in browser localStorage.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/store/save.ts#L130"
+          },
+          {
+            "description": "Upstream source-code license evidence; this does not establish rights to third-party artwork, audio, or media.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/LICENSE"
+          }
+        ],
+        "limitations": [
+          "Static source inspection only: upstream code was not installed, built, played, or behavior-tested; coverageHints remain provider claims for reviewer investigation.",
+          "Only the listed small source/document excerpts are cached; this is not a runnable checkout or a packaged game/asset delivery.",
+          "Code license evidence does not establish permissions for artwork, sprites, music, trademarks, or other assets; those require separate review.",
+          "Pinned package.json declares Phaser ^4.2.1 with React/Zustand dependencies; compatibility with another engine version and independent reuse of named Wukong-themed media were not verified.",
+          "This is client-side game state, not a server-authoritative or monetary payment system."
+        ]
+      },
+      "searchText": "Wukong — persistent gold economy and permanent upgrades Zustand save state supplies addGold/spendGold, checks upgrade cost and level caps, records permanent upgrades and persists JSON to localStorage. 可用于金币消费、永久属性成长、退款与存档方案审查。 gold balance cost-gated permanent upgrade upgrade level cap localStorage persistence upgrade refund economy currency shop purchase permanent progression 金币 经济 消费 商店 永久升级 存档 退款",
+      "tags": [
+        "economy",
+        "currency",
+        "shop",
+        "purchase",
+        "permanent progression",
+        "金币",
+        "经济",
+        "消费",
+        "商店",
+        "永久升级",
+        "存档",
+        "退款"
+      ],
+      "engines": [
+        "phaser"
+      ],
+      "languages": [
+        "typescript"
+      ],
+      "inputModes": [],
+      "purposes": [
+        "mechanic"
+      ]
+    },
+    {
+      "candidate": {
+        "candidateId": "ref-wukong-unlock-progression",
+        "kind": "source_code",
+        "title": "Wukong — character and chapter unlock conditions",
+        "summary": "checkUnlocks computes available characters and chapters from kills, survival time, gold and completed chapters; selection actions check unlocked IDs. 供长期成就、章节解锁与角色成长结构参考。",
+        "source": {
+          "uri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/store/app.ts",
+          "repositoryUrl": "https://github.com/nusr/wukong-survivors",
+          "revision": "bb28e7091ca6072731d74a71a36c5d38877c761c",
+          "paths": [
+            "src/store/app.ts",
+            "src/store/save.ts"
+          ],
+          "symbols": [
+            "checkUnlocks",
+            "useAppStore",
+            "selectCharacter",
+            "selectMap"
+          ]
+        },
+        "coverageHints": [
+          "character unlock gates",
+          "chapter unlock gates",
+          "kill/time/gold achievements",
+          "unlocked selection enforcement"
+        ],
+        "license": {
+          "identifier": "MIT",
+          "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/LICENSE",
+          "scope": "source_code"
+        },
+        "evidence": [
+          {
+            "description": "checkUnlocks derives available maps and characters from saved milestones.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/store/app.ts#L34"
+          },
+          {
+            "description": "Character unlock switch checks kills, time, gold and chapter conditions.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/store/app.ts#L75"
+          },
+          {
+            "description": "Character selection checks whether the requested ID is unlocked.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/src/store/app.ts#L127"
+          },
+          {
+            "description": "Upstream source-code license evidence; this does not establish rights to third-party artwork, audio, or media.",
+            "sourceUri": "https://github.com/nusr/wukong-survivors/blob/bb28e7091ca6072731d74a71a36c5d38877c761c/LICENSE"
+          }
+        ],
+        "limitations": [
+          "Static source inspection only: upstream code was not installed, built, played, or behavior-tested; coverageHints remain provider claims for reviewer investigation.",
+          "Only the listed small source/document excerpts are cached; this is not a runnable checkout or a packaged game/asset delivery.",
+          "Code license evidence does not establish permissions for artwork, sprites, music, trademarks, or other assets; those require separate review.",
+          "Pinned package.json declares Phaser ^4.2.1 with React/Zustand dependencies; compatibility with another engine version and independent reuse of named Wukong-themed media were not verified."
+        ]
+      },
+      "searchText": "Wukong — character and chapter unlock conditions checkUnlocks computes available characters and chapters from kills, survival time, gold and completed chapters; selection actions check unlocked IDs. 供长期成就、章节解锁与角色成长结构参考。 character unlock gates chapter unlock gates kill/time/gold achievements unlocked selection enforcement progression unlock achievement meta progression 解锁 成就 角色解锁 章节解锁 长期成长",
+      "tags": [
+        "progression",
+        "unlock",
+        "achievement",
+        "meta progression",
+        "解锁",
+        "成就",
+        "角色解锁",
+        "章节解锁",
+        "长期成长"
+      ],
+      "engines": [
+        "phaser"
+      ],
+      "languages": [
+        "typescript"
+      ],
+      "inputModes": [],
+      "purposes": [
+        "mechanic"
+      ]
+    },
+    {
+      "candidate": {
+        "candidateId": "ref-phaser-path-follower",
+        "kind": "source_code",
+        "title": "Official Phaser example — spline route following",
+        "summary": "Builds Phaser.Curves.Spline from route coordinates, creates follower sprites and calls startFollow with a duration. 预定义路径/路点跟随的最小参考，不包含障碍物寻路。",
+        "source": {
+          "uri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/public/src/paths/followers/basic%20follower.js",
+          "repositoryUrl": "https://github.com/phaserjs/examples",
+          "revision": "68140eca72525d5034b783a262270715ddc17b78",
+          "paths": [
+            "public/src/paths/followers/basic follower.js"
+          ],
+          "symbols": [
+            "Example.create",
+            "Phaser.Curves.Spline",
+            "startFollow"
+          ]
+        },
+        "coverageHints": [
+          "predefined waypoint route",
+          "spline path following",
+          "duration-based follower movement"
+        ],
+        "license": {
+          "identifier": "MIT",
+          "sourceUri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/README.md",
+          "scope": "source_code"
+        },
+        "evidence": [
+          {
+            "description": "Example creates a spline from a flat coordinate list.",
+            "sourceUri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/public/src/paths/followers/basic%20follower.js#L13"
+          },
+          {
+            "description": "Follower starts a four-second traversal of that route.",
+            "sourceUri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/public/src/paths/followers/basic%20follower.js#L34"
+          },
+          {
+            "description": "Upstream source-code license evidence; this does not establish rights to third-party artwork, audio, or media.",
+            "sourceUri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/README.md"
+          }
+        ],
+        "limitations": [
+          "Static source inspection only: upstream code was not installed, built, played, or behavior-tested; coverageHints remain provider claims for reviewer investigation.",
+          "Only the listed small source/document excerpts are cached; this is not a runnable checkout or a packaged game/asset delivery.",
+          "Code license evidence does not establish permissions for artwork, sprites, music, trademarks, or other assets; those require separate review.",
+          "README explicitly states source code is MIT and assets are not; no referenced example asset files were downloaded.",
+          "README identifies the current site as Phaser 4 examples/development builds, while package.json retains a Phaser 3 name and ISC metadata; exact engine-release compatibility and license metadata discrepancy require review.",
+          "This example follows a predefined spline and does not compute obstacle-avoiding routes or dynamically replan a path."
+        ]
+      },
+      "searchText": "Official Phaser example — spline route following Builds Phaser.Curves.Spline from route coordinates, creates follower sprites and calls startFollow with a duration. 预定义路径/路点跟随的最小参考，不包含障碍物寻路。 predefined waypoint route spline path following duration-based follower movement waypoint navigation path path following route spline 路径 路点 导航 沿路径移动 巡逻路线",
+      "tags": [
+        "waypoint",
+        "navigation",
+        "path",
+        "path following",
+        "route",
+        "spline",
+        "路径",
+        "路点",
+        "导航",
+        "沿路径移动",
+        "巡逻路线"
+      ],
+      "engines": [
+        "phaser"
+      ],
+      "languages": [
+        "javascript"
+      ],
+      "inputModes": [],
+      "purposes": [
+        "mechanic"
+      ]
+    },
+    {
+      "candidate": {
+        "candidateId": "ref-phaser-closest-target",
+        "kind": "source_code",
+        "title": "Official Phaser example — nearest and furthest physics-body query",
+        "summary": "Calls Arcade physics.closest and furthest around a pointer-controlled cursor and draws connections to the selected bodies. 供最近目标查询和空间选择参考，非完整敌我过滤策略。",
+        "source": {
+          "uri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/public/src/physics/arcade/closest%20furthest.js",
+          "repositoryUrl": "https://github.com/phaserjs/examples",
+          "revision": "68140eca72525d5034b783a262270715ddc17b78",
+          "paths": [
+            "public/src/physics/arcade/closest furthest.js"
+          ],
+          "symbols": [
+            "Example.update",
+            "physics.closest",
+            "physics.furthest"
+          ]
+        },
+        "coverageHints": [
+          "nearest body query",
+          "furthest body query",
+          "pointer-driven target point"
+        ],
+        "license": {
+          "identifier": "MIT",
+          "sourceUri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/README.md",
+          "scope": "source_code"
+        },
+        "evidence": [
+          {
+            "description": "update queries the closest physics body to the cursor.",
+            "sourceUri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/public/src/physics/arcade/closest%20furthest.js#L41"
+          },
+          {
+            "description": "update also queries the furthest physics body.",
+            "sourceUri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/public/src/physics/arcade/closest%20furthest.js#L42"
+          },
+          {
+            "description": "Upstream source-code license evidence; this does not establish rights to third-party artwork, audio, or media.",
+            "sourceUri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/README.md"
+          }
+        ],
+        "limitations": [
+          "Static source inspection only: upstream code was not installed, built, played, or behavior-tested; coverageHints remain provider claims for reviewer investigation.",
+          "Only the listed small source/document excerpts are cached; this is not a runnable checkout or a packaged game/asset delivery.",
+          "Code license evidence does not establish permissions for artwork, sprites, music, trademarks, or other assets; those require separate review.",
+          "README explicitly states source code is MIT and assets are not; no referenced example asset files were downloaded.",
+          "README identifies the current site as Phaser 4 examples/development builds, while package.json retains a Phaser 3 name and ISC metadata; exact engine-release compatibility and license metadata discrepancy require review.",
+          "The example demonstrates a body query, not team filtering, attack range checks, line of sight, or lock-on persistence."
+        ]
+      },
+      "searchText": "Official Phaser example — nearest and furthest physics-body query Calls Arcade physics.closest and furthest around a pointer-controlled cursor and draws connections to the selected bodies. 供最近目标查询和空间选择参考，非完整敌我过滤策略。 nearest body query furthest body query pointer-driven target point target targeting nearest closest distance 选敌 目标选择 最近目标 距离查询 自动瞄准",
+      "tags": [
+        "target",
+        "targeting",
+        "nearest",
+        "closest",
+        "distance",
+        "选敌",
+        "目标选择",
+        "最近目标",
+        "距离查询",
+        "自动瞄准"
+      ],
+      "engines": [
+        "phaser"
+      ],
+      "languages": [
+        "javascript"
+      ],
+      "inputModes": [
+        "pointer"
+      ],
+      "purposes": [
+        "mechanic"
+      ]
+    },
+    {
+      "candidate": {
+        "candidateId": "ref-phaser-topdown-combat",
+        "kind": "source_code",
+        "title": "Official Phaser example — top-down shooter combat mechanics",
+        "summary": "Demonstrates keyboard movement, pointer aim, pooled player/enemy bullets, collision callbacks, health damage and enemy firing cooldown. 俯视角射击的输入、伤害与敌人攻击实现参考。",
+        "source": {
+          "uri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/public/src/physics/arcade/topdown%20shooter%20combat%20mechanics.js",
+          "repositoryUrl": "https://github.com/phaserjs/examples",
+          "revision": "68140eca72525d5034b783a262270715ddc17b78",
+          "paths": [
+            "public/src/physics/arcade/topdown shooter combat mechanics.js"
+          ],
+          "symbols": [
+            "Example.enemyHitCallback",
+            "Example.playerHitCallback",
+            "Example.enemyFire",
+            "Bullet.fire"
+          ]
+        },
+        "coverageHints": [
+          "top-down shooter",
+          "bullet collision damage",
+          "health reduction",
+          "enemy firing cooldown",
+          "keyboard and mouse aim"
+        ],
+        "license": {
+          "identifier": "MIT",
+          "sourceUri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/README.md",
+          "scope": "source_code"
+        },
+        "evidence": [
+          {
+            "description": "Enemy collision callback checks active objects, subtracts health and disables the bullet.",
+            "sourceUri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/public/src/physics/arcade/topdown%20shooter%20combat%20mechanics.js#L158"
+          },
+          {
+            "description": "enemyFire emits a bullet when its cooldown elapses.",
+            "sourceUri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/public/src/physics/arcade/topdown%20shooter%20combat%20mechanics.js#L206"
+          },
+          {
+            "description": "The demo explicitly requests mouse pointer lock.",
+            "sourceUri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/public/src/physics/arcade/topdown%20shooter%20combat%20mechanics.js#L116"
+          },
+          {
+            "description": "Upstream source-code license evidence; this does not establish rights to third-party artwork, audio, or media.",
+            "sourceUri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/README.md"
+          }
+        ],
+        "limitations": [
+          "Static source inspection only: upstream code was not installed, built, played, or behavior-tested; coverageHints remain provider claims for reviewer investigation.",
+          "Only the listed small source/document excerpts are cached; this is not a runnable checkout or a packaged game/asset delivery.",
+          "Code license evidence does not establish permissions for artwork, sprites, music, trademarks, or other assets; those require separate review.",
+          "README explicitly states source code is MIT and assets are not; no referenced example asset files were downloaded.",
+          "README identifies the current site as Phaser 4 examples/development builds, while package.json retains a Phaser 3 name and ISC metadata; exact engine-release compatibility and license metadata discrepancy require review.",
+          "The mouse pointer-lock/WASD example does not establish touch controls or mobile gameplay compatibility."
+        ]
+      },
+      "searchText": "Official Phaser example — top-down shooter combat mechanics Demonstrates keyboard movement, pointer aim, pooled player/enemy bullets, collision callbacks, health damage and enemy firing cooldown. 俯视角射击的输入、伤害与敌人攻击实现参考。 top-down shooter bullet collision damage health reduction enemy firing cooldown keyboard and mouse aim combat damage bullet shooter health cooldown 战斗 伤害 碰撞 生命值 子弹 射击",
+      "tags": [
+        "combat",
+        "damage",
+        "bullet",
+        "shooter",
+        "health",
+        "cooldown",
+        "战斗",
+        "伤害",
+        "碰撞",
+        "生命值",
+        "子弹",
+        "射击"
+      ],
+      "engines": [
+        "phaser"
+      ],
+      "languages": [
+        "javascript"
+      ],
+      "inputModes": [
+        "keyboard",
+        "pointer"
+      ],
+      "purposes": [
+        "mechanic"
+      ]
+    },
+    {
+      "candidate": {
+        "candidateId": "ref-phaser-bullet-pool",
+        "kind": "source_code",
+        "title": "Official Phaser example — reusable projectile group",
+        "summary": "Preallocates five Bullet sprites, obtains inactive projectiles with getFirstDead, reactivates on fire and disables them beyond the screen. 适用于弹幕、自动武器与低分配开销的子弹池实现参考。",
+        "source": {
+          "uri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/public/src/physics/arcade/bullets%20group.js",
+          "repositoryUrl": "https://github.com/phaserjs/examples",
+          "revision": "68140eca72525d5034b783a262270715ddc17b78",
+          "paths": [
+            "public/src/physics/arcade/bullets group.js"
+          ],
+          "symbols": [
+            "Bullet.fire",
+            "Bullet.preUpdate",
+            "Bullets.fireBullet"
+          ]
+        },
+        "coverageHints": [
+          "projectile pooling",
+          "inactive object reuse",
+          "out-of-bounds deactivation",
+          "pointer fire input"
+        ],
+        "license": {
+          "identifier": "MIT",
+          "sourceUri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/README.md",
+          "scope": "source_code"
+        },
+        "evidence": [
+          {
+            "description": "Bullets preallocates a bounded pool of five projectiles.",
+            "sourceUri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/public/src/physics/arcade/bullets%20group.js#L37"
+          },
+          {
+            "description": "fireBullet obtains an inactive projectile instead of growing the pool.",
+            "sourceUri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/public/src/physics/arcade/bullets%20group.js#L47"
+          },
+          {
+            "description": "Bullet.preUpdate disables sprites after they pass the upper boundary.",
+            "sourceUri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/public/src/physics/arcade/bullets%20group.js#L22"
+          },
+          {
+            "description": "Upstream source-code license evidence; this does not establish rights to third-party artwork, audio, or media.",
+            "sourceUri": "https://github.com/phaserjs/examples/blob/68140eca72525d5034b783a262270715ddc17b78/README.md"
+          }
+        ],
+        "limitations": [
+          "Static source inspection only: upstream code was not installed, built, played, or behavior-tested; coverageHints remain provider claims for reviewer investigation.",
+          "Only the listed small source/document excerpts are cached; this is not a runnable checkout or a packaged game/asset delivery.",
+          "Code license evidence does not establish permissions for artwork, sprites, music, trademarks, or other assets; those require separate review.",
+          "README explicitly states source code is MIT and assets are not; no referenced example asset files were downloaded.",
+          "README identifies the current site as Phaser 4 examples/development builds, while package.json retains a Phaser 3 name and ISC metadata; exact engine-release compatibility and license metadata discrepancy require review."
+        ]
+      },
+      "searchText": "Official Phaser example — reusable projectile group Preallocates five Bullet sprites, obtains inactive projectiles with getFirstDead, reactivates on fire and disables them beyond the screen. 适用于弹幕、自动武器与低分配开销的子弹池实现参考。 projectile pooling inactive object reuse out-of-bounds deactivation pointer fire input combat projectile bullet pool object reuse 子弹池 对象池 复用 弹幕 射击 性能",
+      "tags": [
+        "combat",
+        "projectile",
+        "bullet",
+        "pool",
+        "object reuse",
+        "子弹池",
+        "对象池",
+        "复用",
+        "弹幕",
+        "射击",
+        "性能"
+      ],
+      "engines": [
+        "phaser"
+      ],
+      "languages": [
+        "javascript"
+      ],
+      "inputModes": [
+        "pointer"
+      ],
+      "purposes": [
+        "mechanic"
+      ]
+    },
+    {
+      "candidate": {
+        "candidateId": "ref-babylon-recast-navigation",
+        "kind": "source_code",
+        "title": "Official Babylon.js — Recast navigation paths and crowd destinations",
+        "summary": "RecastJSPlugin builds a navmesh, projects points and computes paths; RecastJSCrowd adds agents and assigns destinations with agentGoto. 3D导航网格、路径点和群集代理移动的源码参考。",
+        "source": {
+          "uri": "https://github.com/BabylonJS/Babylon.js/blob/1431d93dbd9dd6051575fafcc43db9806d0483c4/packages/dev/core/src/Navigation/Plugins/recastJSPlugin.ts",
+          "repositoryUrl": "https://github.com/BabylonJS/Babylon.js",
+          "revision": "1431d93dbd9dd6051575fafcc43db9806d0483c4",
+          "paths": [
+            "packages/dev/core/src/Navigation/Plugins/recastJSPlugin.ts"
+          ],
+          "symbols": [
+            "RecastJSPlugin.createNavMesh",
+            "RecastJSPlugin.getClosestPoint",
+            "RecastJSPlugin.computePath",
+            "RecastJSCrowd.addAgent",
+            "RecastJSCrowd.agentGoto"
+          ]
+        },
+        "coverageHints": [
+          "3D navigation mesh",
+          "path waypoint query",
+          "destination-driven agent movement",
+          "crowd navigation"
+        ],
+        "license": {
+          "identifier": "Apache-2.0",
+          "sourceUri": "https://github.com/BabylonJS/Babylon.js/blob/1431d93dbd9dd6051575fafcc43db9806d0483c4/license.md",
+          "scope": "source_code"
+        },
+        "evidence": [
+          {
+            "description": "createNavMesh exposes navmesh construction from meshes and parameters.",
+            "sourceUri": "https://github.com/BabylonJS/Babylon.js/blob/1431d93dbd9dd6051575fafcc43db9806d0483c4/packages/dev/core/src/Navigation/Plugins/recastJSPlugin.ts#L137"
+          },
+          {
+            "description": "computePath converts a Recast route to Babylon Vector3 points.",
+            "sourceUri": "https://github.com/BabylonJS/Babylon.js/blob/1431d93dbd9dd6051575fafcc43db9806d0483c4/packages/dev/core/src/Navigation/Plugins/recastJSPlugin.ts#L370"
+          },
+          {
+            "description": "RecastJSCrowd forwards an agent destination into the crowd engine.",
+            "sourceUri": "https://github.com/BabylonJS/Babylon.js/blob/1431d93dbd9dd6051575fafcc43db9806d0483c4/packages/dev/core/src/Navigation/Plugins/recastJSPlugin.ts#L733"
+          },
+          {
+            "description": "Upstream source-code license evidence; this does not establish rights to third-party artwork, audio, or media.",
+            "sourceUri": "https://github.com/BabylonJS/Babylon.js/blob/1431d93dbd9dd6051575fafcc43db9806d0483c4/license.md"
+          }
+        ],
+        "limitations": [
+          "Static source inspection only: upstream code was not installed, built, played, or behavior-tested; coverageHints remain provider claims for reviewer investigation.",
+          "Only the listed small source/document excerpts are cached; this is not a runnable checkout or a packaged game/asset delivery.",
+          "Code license evidence does not establish permissions for artwork, sprites, music, trademarks, or other assets; those require separate review.",
+          "Requires a separately supplied/initialized Recast runtime and scene/navmesh setup; those dependencies were not fetched or run, and their licenses are outside this cached source-code evidence."
+        ]
+      },
+      "searchText": "Official Babylon.js — Recast navigation paths and crowd destinations RecastJSPlugin builds a navmesh, projects points and computes paths; RecastJSCrowd adds agents and assigns destinations with agentGoto. 3D导航网格、路径点和群集代理移动的源码参考。 3D navigation mesh path waypoint query destination-driven agent movement crowd navigation waypoint navigation navmesh pathfinding recast crowd 3d 路径 路点 寻路 导航网格 群集 代理移动",
+      "tags": [
+        "waypoint",
+        "navigation",
+        "navmesh",
+        "pathfinding",
+        "recast",
+        "crowd",
+        "3d",
+        "路径",
+        "路点",
+        "寻路",
+        "导航网格",
+        "群集",
+        "代理移动"
+      ],
+      "engines": [
+        "babylon"
+      ],
+      "languages": [
+        "typescript"
+      ],
+      "inputModes": [],
+      "purposes": [
+        "mechanic"
+      ]
+    },
+    {
+      "candidate": {
+        "candidateId": "ref-pathfinding-grid-astar",
+        "kind": "algorithm_documentation",
+        "title": "PathFinding.js — A* grid routes and path smoothing documentation",
+        "summary": "README documents grid-based A* with heuristic/diagonal options and smoothing; inspected findPath uses a heap/open set, grid neighbors and backtrace. 引擎无关的网格障碍寻路与路径点压缩/平滑参考。",
+        "source": {
+          "uri": "https://github.com/qiao/PathFinding.js/blob/2904a9afba483c02b5a61eb60fefd63e9b2db78c/README.md",
+          "repositoryUrl": "https://github.com/qiao/PathFinding.js",
+          "revision": "2904a9afba483c02b5a61eb60fefd63e9b2db78c",
+          "paths": [
+            "README.md",
+            "src/finders/AStarFinder.js",
+            "src/core/Util.js"
+          ],
+          "symbols": [
+            "AStarFinder.findPath",
+            "smoothenPath",
+            "compressPath"
+          ]
+        },
+        "coverageHints": [
+          "grid obstacle pathfinding",
+          "A* heuristic search",
+          "diagonal movement options",
+          "path smoothing and compression"
+        ],
+        "license": {
+          "identifier": "MIT",
+          "sourceUri": "https://github.com/qiao/PathFinding.js/blob/2904a9afba483c02b5a61eb60fefd63e9b2db78c/README.md",
+          "scope": "source_code"
+        },
+        "evidence": [
+          {
+            "description": "README explains construction and use of the A* finder.",
+            "sourceUri": "https://github.com/qiao/PathFinding.js/blob/2904a9afba483c02b5a61eb60fefd63e9b2db78c/README.md#L110"
+          },
+          {
+            "description": "findPath implements heap-based grid search and backtraces a reached target.",
+            "sourceUri": "https://github.com/qiao/PathFinding.js/blob/2904a9afba483c02b5a61eb60fefd63e9b2db78c/src/finders/AStarFinder.js#L54"
+          },
+          {
+            "description": "smoothenPath checks grid walkability along proposed shortcuts.",
+            "sourceUri": "https://github.com/qiao/PathFinding.js/blob/2904a9afba483c02b5a61eb60fefd63e9b2db78c/src/core/Util.js#L136"
+          },
+          {
+            "description": "compressPath removes redundant intermediate route points.",
+            "sourceUri": "https://github.com/qiao/PathFinding.js/blob/2904a9afba483c02b5a61eb60fefd63e9b2db78c/src/core/Util.js#L186"
+          },
+          {
+            "description": "Upstream source-code license evidence; this does not establish rights to third-party artwork, audio, or media.",
+            "sourceUri": "https://github.com/qiao/PathFinding.js/blob/2904a9afba483c02b5a61eb60fefd63e9b2db78c/README.md"
+          }
+        ],
+        "limitations": [
+          "Static source inspection only: upstream code was not installed, built, played, or behavior-tested; coverageHints remain provider claims for reviewer investigation.",
+          "Only the listed small source/document excerpts are cached; this is not a runnable checkout or a packaged game/asset delivery.",
+          "Code license evidence does not establish permissions for artwork, sprites, music, trademarks, or other assets; those require separate review.",
+          "Returns grid-coordinate routes, not game-engine movement or character steering. CommonJS imports and the heap dependency need integration; dynamic obstacles and current build compatibility were not tested."
+        ]
+      },
+      "searchText": "PathFinding.js — A* grid routes and path smoothing documentation README documents grid-based A* with heuristic/diagonal options and smoothing; inspected findPath uses a heap/open set, grid neighbors and backtrace. 引擎无关的网格障碍寻路与路径点压缩/平滑参考。 grid obstacle pathfinding A* heuristic search diagonal movement options path smoothing and compression waypoint navigation pathfinding astar a* grid route 寻路 路径 路点 导航 网格 障碍物 路径平滑",
+      "tags": [
+        "waypoint",
+        "navigation",
+        "pathfinding",
+        "astar",
+        "a*",
+        "grid",
+        "route",
+        "寻路",
+        "路径",
+        "路点",
+        "导航",
+        "网格",
+        "障碍物",
+        "路径平滑"
+      ],
+      "engines": [],
+      "languages": [
+        "javascript"
+      ],
+      "inputModes": [],
+      "purposes": [
+        "mechanic"
+      ]
+    }
+  ]
+}

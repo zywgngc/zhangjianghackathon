@@ -1,0 +1,61 @@
+{
+  "source_branch": "tests",
+  "source_commit": "81fc5366aa417754ccdba07d5d3dc08daa8f6a02",
+  "description": "Representative art-resource requests extracted from the three tests specs; not an exhaustive asset inventory or full-game success benchmark.",
+  "games": [
+    {
+      "id": "GAME-TEST-001", "name": "数字门枪手", "engine": "Babylon.js",
+      "spec": "case1_Number_Gate_Shooter/001数字门枪手.txt", "image": "case1_Number_Gate_Shooter/1.png",
+      "requirements": [
+        {"id": "military-art", "group": "core", "purpose": "archetype", "expected_type": "model", "description": "低多边形 low-poly 3D military warfare 美术套件，军绿色士兵、沙漠黄战场、战壕、军事基地和装甲车，GLB glTF", "source_lines": ["133-145", "1144-1197"]},
+        {"id": "soldier", "group": "core", "purpose": "mechanic", "expected_type": "model", "description": "现代军事绿色制服士兵 3D rigged soldier GLB，头盔步枪，running shooting hit death 动画", "source_lines": ["308-319", "1161-1170", "1218-1232"]},
+        {"id": "armored-boss", "group": "core", "purpose": "mechanic", "expected_type": "model", "description": "低模 3D armored military vehicle Boss model GLB，受击与摧毁动画，装甲军事车辆", "source_lines": ["360-370"]},
+        {"id": "battlefield", "group": "core", "purpose": "mechanic", "expected_type": "model", "description": "低模 3D battlefield environment assets GLB 沙袋、军用箱子、路障、瞭望塔、战壕与军事车辆", "source_lines": ["1179-1197"]},
+        {"id": "math-gate", "group": "core", "purpose": "mechanic", "expected_type": "model", "description": "3D mathematical gate 门框，显示加减乘除运算符与可变数字，正负红绿反馈，可程序化制作的几何模型", "source_lines": ["326-339"]},
+        {"id": "gun-audio", "group": "core", "purpose": "mechanic", "expected_type": "audio", "description": "枪声音效 gun shooting sound effects，命中、爆炸、胜利与失败事件音效和循环背景音乐，本地可授权文件", "source_lines": ["1253-1275"]},
+        {"id": "pause", "group": "ui", "purpose": "mechanic", "expected_type": "icon", "description": "暂停 pause HUD icon 透明SVG图标", "source_lines": ["1044-1052"], "acceptable_ids": ["game-icons/guard13007/pause-button"]},
+        {"id": "gold", "group": "ui", "purpose": "mechanic", "expected_type": "icon", "description": "金币 coins gold currency 图标，主菜单货币计数旁的透明SVG标记", "source_lines": ["1033-1042"], "acceptable_ids": ["game-icons/delapouite/coins"]},
+        {"id": "settings", "group": "ui", "purpose": "mechanic", "expected_type": "icon", "description": "设置 settings options 主菜单按钮图标，透明SVG", "source_lines": ["1033-1042"], "acceptable_ids": ["game-icons/delapouite/settings-knobs"]},
+        {"id": "start", "group": "ui", "purpose": "mechanic", "expected_type": "icon", "description": "开始游戏 start play 按钮图标，透明SVG", "source_lines": ["1033-1042"], "acceptable_ids": ["game-icons/guard13007/play-button"]},
+        {"id": "sound-on", "group": "ui", "purpose": "mechanic", "expected_type": "icon", "description": "开启声音 sound on unmute 游戏音效设置图标，透明SVG", "source_lines": ["1106-1111"], "acceptable_ids": ["game-icons/delapouite/sound-on"]},
+        {"id": "sound-off", "group": "ui", "purpose": "mechanic", "expected_type": "icon", "description": "关闭声音 sound off mute 静音图标，透明SVG", "source_lines": ["1106-1111"], "acceptable_ids": ["game-icons/delapouite/sound-off"]}
+      ]
+    },
+    {
+      "id": "GAME-TEST-002", "name": "武林幸存者", "engine": "Phaser",
+      "spec": "case2_Wuxia_Survivors/002武林幸存者.txt", "image": "case2_Wuxia_Survivors/1.png",
+      "requirements": [
+        {"id": "wuxia-art", "group": "core", "purpose": "archetype", "expected_type": "sprite", "description": "中国武侠2D俯视幸存者整体美术参考，水墨卡通混合风格，古装剑客、武侠敌群、竹林古道寺庙场景，PNG art pack", "source_lines": ["2538-2556", "2587-2619"]},
+        {"id": "swordsman", "group": "core", "purpose": "mechanic", "expected_type": "sprite", "description": "无名剑客 Wuxia swordsman top-down 2D sprite sheet，古装束发背剑，idle running attacking hurt death 动画", "source_lines": ["426-445", "2560-2572"]},
+        {"id": "wuxia-enemies", "group": "core", "purpose": "mechanic", "expected_type": "sprite", "description": "武侠六类敌人及精英Boss动画 sprite sheets，山贼刀客刺客魔教弟子铁甲武士术士，movement hit death", "source_lines": ["447-647", "2574-2585", "2660-2684"]},
+        {"id": "wuxia-tiles", "group": "core", "purpose": "mechanic", "expected_type": "tileset", "description": "俯视武侠环境 tileset 图块，竹林石路溪流亭子、荒漠古道残破客栈、魔教寺庙石地火盆阵法，可平铺PNG", "source_lines": ["2587-2619"]},
+        {"id": "martial-vfx", "group": "core", "purpose": "mechanic", "expected_type": "sprite", "description": "武侠武功 animated VFX sprite sheets，银白剑气、金色龙掌、蓝冰、橙红火焰、紫白闪电、黑白太极阵与半透明分身", "source_lines": ["687-700", "2634-2658"]},
+        {"id": "wuxia-audio", "group": "core", "purpose": "mechanic", "expected_type": "audio", "description": "本地可授权武侠音效与BGM，剑击掌击暗器雷电、升级进化、Boss和胜败事件，古琴笛子二胡传统打击乐", "source_lines": ["2704-2751"]},
+        {"id": "pause", "group": "ui", "purpose": "mechanic", "expected_type": "icon", "description": "暂停 pause HUD icon 透明SVG图标", "source_lines": ["2409"], "acceptable_ids": ["game-icons/guard13007/pause-button"]},
+        {"id": "start", "group": "ui", "purpose": "mechanic", "expected_type": "icon", "description": "开始 start play 游戏主菜单按钮图标 透明SVG", "source_lines": ["2393"], "acceptable_ids": ["game-icons/guard13007/play-button"]},
+        {"id": "settings", "group": "ui", "purpose": "mechanic", "expected_type": "icon", "description": "设置 settings options 图标 透明SVG", "source_lines": ["2396"], "acceptable_ids": ["game-icons/delapouite/settings-knobs"]},
+        {"id": "gold", "group": "ui", "purpose": "mechanic", "expected_type": "icon", "description": "金币 coins gold currency HUD icon 透明SVG", "source_lines": ["671", "2397", "2408"], "acceptable_ids": ["game-icons/delapouite/coins"]},
+        {"id": "health", "group": "ui", "purpose": "mechanic", "expected_type": "icon", "description": "生命值 health hp HUD heart icon，血条旁的透明SVG图标", "source_lines": ["2403"], "notes": ["TXT要求生命值显示；心形图标是辅助表现方案，不替代血条。"], "acceptable_ids": ["game-icons/delapouite/heart-beats"]},
+        {"id": "healing-item", "group": "ui", "purpose": "mechanic", "expected_type": "icon", "description": "治疗物品 healing potion health-potion 静态拾取物图标 透明SVG", "source_lines": ["666-672"], "notes": ["TXT只规定healing item；药水是测试采用的外观假设，未验证为指定武侠风格。"], "acceptable_ids": ["game-icons/delapouite/health-potion"]}
+      ]
+    },
+    {
+      "id": "GAME-TEST-003", "name": "百炼英雄", "engine": "Babylon.js",
+      "spec": "case3_Power_Hunter/003百炼英雄.txt", "image": "case3_Power_Hunter/1.png",
+      "requirements": [
+        {"id": "fantasy-art", "group": "core", "purpose": "archetype", "expected_type": "model", "description": "彩色 low-poly 3D fantasy open-field puzzle 整体美术套件，轻甲剑士怪物森林营地荒漠遗迹魔王城堡，GLB glTF", "source_lines": ["57-61", "190-200", "1827-1834", "1862-1895"], "notes": ["截图为塔楼广告，但文字明确要求open-field；不据截图改变玩法与场景需求。"]},
+        {"id": "fantasy-hero", "group": "core", "purpose": "mechanic", "expected_type": "model", "description": "低模奇幻冒险家 3D light armor sword rigged hero GLB，idle running attacking collecting weapon power increase victory 动画", "source_lines": ["477-496", "1836-1847"]},
+        {"id": "fantasy-enemies", "group": "core", "purpose": "mechanic", "expected_type": "model", "description": "低模3D幻想敌人及Boss模型动画包 GLB，goblin skeleton spider orc dark knight demonic guard forest troll，idle hit defeat attack", "source_lines": ["498-613", "1849-1860"]},
+        {"id": "weapons", "group": "core", "purpose": "mechanic", "expected_type": "model", "description": "低模3D武器 collectible GLB，wooden sword 木剑铁剑精钢剑 battle axe magic sword holy sword，轮廓材质区分品质", "source_lines": ["615-665"]},
+        {"id": "fantasy-environment", "group": "core", "purpose": "mechanic", "expected_type": "model", "description": "低模3D森林营地树草岩石木栅栏、沙漠遗迹柱子残墙、黑暗城堡石地火炬 modular environment GLB assets", "source_lines": ["668-681", "1862-1895"]},
+        {"id": "fantasy-audio", "group": "core", "purpose": "mechanic", "expected_type": "audio", "description": "本地可授权轻快奇幻冒险 BGM 和 target selection movement confirm pickup attack enemy defeat power increase invalid target boss victory 音效", "source_lines": ["1950-1982"]},
+        {"id": "pause", "group": "ui", "purpose": "mechanic", "expected_type": "icon", "description": "暂停 pause HUD icon 透明SVG图标", "source_lines": ["1685"], "acceptable_ids": ["game-icons/guard13007/pause-button"]},
+        {"id": "start", "group": "ui", "purpose": "mechanic", "expected_type": "icon", "description": "开始 start play 主菜单按钮图标 透明SVG", "source_lines": ["1668"], "acceptable_ids": ["game-icons/guard13007/play-button"]},
+        {"id": "settings", "group": "ui", "purpose": "mechanic", "expected_type": "icon", "description": "设置 settings options 主菜单图标 透明SVG", "source_lines": ["1670"], "acceptable_ids": ["game-icons/delapouite/settings-knobs"]},
+        {"id": "sound-on", "group": "ui", "purpose": "mechanic", "expected_type": "icon", "description": "开启声音 sound on unmute 游戏音效图标 透明SVG", "source_lines": ["1780-1785"], "acceptable_ids": ["game-icons/delapouite/sound-on"]},
+        {"id": "sound-off", "group": "ui", "purpose": "mechanic", "expected_type": "icon", "description": "关闭声音 sound off mute 静音图标 透明SVG", "source_lines": ["1780-1785"], "acceptable_ids": ["game-icons/delapouite/sound-off"]},
+        {"id": "resume", "group": "ui", "purpose": "mechanic", "expected_type": "icon", "description": "继续游戏 resume play 暂停菜单按钮图标 透明SVG", "source_lines": ["1743-1749"], "notes": ["开始与继续复用同一play-button资源；不计作两个独立素材。"], "acceptable_ids": ["game-icons/guard13007/play-button"]}
+      ]
+    }
+  ]
+}

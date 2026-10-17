@@ -1,0 +1,222 @@
+{
+  "schemaVersion": "0.2",
+  "isMock": false,
+  "files": [
+    {
+      "repository": "nusr/wukong-survivors",
+      "revision": "bb28e7091ca6072731d74a71a36c5d38877c761c",
+      "path": "README.md",
+      "sourceUri": "https://raw.githubusercontent.com/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/README.md",
+      "cachePath": "sources/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/README.md",
+      "sha256": "01f38200c381ffdead8b1b95c7f12d6b91e392c5012acbe12d0a582b5c7fa620",
+      "bytes": 3354
+    },
+    {
+      "repository": "nusr/wukong-survivors",
+      "revision": "bb28e7091ca6072731d74a71a36c5d38877c761c",
+      "path": "LICENSE",
+      "sourceUri": "https://raw.githubusercontent.com/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/LICENSE",
+      "cachePath": "sources/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/LICENSE",
+      "sha256": "4d0743123aa16a8fc15f611ef54d435c9de647a149d5f42c25bcfbe02a19c487",
+      "bytes": 1065
+    },
+    {
+      "repository": "nusr/wukong-survivors",
+      "revision": "bb28e7091ca6072731d74a71a36c5d38877c761c",
+      "path": "package.json",
+      "sourceUri": "https://raw.githubusercontent.com/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/package.json",
+      "cachePath": "sources/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/package.json",
+      "sha256": "82f29c097ebb549383bd56ab95f0236a227f28f5b33e75e27a9e45214ac7fb02",
+      "bytes": 1666
+    },
+    {
+      "repository": "nusr/wukong-survivors",
+      "revision": "bb28e7091ca6072731d74a71a36c5d38877c761c",
+      "path": "src/game/GameScene.ts",
+      "sourceUri": "https://raw.githubusercontent.com/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/GameScene.ts",
+      "cachePath": "sources/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/GameScene.ts",
+      "sha256": "05f08fe2ca09d2f7f992c9951a56fa23629f9553e061ae61070fd782dd0376ce",
+      "bytes": 32551
+    },
+    {
+      "repository": "nusr/wukong-survivors",
+      "revision": "bb28e7091ca6072731d74a71a36c5d38877c761c",
+      "path": "src/game/weapon.ts",
+      "sourceUri": "https://raw.githubusercontent.com/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/weapon.ts",
+      "cachePath": "sources/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/weapon.ts",
+      "sha256": "7d140ac8cae4313c1a88325b67ee5ce5deeb3c52c0ace32ddbec9239a21e7a92",
+      "bytes": 48614
+    },
+    {
+      "repository": "nusr/wukong-survivors",
+      "revision": "bb28e7091ca6072731d74a71a36c5d38877c761c",
+      "path": "src/game/enemy.ts",
+      "sourceUri": "https://raw.githubusercontent.com/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/enemy.ts",
+      "cachePath": "sources/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/enemy.ts",
+      "sha256": "d6344c6c8823c2b228c4d0e61c4f21eae994058eef659e0a2d2553bb85157646",
+      "bytes": 9544
+    },
+    {
+      "repository": "nusr/wukong-survivors",
+      "revision": "bb28e7091ca6072731d74a71a36c5d38877c761c",
+      "path": "src/game/experience.ts",
+      "sourceUri": "https://raw.githubusercontent.com/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/experience.ts",
+      "cachePath": "sources/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/experience.ts",
+      "sha256": "2bec5ecd617ed4d1f51206b5fb59884a8ddf6a3aa962184741cf63b2fb0d38cf",
+      "bytes": 5849
+    },
+    {
+      "repository": "nusr/wukong-survivors",
+      "revision": "bb28e7091ca6072731d74a71a36c5d38877c761c",
+      "path": "src/game/player.ts",
+      "sourceUri": "https://raw.githubusercontent.com/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/player.ts",
+      "cachePath": "sources/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/player.ts",
+      "sha256": "b8b263cd40684d1fe85ca23d5f621e7c639ad21f82eee57d0dc39dd8f52cdb1e",
+      "bytes": 7085
+    },
+    {
+      "repository": "nusr/wukong-survivors",
+      "revision": "bb28e7091ca6072731d74a71a36c5d38877c761c",
+      "path": "src/game/RewardSelectionUI.ts",
+      "sourceUri": "https://raw.githubusercontent.com/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/RewardSelectionUI.ts",
+      "cachePath": "sources/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/src/game/RewardSelectionUI.ts",
+      "sha256": "729dc685fe8e56aadb627f851ed7734bd1590ba602ca3ec7c5178ac50a6f12c2",
+      "bytes": 11232
+    },
+    {
+      "repository": "nusr/wukong-survivors",
+      "revision": "bb28e7091ca6072731d74a71a36c5d38877c761c",
+      "path": "src/store/app.ts",
+      "sourceUri": "https://raw.githubusercontent.com/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/src/store/app.ts",
+      "cachePath": "sources/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/src/store/app.ts",
+      "sha256": "9a881eb46ae1da3cdd47e22fc61558fde1545a3a8d8618916e35a1851b120079",
+      "bytes": 4543
+    },
+    {
+      "repository": "nusr/wukong-survivors",
+      "revision": "bb28e7091ca6072731d74a71a36c5d38877c761c",
+      "path": "src/store/save.ts",
+      "sourceUri": "https://raw.githubusercontent.com/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/src/store/save.ts",
+      "cachePath": "sources/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/src/store/save.ts",
+      "sha256": "ee44539deb61978a0625d310654c85322dcad2b84034feeefeaa32170c67eb0e",
+      "bytes": 4990
+    },
+    {
+      "repository": "nusr/wukong-survivors",
+      "revision": "bb28e7091ca6072731d74a71a36c5d38877c761c",
+      "path": "src/constant/rewards.ts",
+      "sourceUri": "https://raw.githubusercontent.com/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/src/constant/rewards.ts",
+      "cachePath": "sources/nusr/wukong-survivors/bb28e7091ca6072731d74a71a36c5d38877c761c/src/constant/rewards.ts",
+      "sha256": "2ce7e99e5ebf04f97bf973a34cbc5ae4ec55f41c1c2b2daaa6c700aa53362ee0",
+      "bytes": 17993
+    },
+    {
+      "repository": "phaserjs/examples",
+      "revision": "68140eca72525d5034b783a262270715ddc17b78",
+      "path": "README.md",
+      "sourceUri": "https://raw.githubusercontent.com/phaserjs/examples/68140eca72525d5034b783a262270715ddc17b78/README.md",
+      "cachePath": "sources/phaserjs/examples/68140eca72525d5034b783a262270715ddc17b78/README.md",
+      "sha256": "e474b6c49e2ebf9aaf8c8832e38885407cd36cc57763e86d523f06d3d2cbc35c",
+      "bytes": 1712
+    },
+    {
+      "repository": "phaserjs/examples",
+      "revision": "68140eca72525d5034b783a262270715ddc17b78",
+      "path": "package.json",
+      "sourceUri": "https://raw.githubusercontent.com/phaserjs/examples/68140eca72525d5034b783a262270715ddc17b78/package.json",
+      "cachePath": "sources/phaserjs/examples/68140eca72525d5034b783a262270715ddc17b78/package.json",
+      "sha256": "2ab699b1f5f849d6ad21273c6145992afc9bf566c09b1a9b619756e3c0b61776",
+      "bytes": 1056
+    },
+    {
+      "repository": "phaserjs/examples",
+      "revision": "68140eca72525d5034b783a262270715ddc17b78",
+      "path": "public/src/paths/followers/basic follower.js",
+      "sourceUri": "https://raw.githubusercontent.com/phaserjs/examples/68140eca72525d5034b783a262270715ddc17b78/public/src/paths/followers/basic%20follower.js",
+      "cachePath": "sources/phaserjs/examples/68140eca72525d5034b783a262270715ddc17b78/public/src/paths/followers/basic follower.js",
+      "sha256": "3e37af700a46058b67c398cf50ab609d6462a7d696f2a38a37f0bf5df22f6796",
+      "bytes": 1231
+    },
+    {
+      "repository": "phaserjs/examples",
+      "revision": "68140eca72525d5034b783a262270715ddc17b78",
+      "path": "public/src/physics/arcade/closest furthest.js",
+      "sourceUri": "https://raw.githubusercontent.com/phaserjs/examples/68140eca72525d5034b783a262270715ddc17b78/public/src/physics/arcade/closest%20furthest.js",
+      "cachePath": "sources/phaserjs/examples/68140eca72525d5034b783a262270715ddc17b78/public/src/physics/arcade/closest furthest.js",
+      "sha256": "9dc727bd8b85ff4f54954771b23001fb533b106a6753d6c39de2c082987ee18d",
+      "bytes": 1650
+    },
+    {
+      "repository": "phaserjs/examples",
+      "revision": "68140eca72525d5034b783a262270715ddc17b78",
+      "path": "public/src/physics/arcade/topdown shooter combat mechanics.js",
+      "sourceUri": "https://raw.githubusercontent.com/phaserjs/examples/68140eca72525d5034b783a262270715ddc17b78/public/src/physics/arcade/topdown%20shooter%20combat%20mechanics.js",
+      "cachePath": "sources/phaserjs/examples/68140eca72525d5034b783a262270715ddc17b78/public/src/physics/arcade/topdown shooter combat mechanics.js",
+      "sha256": "55d9e732ee372528fd63929bc016d6398ac837b4ea1b8931e73f2cba265834b5",
+      "bytes": 10850
+    },
+    {
+      "repository": "phaserjs/examples",
+      "revision": "68140eca72525d5034b783a262270715ddc17b78",
+      "path": "public/src/physics/arcade/bullets group.js",
+      "sourceUri": "https://raw.githubusercontent.com/phaserjs/examples/68140eca72525d5034b783a262270715ddc17b78/public/src/physics/arcade/bullets%20group.js",
+      "cachePath": "sources/phaserjs/examples/68140eca72525d5034b783a262270715ddc17b78/public/src/physics/arcade/bullets group.js",
+      "sha256": "358b3cb3f21f5f0e9ac47c04b854f09e68d1f5dcc24afe6bc90367553852fcd3",
+      "bytes": 2001
+    },
+    {
+      "repository": "BabylonJS/Babylon.js",
+      "revision": "1431d93dbd9dd6051575fafcc43db9806d0483c4",
+      "path": "license.md",
+      "sourceUri": "https://raw.githubusercontent.com/BabylonJS/Babylon.js/1431d93dbd9dd6051575fafcc43db9806d0483c4/license.md",
+      "cachePath": "sources/BabylonJS/Babylon.js/1431d93dbd9dd6051575fafcc43db9806d0483c4/license.md",
+      "sha256": "9362ea9ea17cb221a20cbbd63f404710834cc273d2a9a7b60314fd68ab702cd6",
+      "bytes": 9226
+    },
+    {
+      "repository": "BabylonJS/Babylon.js",
+      "revision": "1431d93dbd9dd6051575fafcc43db9806d0483c4",
+      "path": "packages/dev/core/src/Navigation/Plugins/recastJSPlugin.ts",
+      "sourceUri": "https://raw.githubusercontent.com/BabylonJS/Babylon.js/1431d93dbd9dd6051575fafcc43db9806d0483c4/packages/dev/core/src/Navigation/Plugins/recastJSPlugin.ts",
+      "cachePath": "sources/BabylonJS/Babylon.js/1431d93dbd9dd6051575fafcc43db9806d0483c4/packages/dev/core/src/Navigation/Plugins/recastJSPlugin.ts",
+      "sha256": "d5b8479a020b4f0746a1bd71a6c5159d6b15b2437bda02d5264c578dd3a4d70a",
+      "bytes": 35371
+    },
+    {
+      "repository": "qiao/PathFinding.js",
+      "revision": "2904a9afba483c02b5a61eb60fefd63e9b2db78c",
+      "path": "README.md",
+      "sourceUri": "https://raw.githubusercontent.com/qiao/PathFinding.js/2904a9afba483c02b5a61eb60fefd63e9b2db78c/README.md",
+      "cachePath": "sources/qiao/PathFinding.js/2904a9afba483c02b5a61eb60fefd63e9b2db78c/README.md",
+      "sha256": "6517cd3e48cabb16fc55d72613fc0f9ba1988a12bf85911f10fa65d1a18f2f4d",
+      "bytes": 8805
+    },
+    {
+      "repository": "qiao/PathFinding.js",
+      "revision": "2904a9afba483c02b5a61eb60fefd63e9b2db78c",
+      "path": "package.json",
+      "sourceUri": "https://raw.githubusercontent.com/qiao/PathFinding.js/2904a9afba483c02b5a61eb60fefd63e9b2db78c/package.json",
+      "cachePath": "sources/qiao/PathFinding.js/2904a9afba483c02b5a61eb60fefd63e9b2db78c/package.json",
+      "sha256": "17609851c7ca364168f98b1fea91d09dc6f65f50dcbcaafcea869edc7548010e",
+      "bytes": 904
+    },
+    {
+      "repository": "qiao/PathFinding.js",
+      "revision": "2904a9afba483c02b5a61eb60fefd63e9b2db78c",
+      "path": "src/finders/AStarFinder.js",
+      "sourceUri": "https://raw.githubusercontent.com/qiao/PathFinding.js/2904a9afba483c02b5a61eb60fefd63e9b2db78c/src/finders/AStarFinder.js",
+      "cachePath": "sources/qiao/PathFinding.js/2904a9afba483c02b5a61eb60fefd63e9b2db78c/src/finders/AStarFinder.js",
+      "sha256": "d1e8e12a2c84f8af2175136b08bc435a9ec9854e3c17d84cc17d37533d5633d0",
+      "bytes": 4627
+    },
+    {
+      "repository": "qiao/PathFinding.js",
+      "revision": "2904a9afba483c02b5a61eb60fefd63e9b2db78c",
+      "path": "src/core/Util.js",
+      "sourceUri": "https://raw.githubusercontent.com/qiao/PathFinding.js/2904a9afba483c02b5a61eb60fefd63e9b2db78c/src/core/Util.js",
+      "cachePath": "sources/qiao/PathFinding.js/2904a9afba483c02b5a61eb60fefd63e9b2db78c/src/core/Util.js",
+      "sha256": "4ea100d831cd50f7f84dc080f0edcd021ad78f96ae8a364b5b2b175d7ea28300",
+      "bytes": 5961
+    }
+  ]
+}

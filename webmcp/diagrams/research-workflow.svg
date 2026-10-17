@@ -1,0 +1,161 @@
+<svg role="img" aria-labelledby="research-workflow-title research-workflow-desc" width="831pt" height="752pt"
+ viewBox="0.00 0.00 831.00 752.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="research-workflow-graph0" class="graph" transform="scale(1 1) rotate(0) translate(18 733.8)">
+<title id="research-workflow-title">Research workflow</title><desc id="research-workflow-desc">Archetypes → editable defaults → mechanic contracts → multiple candidate investigations → compatibility review → Builder blueprint.</desc>
+<!-- brief&#45;&gt;archetypes -->
+<g id="research-workflow-edge1" class="edge">
+<title>brief&#45;&gt;archetypes</title>
+<path fill="none" stroke="#8d9195" d="M343.28,-657.87C343.28,-648.33 343.28,-637.54 343.28,-627.47"/>
+<polygon fill="#8d9195" stroke="#8d9195" points="345.56,-627.6 343.28,-621.1 341.01,-627.6 345.56,-627.6"/>
+</g>
+<!-- archetypes&#45;&gt;planner -->
+<g id="research-workflow-edge2" class="edge">
+<title>archetypes&#45;&gt;planner</title>
+<path fill="none" stroke="#8d9195" d="M343.28,-561.27C343.28,-551.73 343.28,-540.94 343.28,-530.87"/>
+<polygon fill="#8d9195" stroke="#8d9195" points="345.56,-531 343.28,-524.5 341.01,-531 345.56,-531"/>
+</g>
+<!-- planner&#45;&gt;mechanics -->
+<g id="research-workflow-edge3" class="edge">
+<title>planner&#45;&gt;mechanics</title>
+<path fill="none" stroke="#8d9195" d="M343.28,-464.67C343.28,-455.13 343.28,-444.34 343.28,-434.27"/>
+<polygon fill="#8d9195" stroke="#8d9195" points="345.56,-434.4 343.28,-427.9 341.01,-434.4 345.56,-434.4"/>
+</g>
+<!-- developer&#45;&gt;planner -->
+<g id="research-workflow-edge4" class="edge">
+<title>developer&#45;&gt;planner</title>
+<path fill="none" stroke="#8d9195" d="M190.7,-493.8C204.53,-493.8 218.36,-493.8 232.19,-493.8"/>
+<polygon fill="#8d9195" stroke="#8d9195" points="231.86,-496.08 238.36,-493.8 231.86,-491.53 231.86,-496.08"/>
+</g>
+<!-- mechanics&#45;&gt;researchA -->
+<g id="research-workflow-edge5" class="edge">
+<title>mechanics&#45;&gt;researchA</title>
+<path fill="none" stroke="#8d9195" d="M274.29,-367.95C247.32,-356.9 216.28,-344.19 188.64,-332.87"/>
+<polygon fill="#8d9195" stroke="#8d9195" points="189.6,-330.8 182.72,-330.45 187.87,-335.02 189.6,-330.8"/>
+</g>
+<!-- mechanics&#45;&gt;researchB -->
+<g id="research-workflow-edge6" class="edge">
+<title>mechanics&#45;&gt;researchB</title>
+<path fill="none" stroke="#8d9195" d="M343.28,-368.07C343.28,-358.53 343.28,-347.74 343.28,-337.67"/>
+<polygon fill="#8d9195" stroke="#8d9195" points="345.56,-337.8 343.28,-331.3 341.01,-337.8 345.56,-337.8"/>
+</g>
+<!-- mechanics&#45;&gt;researchC -->
+<g id="research-workflow-edge7" class="edge">
+<title>mechanics&#45;&gt;researchC</title>
+<path fill="none" stroke="#8d9195" d="M412.28,-367.95C439.25,-356.9 470.28,-344.19 497.92,-332.87"/>
+<polygon fill="#8d9195" stroke="#8d9195" points="498.69,-335.02 503.84,-330.45 496.97,-330.8 498.69,-335.02"/>
+</g>
+<!-- researchA&#45;&gt;reviewer -->
+<g id="research-workflow-edge8" class="edge">
+<title>researchA&#45;&gt;reviewer</title>
+<path fill="none" stroke="#8d9195" d="M181.28,-271.35C208.25,-260.3 239.28,-247.59 266.92,-236.27"/>
+<polygon fill="#8d9195" stroke="#8d9195" points="267.69,-238.42 272.84,-233.85 265.97,-234.2 267.69,-238.42"/>
+</g>
+<!-- researchB&#45;&gt;reviewer -->
+<g id="research-workflow-edge9" class="edge">
+<title>researchB&#45;&gt;reviewer</title>
+<path fill="none" stroke="#8d9195" d="M343.28,-271.47C343.28,-261.93 343.28,-251.14 343.28,-241.07"/>
+<polygon fill="#8d9195" stroke="#8d9195" points="345.56,-241.2 343.28,-234.7 341.01,-241.2 345.56,-241.2"/>
+</g>
+<!-- researchC&#45;&gt;reviewer -->
+<g id="research-workflow-edge10" class="edge">
+<title>researchC&#45;&gt;reviewer</title>
+<path fill="none" stroke="#8d9195" d="M505.29,-271.35C478.32,-260.3 447.28,-247.59 419.64,-236.27"/>
+<polygon fill="#8d9195" stroke="#8d9195" points="420.6,-234.2 413.72,-233.85 418.87,-238.42 420.6,-234.2"/>
+</g>
+<!-- reviewer&#45;&gt;mechanics -->
+<g id="research-workflow-edge11" class="edge">
+<title>reviewer&#45;&gt;mechanics</title>
+<path fill="none" stroke="#8d9195" d="M507.77,-213.65C624.56,-226.05 750.75,-256.18 690.28,-329.4 664,-361.22 569.49,-378.05 485.73,-386.85"/>
+<polygon fill="#8d9195" stroke="#8d9195" points="485.66,-384.57 479.43,-387.5 486.12,-389.1 485.66,-384.57"/>
+<text style="paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round" xml:space="preserve" text-anchor="middle" x="750.61" y="-297" font-family="Arial" font-size="12.00" fill="#555a60">Gaps or conflicts</text>
+</g>
+<!-- reviewer&#45;&gt;blueprint -->
+<g id="research-workflow-edge12" class="edge">
+<title>reviewer&#45;&gt;blueprint</title>
+<path fill="none" stroke="#8d9195" d="M343.28,-174.87C343.28,-165.33 343.28,-154.54 343.28,-144.47"/>
+<polygon fill="#8d9195" stroke="#8d9195" points="345.56,-144.6 343.28,-138.1 341.01,-144.6 345.56,-144.6"/>
+</g>
+<!-- blueprint&#45;&gt;builder -->
+<g id="research-workflow-edge13" class="edge">
+<title>blueprint&#45;&gt;builder</title>
+<path fill="none" stroke="#8d9195" d="M343.28,-78.37C343.28,-68.54 343.28,-57.53 343.28,-47.79"/>
+<polygon fill="#8d9195" stroke="#8d9195" points="345.56,-47.97 343.28,-41.47 341.01,-47.97 345.56,-47.97"/>
+</g>
+<!-- brief -->
+<g id="research-workflow-node1" class="node">
+<title>brief</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" d="M463.04,-715.8C463.04,-715.8 223.53,-715.8 223.53,-715.8 217.53,-715.8 211.53,-709.8 211.53,-703.8 211.53,-703.8 211.53,-670.2 211.53,-670.2 211.53,-664.2 217.53,-658.2 223.53,-658.2 223.53,-658.2 463.04,-658.2 463.04,-658.2 469.04,-658.2 475.04,-664.2 475.04,-670.2 475.04,-670.2 475.04,-703.8 475.04,-703.8 475.04,-709.8 469.04,-715.8 463.04,-715.8"/>
+<text xml:space="preserve" text-anchor="middle" x="343.28" y="-691.5" font-family="Arial" font-size="15.00" fill="#303030">Brief + reference images</text>
+<text xml:space="preserve" text-anchor="middle" x="343.28" y="-673.5" font-family="Arial" font-size="15.00" fill="#303030">selected architecture + preferences</text>
+</g>
+<!-- archetypes -->
+<g id="research-workflow-node2" class="node">
+<title>archetypes</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" d="M418.2,-619.2C418.2,-619.2 268.36,-619.2 268.36,-619.2 262.36,-619.2 256.36,-613.2 256.36,-607.2 256.36,-607.2 256.36,-573.6 256.36,-573.6 256.36,-567.6 262.36,-561.6 268.36,-561.6 268.36,-561.6 418.2,-561.6 418.2,-561.6 424.2,-561.6 430.2,-567.6 430.2,-573.6 430.2,-573.6 430.2,-607.2 430.2,-607.2 430.2,-613.2 424.2,-619.2 418.2,-619.2"/>
+<text xml:space="preserve" text-anchor="middle" x="343.28" y="-594.9" font-family="Arial" font-size="15.00" fill="#303030">Archetype research</text>
+<text xml:space="preserve" text-anchor="middle" x="343.28" y="-576.9" font-family="Arial" font-size="15.00" fill="#303030">several similar games</text>
+</g>
+<!-- planner -->
+<g id="research-workflow-node3" class="node">
+<title>planner</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" d="M434.28,-522.6C434.28,-522.6 252.28,-522.6 252.28,-522.6 246.28,-522.6 240.28,-516.6 240.28,-510.6 240.28,-510.6 240.28,-477 240.28,-477 240.28,-471 246.28,-465 252.28,-465 252.28,-465 434.28,-465 434.28,-465 440.28,-465 446.28,-471 446.28,-477 446.28,-477 446.28,-510.6 446.28,-510.6 446.28,-516.6 440.28,-522.6 434.28,-522.6"/>
+<text xml:space="preserve" text-anchor="middle" x="343.28" y="-498.3" font-family="Arial" font-size="15.00" fill="#303030">Planner</text>
+<text xml:space="preserve" text-anchor="middle" x="343.28" y="-480.3" font-family="Arial" font-size="15.00" fill="#303030">choices + editable defaults</text>
+</g>
+<!-- developer -->
+<g id="research-workflow-node4" class="node">
+<title>developer</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" d="M178.56,-522.6C178.56,-522.6 12,-522.6 12,-522.6 6,-522.6 0,-516.6 0,-510.6 0,-510.6 0,-477 0,-477 0,-471 6,-465 12,-465 12,-465 178.56,-465 178.56,-465 184.56,-465 190.56,-471 190.56,-477 190.56,-477 190.56,-510.6 190.56,-510.6 190.56,-516.6 184.56,-522.6 178.56,-522.6"/>
+<text xml:space="preserve" text-anchor="middle" x="95.28" y="-498.3" font-family="Arial" font-size="15.00" fill="#303030">Developer overrides</text>
+<text xml:space="preserve" text-anchor="middle" x="95.28" y="-480.3" font-family="Arial" font-size="15.00" fill="#303030">or continue with defaults</text>
+</g>
+<!-- mechanics -->
+<g id="research-workflow-node5" class="node">
+<title>mechanics</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" d="M465.77,-426C465.77,-426 220.8,-426 220.8,-426 214.8,-426 208.8,-420 208.8,-414 208.8,-414 208.8,-380.4 208.8,-380.4 208.8,-374.4 214.8,-368.4 220.8,-368.4 220.8,-368.4 465.77,-368.4 465.77,-368.4 471.77,-368.4 477.77,-374.4 477.77,-380.4 477.77,-380.4 477.77,-414 477.77,-414 477.77,-420 471.77,-426 465.77,-426"/>
+<text xml:space="preserve" text-anchor="middle" x="343.28" y="-401.7" font-family="Arial" font-size="15.00" fill="#303030">Mechanic contracts</text>
+<text xml:space="preserve" text-anchor="middle" x="343.28" y="-383.7" font-family="Arial" font-size="15.00" fill="#303030">inputs, outputs, state, dependencies</text>
+</g>
+<!-- researchA -->
+<g id="research-workflow-node6" class="node">
+<title>researchA</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" d="M203.48,-329.4C203.48,-329.4 21.08,-329.4 21.08,-329.4 15.08,-329.4 9.08,-323.4 9.08,-317.4 9.08,-317.4 9.08,-283.8 9.08,-283.8 9.08,-277.8 15.08,-271.8 21.08,-271.8 21.08,-271.8 203.48,-271.8 203.48,-271.8 209.48,-271.8 215.48,-277.8 215.48,-283.8 215.48,-283.8 215.48,-317.4 215.48,-317.4 215.48,-323.4 209.48,-329.4 203.48,-329.4"/>
+<text xml:space="preserve" text-anchor="middle" x="112.28" y="-305.1" font-family="Arial" font-size="15.00" fill="#303030">Research mechanic A</text>
+<text xml:space="preserve" text-anchor="middle" x="112.28" y="-287.1" font-family="Arial" font-size="15.00" fill="#303030">multiple source candidates</text>
+</g>
+<!-- researchB -->
+<g id="research-workflow-node7" class="node">
+<title>researchB</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" d="M434.48,-329.4C434.48,-329.4 252.08,-329.4 252.08,-329.4 246.08,-329.4 240.08,-323.4 240.08,-317.4 240.08,-317.4 240.08,-283.8 240.08,-283.8 240.08,-277.8 246.08,-271.8 252.08,-271.8 252.08,-271.8 434.48,-271.8 434.48,-271.8 440.48,-271.8 446.48,-277.8 446.48,-283.8 446.48,-283.8 446.48,-317.4 446.48,-317.4 446.48,-323.4 440.48,-329.4 434.48,-329.4"/>
+<text xml:space="preserve" text-anchor="middle" x="343.28" y="-305.1" font-family="Arial" font-size="15.00" fill="#303030">Research mechanic B</text>
+<text xml:space="preserve" text-anchor="middle" x="343.28" y="-287.1" font-family="Arial" font-size="15.00" fill="#303030">multiple source candidates</text>
+</g>
+<!-- researchC -->
+<g id="research-workflow-node8" class="node">
+<title>researchC</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" d="M665.48,-329.4C665.48,-329.4 483.08,-329.4 483.08,-329.4 477.08,-329.4 471.08,-323.4 471.08,-317.4 471.08,-317.4 471.08,-283.8 471.08,-283.8 471.08,-277.8 477.08,-271.8 483.08,-271.8 483.08,-271.8 665.48,-271.8 665.48,-271.8 671.48,-271.8 677.48,-277.8 677.48,-283.8 677.48,-283.8 677.48,-317.4 677.48,-317.4 677.48,-323.4 671.48,-329.4 665.48,-329.4"/>
+<text xml:space="preserve" text-anchor="middle" x="574.28" y="-305.1" font-family="Arial" font-size="15.00" fill="#303030">Research mechanic C</text>
+<text xml:space="preserve" text-anchor="middle" x="574.28" y="-287.1" font-family="Arial" font-size="15.00" fill="#303030">multiple source candidates</text>
+</g>
+<!-- reviewer -->
+<g id="research-workflow-node9" class="node">
+<title>reviewer</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" d="M495.34,-232.8C495.34,-232.8 191.22,-232.8 191.22,-232.8 185.22,-232.8 179.22,-226.8 179.22,-220.8 179.22,-220.8 179.22,-187.2 179.22,-187.2 179.22,-181.2 185.22,-175.2 191.22,-175.2 191.22,-175.2 495.34,-175.2 495.34,-175.2 501.34,-175.2 507.34,-181.2 507.34,-187.2 507.34,-187.2 507.34,-220.8 507.34,-220.8 507.34,-226.8 501.34,-232.8 495.34,-232.8"/>
+<text xml:space="preserve" text-anchor="middle" x="343.28" y="-208.5" font-family="Arial" font-size="15.00" fill="#303030">Evidence + compatibility reviewer</text>
+<text xml:space="preserve" text-anchor="middle" x="343.28" y="-190.5" font-family="Arial" font-size="15.00" fill="#303030">inspect, verify, select a coherent combination</text>
+</g>
+<!-- blueprint -->
+<g id="research-workflow-node10" class="node">
+<title>blueprint</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" d="M493.25,-136.2C493.25,-136.2 193.31,-136.2 193.31,-136.2 187.31,-136.2 181.31,-130.2 181.31,-124.2 181.31,-124.2 181.31,-90.6 181.31,-90.6 181.31,-84.6 187.31,-78.6 193.31,-78.6 193.31,-78.6 493.25,-78.6 493.25,-78.6 499.25,-78.6 505.25,-84.6 505.25,-90.6 505.25,-90.6 505.25,-124.2 505.25,-124.2 505.25,-130.2 499.25,-136.2 493.25,-136.2"/>
+<text xml:space="preserve" text-anchor="middle" x="343.28" y="-111.9" font-family="Arial" font-size="15.00" fill="#303030">Versioned implementation blueprint</text>
+<text xml:space="preserve" text-anchor="middle" x="343.28" y="-93.9" font-family="Arial" font-size="15.00" fill="#303030">recommended sources + alternatives + tests</text>
+</g>
+<!-- builder -->
+<g id="research-workflow-node11" class="node">
+<title>builder</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" d="M455.72,-39.6C455.72,-39.6 230.84,-39.6 230.84,-39.6 224.84,-39.6 218.84,-33.6 218.84,-27.6 218.84,-27.6 218.84,-12 218.84,-12 218.84,-6 224.84,0 230.84,0 230.84,0 455.72,0 455.72,0 461.72,0 467.72,-6 467.72,-12 467.72,-12 467.72,-27.6 467.72,-27.6 467.72,-33.6 461.72,-39.6 455.72,-39.6"/>
+<text xml:space="preserve" text-anchor="middle" x="343.28" y="-15.3" font-family="Arial" font-size="15.00" fill="#303030">Existing Builder → QA → Preview</text>
+</g>
+</g>
+</svg>

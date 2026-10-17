@@ -1,0 +1,17 @@
+{
+  "contractVersion": "0.2",
+  "requestId": "fixture-main-follow-up-001",
+  "projectId": "fixture-project-001",
+  "expectedProjectRevision": 2,
+  "discussion": {
+    "runId": "fixture-run-001",
+    "threadId": "fixture-main",
+    "round": 1,
+    "inReplyToRequestId": "fixture-main-initial-001",
+    "followUp": {
+      "message": "Keep the fixed-path design, but make tower placement work with one finger. Reconsider any mechanics that require hover or a right mouse button.",
+      "clarificationId": null,
+      "answers": []
+    }
+  }
+}

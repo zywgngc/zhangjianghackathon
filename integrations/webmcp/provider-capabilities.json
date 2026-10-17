@@ -1,0 +1,48 @@
+{
+  "contractVersion": "0.2",
+  "contractRevision": "437981e281281994c1f2377ab69b3c7871943b2e",
+  "applicationOperation": "MaterialPortalPort.search",
+  "implementation": "asset_agent.ResearchMaterialPortal.search",
+  "integration": {
+    "selectedTransport": "python_module",
+    "processAdapter": "python -m asset_agent research -",
+    "remoteMcpEndpoint": null,
+    "registeredMcpToolName": null,
+    "authentication": "Host application responsibility; no remote service is deployed"
+  },
+  "materialKinds": ["game_repository", "source_code", "algorithm_documentation", "reference_media"],
+  "retrieval": {
+    "defaultProvider": "local-reference-catalog",
+    "networkDuringSearch": false,
+    "catalogRecords": 13,
+    "sourceRepositories": 4,
+    "cachedPinnedSourceFiles": 24,
+    "llmReranking": false,
+    "behaviorVerification": false
+  },
+  "images": {
+    "acceptsUriMetadata": true,
+    "acceptsLocalFilesystemPaths": false,
+    "defaultVisualRetrieval": false,
+    "unsupportedBehavior": "partial with explicit text-only limitation"
+  },
+  "limits": {
+    "maximumCandidates": 10,
+    "maximumFollowUpRoundValue": 3,
+    "runWideBudgetOwner": "upstream MAS orchestrator",
+    "defaultResponseTimeoutSeconds": 10,
+    "automaticRetries": 0
+  },
+  "recovery": {
+    "persistentCompletedResults": true,
+    "concurrentRequestDeduplication": true,
+    "pendingRequestRedispatch": false,
+    "remoteJobReconciliation": false,
+    "explicitCooperativeCancellation": true
+  },
+  "sourceAccess": {
+    "candidateReferences": "Immutable HTTPS URLs plus upstream paths and symbols",
+    "localInspectionCache": "catalogs/references/sources",
+    "formalSourceDownloadOperation": null
+  }
+}

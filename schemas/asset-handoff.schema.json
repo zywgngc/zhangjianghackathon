@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:game-asset-agent:handoff:1.0",
+  "title": "Game asset plan and delivered manifest",
+  "type": "object",
+  "required": ["schema_version", "request_id", "status", "layout", "retrieval", "selections", "unresolved"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "request_id": {"type": "string"},
+    "status": {"enum": ["ready", "partial", "unresolved"]},
+    "layout": {"type": "object"},
+    "catalog_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "retrieval": {"type": "object", "required": ["selection_mode", "slots"], "properties": {"selection_mode": {"enum": ["ranked_policy", "rag_callback"]}, "slots": {"type": "array"}}},
+    "selections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["slot_id", "asset_id", "asset_type", "format", "source", "usage", "score", "reason", "alternatives"],
+        "properties": {
+          "slot_id": {"type": "string"},
+          "asset_id": {"type": "string"},
+          "asset_type": {"enum": ["icon", "sprite", "tileset", "model", "audio", "font"]},
+          "format": {"type": "string"},
+          "source": {"type": "object", "required": ["url", "author", "license", "license_url"]},
+          "score": {"type": "number"},
+          "reason": {"type": "string"},
+          "usage": {"type": "object", "required": ["fit", "render_as"], "properties": {"runtime_url": {"type": "string"}, "fit": {"enum": ["contain", "cover", "tile"]}, "render_as": {"enum": ["ui-svg", "texture", "gltf", "audio", "font"]}}},
+          "file": {"$ref": "#/$defs/file"},
+          "expected_file": {"$ref": "#/$defs/checksum", "description": "Original catalog file fingerprint captured during planning"},
+          "metadata": {"$ref": "#/$defs/metadata", "description": "Delivered file metadata; after resize width/height describe the derived output"},
+          "transform_request": {"type": "object", "required": ["resize"], "properties": {"resize": {"$ref": "#/$defs/resize"}}, "additionalProperties": false, "description": "Requested operation retained by plan(); no derived file exists until run() succeeds"},
+          "source_file": {"type": "object", "required": ["sha256", "bytes", "format"], "properties": {"sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "bytes": {"type": "integer", "minimum": 0}, "format": {"type": "string"}}, "additionalProperties": false, "description": "Original catalog file fingerprint. Original stays in the catalog; no runtime path is supplied."},
+          "source_metadata": {"$ref": "#/$defs/metadata", "description": "Original metadata before transformation"},
+          "transforms": {"type": "array", "minItems": 1, "items": {"type": "object"}, "description": "Actual operations executed on the delivered derivative; also recorded in CREDITS.txt"},
+          "alternatives": {"type": "array"}
+        }
+      }
+    },
+    "unresolved": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["slot_id", "required", "reason", "next_action"],
+        "properties": {
+          "slot_id": {"type": "string"},
+          "required": {"type": "boolean"},
+          "reason": {"type": "string"},
+          "next_action": {"type": "string"},
+          "attempted_queries": {"type": "array", "items": {"type": "string"}, "description": "Queries already attempted for this slot, including retries"},
+          "actions": {"type": "array", "items": {"type": "object"}, "description": "Proposed main-agent actions; they have not been executed"},
+          "generation_brief": {"type": ["object", "null"], "description": "A pending asset-generation task for the main agent, or null for a budget-only gap. No generator has been called and no placeholder has been created."}
+        }
+      }
+    },
+    "bundle": {"type": "object", "required": ["manifest", "credits", "asset_count", "total_bytes"], "properties": {"manifest": {"const": "manifest.json"}, "credits": {"const": "CREDITS.txt"}, "asset_count": {"type": "integer", "minimum": 0}, "total_bytes": {"type": "integer", "minimum": 0}}}
+  },
+  "$defs": {
+    "checksum": {"type": "object", "required": ["sha256", "bytes"], "properties": {"sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "bytes": {"type": "integer", "minimum": 0}}},
+    "metadata": {"type": "object", "properties": {"width": {"type": "integer", "minimum": 1}, "height": {"type": "integer", "minimum": 1}, "animations": {"type": "array", "items": {"type": "string"}}, "triangles": {"type": "integer", "minimum": 0}}},
+    "resize": {
+      "type": "object", "required": ["width", "height"],
+      "properties": {
+        "width": {"type": "integer", "minimum": 1, "maximum": 8192}, "height": {"type": "integer", "minimum": 1, "maximum": 8192},
+        "mode": {"enum": ["contain", "cover", "stretch"], "default": "contain"}, "resample": {"enum": ["lanczos", "nearest"], "default": "lanczos"},
+        "allow_upscale": {"type": "boolean", "default": false}, "output_format": {"enum": ["png", "webp", "jpeg"]}
+      }, "additionalProperties": false
+    },
+    "file": {"type": "object", "required": ["path", "sha256", "bytes"], "properties": {"path": {"type": "string", "pattern": "^assets/[a-f0-9]{16}\\.[a-z0-9]+$"}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "bytes": {"type": "integer", "minimum": 0}}}
+  }
+}

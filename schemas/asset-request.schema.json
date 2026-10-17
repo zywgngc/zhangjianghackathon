@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:game-asset-agent:request:1.0",
+  "title": "Game asset sub-agent request",
+  "type": "object",
+  "required": ["request_id", "prompt", "layout"],
+  "properties": {
+    "schema_version": {"const": "1.0", "default": "1.0"},
+    "request_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$"},
+    "prompt": {"type": "string", "minLength": 1},
+    "style": {"type": "string", "minLength": 1},
+    "missing_policy": {
+      "type": "object",
+      "description": "Retry only slots with no candidates. A positive retry_rounds requires a query_builder callback; retries never relax hard constraints.",
+      "properties": {"retry_rounds": {"type": "integer", "minimum": 0, "maximum": 2, "default": 0}},
+      "additionalProperties": false
+    },
+    "layout": {
+      "type": "object",
+      "required": ["viewport", "slots"],
+      "properties": {
+        "viewport": {"type": "object", "required": ["width", "height"], "properties": {"width": {"type": "number", "exclusiveMinimum": 0}, "height": {"type": "number", "exclusiveMinimum": 0}}},
+        "slots": {"type": "array", "minItems": 1, "maxItems": 200, "items": {"$ref": "#/$defs/slot"}}
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "properties": {
+        "licenses": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "default": ["CC0-1.0", "CC-BY-3.0"]},
+        "max_asset_bytes": {"type": "integer", "minimum": 1, "default": 8388608},
+        "max_total_bytes": {"type": "integer", "minimum": 1, "default": 33554432},
+        "max_triangles": {"type": "integer", "minimum": 1},
+        "top_k": {"type": "integer", "minimum": 1, "maximum": 30, "default": 5},
+        "min_score": {"type": "number", "minimum": 0, "default": 0.01},
+        "allow_reuse": {"type": "boolean", "default": true}
+      }
+    }
+  },
+  "$defs": {
+    "resize": {
+      "type": "object",
+      "description": "Explicit file transformation, independent of layout bounds. Runtime additionally enforces width × height <= 16 million pixels. Only static icons/sprites are supported; SVG remains SVG.",
+      "required": ["width", "height"],
+      "properties": {
+        "width": {"type": "integer", "minimum": 1, "maximum": 8192},
+        "height": {"type": "integer", "minimum": 1, "maximum": 8192},
+        "mode": {"enum": ["contain", "cover", "stretch"], "default": "contain"},
+        "resample": {"enum": ["lanczos", "nearest"], "default": "lanczos"},
+        "allow_upscale": {"type": "boolean", "default": false},
+        "output_format": {"enum": ["png", "webp", "jpeg"], "description": "Raster outputs only; SVG-to-raster conversion is unsupported"}
+      },
+      "additionalProperties": false
+    },
+    "slot": {
+      "type": "object",
+      "required": ["slot_id", "type", "description"],
+      "properties": {
+        "slot_id": {"type": "string", "minLength": 1},
+        "type": {"enum": ["icon", "sprite", "tileset", "model", "audio", "font"]},
+        "description": {"type": "string", "minLength": 1},
+        "tags": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "style": {"type": "string", "minLength": 1},
+        "packs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "formats": {"type": "array", "minItems": 1, "items": {"enum": ["svg", "png", "webp", "jpg", "jpeg", "glb", "gltf", "wav", "ogg", "mp3", "woff", "woff2", "ttf", "otf"]}, "description": "Accepted original catalog formats, independent of resize.output_format for the derived output"},
+        "required_animations": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "required": {"type": "boolean", "default": true},
+        "fit": {"enum": ["contain", "cover", "tile"], "default": "contain"},
+        "resize": {"$ref": "#/$defs/resize"},
+        "bounds": {"type": "object", "required": ["x", "y", "width", "height"], "properties": {"x": {"type": "number", "minimum": 0}, "y": {"type": "number", "minimum": 0}, "width": {"type": "number", "exclusiveMinimum": 0}, "height": {"type": "number", "exclusiveMinimum": 0}}},
+        "anchor": {"type": "string", "description": "Opaque downstream layout hint, preserved without interpretation"},
+        "responsive": {"type": "object", "description": "Opaque downstream responsive rules, preserved without interpretation"},
+        "tint": {"type": "string", "description": "Downstream rendering hint; the asset sub-agent does not apply tint"}
+      },
+      "allOf": [{"if": {"required": ["resize"]}, "then": {"properties": {"type": {"enum": ["icon", "sprite"]}, "required_animations": {"maxItems": 0}}}}]
+    }
+  }
+}

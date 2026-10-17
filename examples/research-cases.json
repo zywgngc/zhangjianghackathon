@@ -1,0 +1,67 @@
+{
+  "contractVersion": "0.2",
+  "contractRevision": "437981e281281994c1f2377ab69b3c7871943b2e",
+  "testSpecRevision": "81fc5366aa417754ccdba07d5d3dc08daa8f6a02",
+  "cases": [
+    {
+      "id": "number-gate-archetype", "purpose": "archetype", "engine": "babylon",
+      "source": "tests:case1:Number_Gate_Shooter/001数字门枪手.txt",
+      "description": "Find similar playable game repositories for a 3D military automatic runner shooter with a growing soldier squad, arithmetic gates, obstacles and armored-vehicle Bosses. 数字门枪手：连续前进、加减乘除门、自动射击、人数变化。",
+      "materialKinds": ["game_repository", "reference_media"], "limit": 3
+    },
+    {
+      "id": "wuxia-survivors-archetype", "purpose": "archetype", "engine": "phaser",
+      "source": "tests:case2:Wuxia_Survivors/002武林幸存者.txt",
+      "description": "Find a real top-down survivors game repository with automatic combat, enemy waves, XP and gold pickups, level-up choices and upgrade progression. 武林幸存者、武侠幸存者、弹幕生存与自动战斗。",
+      "materialKinds": ["game_repository", "reference_media"], "limit": 3
+    },
+    {
+      "id": "power-hunter-archetype", "purpose": "archetype", "engine": "babylon",
+      "source": "tests:case3:Power_Hunter/003百炼英雄.txt",
+      "description": "Find a 3D open-field numerical power-growth game repository: click a weaker enemy, move, compare power, defeat and absorb it, collect weapons and reach a final Boss. 百炼英雄要求开放场地，不能改成塔楼玩法，没有常规HP战斗。",
+      "materialKinds": ["game_repository", "reference_media"], "limit": 3
+    },
+    {
+      "id": "enemy-waypoint-movement", "purpose": "mechanic", "engine": "phaser",
+      "source": "Webmcp:webmcp/examples/mechanic-request.json",
+      "description": "Find extractable waypoint-movement implementations or algorithm references compatible with a Phaser web game. The host owns entity state and simulation timing. Return multiple alternatives with relevant source paths and dependency information.",
+      "requiredBehavior": ["Move enemies along ordered 2D waypoints using elapsed simulation time.", "Handle crossing multiple waypoints within one update.", "Emit a goal-reached event once per enemy."],
+      "materialKinds": ["source_code", "algorithm_documentation"], "limit": 3
+    },
+    {
+      "id": "enemy-wave-scheduling", "purpose": "mechanic", "engine": "phaser",
+      "source": "tests:case2:Wuxia_Survivors/002武林幸存者.txt",
+      "description": "Find enemy wave scheduling source code: use elapsed time, cap active enemies, grow spawn frequency and difficulty over a survivors run. 波次、定时刷怪、场上敌人数上限。",
+      "requiredBehavior": ["Schedule enemy spawns from simulation time.", "Bound active enemy count and increase wave difficulty."],
+      "materialKinds": ["source_code", "algorithm_documentation"], "limit": 3
+    },
+    {
+      "id": "nearest-target-selection", "purpose": "mechanic", "engine": "phaser",
+      "source": "tests:case2:Wuxia_Survivors/002武林幸存者.txt",
+      "description": "Find nearest-enemy targeting and target selection code. Filter dead enemies and order valid targets by distance before automatic attacks. 最近敌人索敌和目标选择。",
+      "requiredBehavior": ["Choose a valid nearby enemy and ignore defeated entities.", "Expose distance and targeting assumptions for adaptation."],
+      "materialKinds": ["source_code", "algorithm_documentation"], "limit": 3
+    },
+    {
+      "id": "automatic-combat-projectiles", "purpose": "mechanic", "engine": "phaser",
+      "source": "tests:case2:Wuxia_Survivors/002武林幸存者.txt",
+      "description": "Find automatic cooldown combat and projectile collision damage source code, including reuse/deactivation of bullets. 自动战斗、武器冷却、子弹碰撞伤害和对象池。",
+      "requiredBehavior": ["Attack only when cooldown expires.", "Apply hit damage through explicit collision/lifecycle handling."],
+      "materialKinds": ["source_code", "algorithm_documentation"], "limit": 3
+    },
+    {
+      "id": "gold-economy-purchases", "purpose": "mechanic", "engine": "phaser",
+      "source": "tests:case2:Wuxia_Survivors/002武林幸存者.txt",
+      "description": "Find gold economy and permanent-upgrade purchase source code. Record earned gold, check affordability, deduct purchase costs and preserve state on a rejected purchase. 金币经济、消费校验、永久升级。",
+      "requiredBehavior": ["Check available currency before a purchase.", "Persist earned gold and purchased upgrade state."],
+      "materialKinds": ["source_code", "algorithm_documentation"], "limit": 3
+    },
+    {
+      "id": "experience-upgrade-progression", "purpose": "mechanic", "engine": "phaser",
+      "source": "tests:case2:Wuxia_Survivors/002武林幸存者.txt",
+      "description": "Find experience level-up and skill-upgrade progression source code, with a choice UI or unlock conditions for a survivors game. 经验升级、技能选择与解锁进度。",
+      "requiredBehavior": ["Accumulate experience and trigger level-up choices.", "Keep skill evolution and unlock requirements inspectable."],
+      "materialKinds": ["source_code", "algorithm_documentation"], "limit": 3
+    }
+  ]
+}

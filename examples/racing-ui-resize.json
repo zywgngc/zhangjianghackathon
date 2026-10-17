@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "request_id": "racing-ui-demo",
+  "prompt": "卡通赛车小游戏，深色HUD，使用统一的单色剪影图标。需要暂停、金币计数、氮气加速和生命值图标。",
+  "style": "silhouette",
+  "layout": {
+    "viewport": {"width": 1280, "height": 720},
+    "slots": [
+      {"slot_id": "pause", "type": "icon", "description": "暂停按钮 pause", "tags": ["pause"], "bounds": {"x": 1200, "y": 20, "width": 48, "height": 48}, "resize": {"width": 48, "height": 48}},
+      {"slot_id": "coins", "type": "icon", "description": "金币计数 coin currency", "tags": ["coin"], "bounds": {"x": 20, "y": 20, "width": 40, "height": 40}, "resize": {"width": 40, "height": 40}},
+      {"slot_id": "nitro", "type": "icon", "description": "氮气加速 boost lightning", "tags": ["boost", "lightning"], "bounds": {"x": 1160, "y": 580, "width": 80, "height": 80}, "resize": {"width": 80, "height": 80}},
+      {"slot_id": "health", "type": "icon", "description": "生命值 heart health", "tags": ["heart", "health"], "bounds": {"x": 20, "y": 650, "width": 40, "height": 40}, "resize": {"width": 40, "height": 40}}
+    ]
+  },
+  "constraints": {"licenses": ["CC-BY-3.0"], "max_asset_bytes": 65536, "max_total_bytes": 262144, "top_k": 5}
+}
