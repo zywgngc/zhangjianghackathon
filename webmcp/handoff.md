@@ -38,7 +38,7 @@ The output is a plan backed by traceable sources and explicit validation evidenc
 | Durable execution | SQLite run/job history, leases, bounded retries, cancellation, and safe restart recovery | Postgres/distributed workers and provider asynchronous-job reconciliation |
 | Builder handoff | Versioned partial blueprints; v1 `/api/runs` adapter with revision/evidence/engine admission and pinned-context hooks | Verified source combinations, a compatible ready blueprint, and v2 `/api/projects` receiver integration |
 
-The top-level contract `.ts` files contain declarations; [src](src) contains the executable runtime. The example JSON, `pnpm demo`, and explicit fixture mode use synthetic materials. Default `pnpm start` uses GitHub discovery and an unconfigured material port. `architecture.html` remains an earlier static design export; the current ownership diagram is in [github-research.md](github-research.md).
+The top-level contract `.ts` files contain declarations; [src](src) contains the executable runtime. The example JSON, `pnpm demo`, and explicit fixture mode use synthetic materials. Default `pnpm start` uses only the local GitHub cache and an unconfigured material port. Explicit bounded networking is opt-in; see the request protection limits in [GitHub research](github-research.md). `architecture.html` remains an earlier static design export; the current ownership diagram is in [github-research.md](github-research.md).
 
 ## 3. Ownership and the three interfaces
 

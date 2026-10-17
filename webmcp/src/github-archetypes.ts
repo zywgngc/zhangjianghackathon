@@ -1,9 +1,10 @@
 import type { ArchetypeResearchPort } from './archetypes.ts';
+import { setTimeout as delay } from 'node:timers/promises';
+import { GitHubNetworkStore, GitHubFailure } from './github-network.ts';
 import type {
   MaterialCandidate,
   MaterialSearchRequest,
   MaterialSearchResult,
-  PortalErrorCode,
 } from '../material-portal.ts';
 
 type Fetch = typeof globalThis.fetch;
@@ -31,13 +32,7 @@ const patterns = [
   { tag: '跑酷 / 跳跃', re: /runner|jump|platform|grounded/i },
   { tag: '棋盘 / 解谜', re: /puzzle|merge|tile|grid|matchThree/i },
 ];
-class GitHubFailure extends Error {
-  code: PortalErrorCode;
-  constructor(code: PortalErrorCode, message: string) {
-    super(message);
-    this.code = code;
-  }
-}
+type Access = { signal?: AbortSignal; runId: string; cachedTimes: Set<number> };
 
 /** Bounded, public-only, read-only repository exploration. Never clones, installs or executes code. */
 export class GitHubArchetypeResearcher implements ArchetypeResearchPort {
@@ -45,86 +40,130 @@ export class GitHubArchetypeResearcher implements ArchetypeResearchPort {
   readonly idempotentRequests = true;
   private fetcher: Fetch;
   private token?: string;
-  private cache = new Map<string, { expires: number; value: unknown }>();
-  constructor(options: { fetch?: Fetch; token?: string } = {}) {
+  readonly automaticRetries = false;
+  readonly networkEnabled: boolean;
+  readonly network: GitHubNetworkStore;
+  private wait: (ms: number, signal?: AbortSignal) => Promise<void>;
+  constructor(
+    options: {
+      fetch?: Fetch;
+      token?: string;
+      networkEnabled?: boolean;
+      network?: GitHubNetworkStore;
+      wait?: (ms: number, signal?: AbortSignal) => Promise<void>;
+    } = {},
+  ) {
     this.fetcher = options.fetch ?? globalThis.fetch;
     this.token = options.token;
+    this.networkEnabled = options.networkEnabled === true;
+    this.network = options.network ?? new GitHubNetworkStore();
+    this.wait =
+      options.wait ??
+      (async (ms, signal) => {
+        await delay(ms, undefined, { signal });
+      });
+  }
+  networkStatus(runId?: string) {
+    return { enabled: this.networkEnabled, ...this.network.status(runId) };
+  }
+  close() {
+    this.network.close();
   }
   private async get(
     path: string,
-    signal: AbortSignal | undefined,
+    context: Access,
     maxBytes = 2_000_000,
-    ttl = 300_000,
+    ttl = 86400000,
   ): Promise<any> {
+    const { signal } = context;
     signal?.throwIfAborted();
-    const cached = this.cache.get(path);
-    if (cached && cached.expires > Date.now()) return structuredClone(cached.value);
+    const cached = this.network.cached(path);
+    if (cached) {
+      context.cachedTimes.add(cached.savedAt);
+      return cached.value;
+    }
+    if (!this.networkEnabled)
+      throw new GitHubFailure(
+        'UNAVAILABLE',
+        'GitHub 联网已关闭，仅使用本地缓存；此查询暂无缓存，未发出网络请求。',
+      );
     // Only locally constructed API paths, never URLs obtained from repository content.
     if (!path.startsWith('/') || path.startsWith('//'))
       throw new GitHubFailure('INVALID_INPUT', 'Invalid GitHub API path.');
     const url = new URL(path, 'https://api.github.com');
     if (url.origin !== 'https://api.github.com')
       throw new GitHubFailure('INVALID_INPUT', 'Unexpected API origin.');
-    const timeout = AbortSignal.timeout(10000);
-    const response = await this.fetcher(url, {
-      headers: {
-        Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2026-03-10',
-        'User-Agent': 'WebMCP-Archetype-Research',
-        ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
-      },
-      redirect: 'error',
-      signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
-    });
-    if (!response.ok) {
-      await response.body?.cancel();
-      if (
-        response.status === 429 ||
-        (response.status === 403 &&
-          (response.headers.get('x-ratelimit-remaining') === '0' ||
-            response.headers.has('retry-after')))
-      ) {
-        const reset = response.headers.get('x-ratelimit-reset');
+    let ticket;
+    do {
+      signal?.throwIfAborted();
+      ticket = this.network.reserve(context.runId, path.startsWith('/search/') ? 'search' : 'core');
+      if (!ticket.owner) await this.wait(ticket.waitMs, signal);
+    } while (!ticket.owner);
+    try {
+      signal?.throwIfAborted();
+      const timeout = AbortSignal.timeout(10000);
+      let response: Response;
+      try {
+        response = await this.fetcher(url, {
+          headers: {
+            Accept: 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2026-03-10',
+            'User-Agent': 'WebMCP-Archetype-Research',
+            ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+          },
+          redirect: 'error',
+          signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
+        });
+      } catch (error) {
+        this.network.pause(this.network.now() + 60000, '网络异常或取消；暂停联网，不自动重试。');
+        throw error;
+      }
+      this.network.observe(response);
+      if (!response.ok) {
+        await response.body?.cancel();
+        if (response.status === 429 || response.status === 403) {
+          throw new GitHubFailure(
+            'RATE_LIMITED',
+            'GitHub 返回限流或拒绝访问；共享冷却已保存，停止联网且不自动重试。',
+          );
+        }
         throw new GitHubFailure(
-          'RATE_LIMITED',
-          `GitHub 请求额度已用完${reset && /^\d+$/.test(reset) ? `，重置时间 ${new Date(Number(reset) * 1000).toISOString()}` : ''}。可稍后重试，或由服务端配置 WEBMCP_GITHUB_TOKEN。`,
+          response.status === 401 || response.status === 403 ? 'AUTH_REQUIRED' : 'UNAVAILABLE',
+          `GitHub 返回 HTTP ${response.status}；未使用模拟结果替代。`,
         );
       }
-      throw new GitHubFailure(
-        response.status === 401 || response.status === 403 ? 'AUTH_REQUIRED' : 'UNAVAILABLE',
-        `GitHub 返回 HTTP ${response.status}；未使用模拟结果替代。`,
-      );
-    }
-    const reader = response.body?.getReader();
-    if (!reader) throw new GitHubFailure('UNAVAILABLE', 'GitHub returned an empty body.');
-    let length = 0;
-    const parts: Uint8Array[] = [];
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        length += value.byteLength;
-        if (length > maxBytes)
-          throw new GitHubFailure(
-            'UNAVAILABLE',
-            'GitHub response exceeded the bounded inspection size.',
-          );
-        parts.push(value);
+      const reader = response.body?.getReader();
+      if (!reader) throw new GitHubFailure('UNAVAILABLE', 'GitHub returned an empty body.');
+      let length = 0;
+      const parts: Uint8Array[] = [];
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          length += value.byteLength;
+          if (length > maxBytes)
+            throw new GitHubFailure(
+              'UNAVAILABLE',
+              'GitHub response exceeded the bounded inspection size.',
+            );
+          parts.push(value);
+        }
+      } finally {
+        await reader.cancel().catch(() => {});
       }
+      let value: unknown;
+      try {
+        value = JSON.parse(Buffer.concat(parts).toString('utf8'));
+      } catch {
+        throw new GitHubFailure('UNAVAILABLE', 'GitHub returned invalid JSON.');
+      }
+      this.network.cache(path, value, ttl);
+      return value;
     } finally {
-      await reader.cancel().catch(() => {});
+      this.network.release(ticket.owner);
     }
-    let value: unknown;
-    try {
-      value = JSON.parse(Buffer.concat(parts).toString('utf8'));
-    } catch {
-      throw new GitHubFailure('UNAVAILABLE', 'GitHub returned invalid JSON.');
-    }
-    if (this.cache.size >= 200) this.cache.delete(this.cache.keys().next().value!);
-    this.cache.set(path, { value, expires: Date.now() + ttl });
-    return structuredClone(value);
   }
-  private async readBlob(repo: string, file: Entry, signal?: AbortSignal): Promise<string> {
+  private async readBlob(repo: string, file: Entry, context: Access): Promise<string> {
     if (file.mode !== '100644' && file.mode !== '100755')
       throw new GitHubFailure('UNAVAILABLE', 'Symlinks/submodules are not inspected.');
     if (!shaPattern.test(file.sha) || (file.size ?? Infinity) > 96000)
@@ -132,7 +171,7 @@ export class GitHubArchetypeResearcher implements ArchetypeResearchPort {
         'UNAVAILABLE',
         'File is too large or has no immutable blob identity.',
       );
-    const blob = await this.get(`/repos/${repo}/git/blobs/${file.sha}`, signal, 150000, 86400000);
+    const blob = await this.get(`/repos/${repo}/git/blobs/${file.sha}`, context, 150000, 86400000);
     if (
       blob.sha !== file.sha ||
       blob.encoding !== 'base64' ||
@@ -145,15 +184,11 @@ export class GitHubArchetypeResearcher implements ArchetypeResearchPort {
       throw new GitHubFailure('UNAVAILABLE', 'Oversized or binary file was skipped.');
     return bytes.toString('utf8');
   }
-  private async inspect(
-    repo: Repo,
-    query: string,
-    signal?: AbortSignal,
-  ): Promise<MaterialCandidate> {
+  private async inspect(repo: Repo, query: string, context: Access): Promise<MaterialCandidate> {
     const root = `https://github.com/${repo.full_name}`;
     const ref = await this.get(
       `/repos/${repo.full_name}/git/ref/heads/${encodeURIComponent(repo.default_branch)}`,
-      signal,
+      context,
     );
     const revision = ref.object?.sha;
     if (ref.object?.type !== 'commit' || !shaPattern.test(revision))
@@ -161,7 +196,7 @@ export class GitHubArchetypeResearcher implements ArchetypeResearchPort {
     // Read commit metadata without downloading its potentially huge diff.
     const commit = await this.get(
       `/repos/${repo.full_name}/git/commits/${revision}`,
-      signal,
+      context,
       2_000_000,
       86400000,
     );
@@ -170,7 +205,7 @@ export class GitHubArchetypeResearcher implements ArchetypeResearchPort {
       throw new GitHubFailure('UNAVAILABLE', 'Repository revision could not be pinned.');
     const tree = await this.get(
       `/repos/${repo.full_name}/git/trees/${treeSha}`,
-      signal,
+      context,
       2_000_000,
       86400000,
     );
@@ -187,12 +222,12 @@ export class GitHubArchetypeResearcher implements ArchetypeResearchPort {
           /^(src|source|game|scripts|js|app|lib|client)$/i.test(e.path),
       )
       .sort((a: Entry, b: Entry) => Number(b.path === 'src') - Number(a.path === 'src'))
-      .slice(0, 2);
+      .slice(0, 1);
     for (const dir of codeDirs) {
       try {
         const child = await this.get(
           `/repos/${repo.full_name}/git/trees/${dir.sha}?recursive=1`,
-          signal,
+          context,
           2_000_000,
           86400000,
         );
@@ -202,7 +237,7 @@ export class GitHubArchetypeResearcher implements ArchetypeResearchPort {
         if (child.truncated) treeLimits.push(`${dir.path} 目录树被截断。`);
       } catch (error) {
         if (
-          signal?.aborted ||
+          context.signal?.aborted ||
           (error instanceof GitHubFailure && ['RATE_LIMITED', 'AUTH_REQUIRED'].includes(error.code))
         )
           throw error;
@@ -249,7 +284,7 @@ export class GitHubArchetypeResearcher implements ArchetypeResearchPort {
     const limitations = [
       '仅进行静态、有范围限制的源码读取；未安装依赖、未运行游戏、未验证行为或组合兼容性。',
       '源码许可证与图片、音频、品牌等素材的授权范围需分别核对。',
-      '目录探索只覆盖根目录和最多两个代码目录；其他目录未搜索。',
+      '目录探索只覆盖根目录和最多一个代码目录；其他目录未搜索。',
       ...treeLimits,
     ];
     if (tree.truncated) limitations.push('GitHub 目录树被截断，文件探索范围不完整。');
@@ -262,9 +297,9 @@ export class GitHubArchetypeResearcher implements ArchetypeResearchPort {
     for (const file of files) {
       let text: string;
       try {
-        text = await this.readBlob(repo.full_name, file, signal);
+        text = await this.readBlob(repo.full_name, file, context);
       } catch (error) {
-        if (signal?.aborted) throw error;
+        if (context.signal?.aborted) throw error;
         if (
           error instanceof GitHubFailure &&
           ['RATE_LIMITED', 'AUTH_REQUIRED'].includes(error.code)
@@ -380,6 +415,11 @@ export class GitHubArchetypeResearcher implements ArchetypeResearchPort {
       };
     const candidates: MaterialCandidate[] = [],
       limitations: string[] = [];
+    const context: Access = {
+      signal: options.signal,
+      runId: request.discussion.runId,
+      cachedTimes: new Set(),
+    };
     try {
       const queries = githubQueries(request);
       const repos = new Map<string, { repo: Repo; query: string }>();
@@ -388,7 +428,7 @@ export class GitHubArchetypeResearcher implements ArchetypeResearchPort {
       for (const query of queries) {
         const result = await this.get(
           `/search/repositories?${new URLSearchParams({ q: query, per_page: '30' })}`,
-          options.signal,
+          context,
         );
         if (!Array.isArray(result.items))
           throw new GitHubFailure('UNAVAILABLE', 'Malformed GitHub repository search response.');
@@ -435,27 +475,54 @@ export class GitHubArchetypeResearcher implements ArchetypeResearchPort {
         limitations.push(
           `略过 ${skippedLicense} 条未提供明确许可证标识的搜索结果；公开可读不等于可复用。`,
         );
-      // Inspect at most four repositories and return at most three: bounded reads even for broad queries.
-      for (const { repo, query } of [...repos.values()].slice(0, 4)) {
-        if (candidates.length >= Math.min(request.limit, 3)) break;
+      // Several metadata candidates; bounded source inspection for only the leading repository.
+      const selected = [...repos.values()].slice(0, Math.min(request.limit, 3));
+      for (const { repo, query } of selected)
+        candidates.push({
+          candidateId: `github:${repo.full_name}:discovery`,
+          kind: 'game_repository',
+          title: repo.full_name,
+          summary: repo.description?.slice(0, 400) || '仓库暂无简介',
+          source: {
+            uri: `https://github.com/${repo.full_name}`,
+            repositoryUrl: `https://github.com/${repo.full_name}`,
+            revision: null,
+            paths: [],
+            symbols: [],
+          },
+          coverageHints: [],
+          license: {
+            identifier: repo.license!.spdx_id,
+            sourceUri: `https://github.com/${repo.full_name}`,
+            scope: 'unknown',
+          },
+          evidence: [
+            {
+              description: `GitHub 仓库搜索返回；查询：${query}。仅为候选线索。`,
+              sourceUri: `https://github.com/${repo.full_name}`,
+            },
+          ],
+          limitations: ['仅获取仓库搜索元数据，尚未读取源码、固定 commit 或验证玩法。'],
+        });
+      if (selected.length) {
         try {
-          candidates.push(await this.inspect(repo, query, options.signal));
+          candidates[0] = await this.inspect(selected[0].repo, selected[0].query, context);
         } catch (error) {
           if (options.signal?.aborted) throw error;
-          if (
-            error instanceof GitHubFailure &&
-            ['RATE_LIMITED', 'AUTH_REQUIRED'].includes(error.code)
-          )
-            throw error;
           limitations.push(
-            `${repo.full_name}：${error instanceof GitHubFailure ? error.message : '网络读取失败或超时'} 未计入候选。`,
+            `首选仓库源码读取未完成：${error instanceof GitHubFailure ? error.message : '网络错误或超时'}。保留元数据候选，不扩大检索。`,
           );
         }
       }
-      if (candidates.length < request.limit)
+      if (context.cachedTimes.size)
         limitations.push(
-          `仅找到并读取 ${candidates.length}/${request.limit} 个候选，不以占位数据补足。`,
+          `使用本地缓存，最早获取于 ${new Date(Math.min(...context.cachedTimes)).toISOString()}；不代表刚刚访问了 GitHub。`,
         );
+      limitations.push(
+        '每个创意最多 15 次 HTTP 请求（含失败及追问）；通常为 2 次搜索 + 首选仓库最多 10 次读取。',
+      );
+      if (candidates.length < request.limit)
+        limitations.push(`仅找到 ${candidates.length}/${request.limit} 个候选，不以占位数据补足。`);
       limitations.push(
         '检索使用英文玩法关键词与 JS/TS 范围；不是全网召回，候选相似性仅有文字/词法依据。图片未被解释。',
       );
@@ -509,7 +576,7 @@ export function githubQueries(request: MaterialSearchRequest): string[] {
         : '';
   // A focused engine query plus a broader alternative helps compare architecture tradeoffs.
   return [
-    `${terms[family]}${engine} language:TypeScript fork:false archived:false`,
-    `${terms[family]} language:JavaScript fork:false archived:false`,
+    `${terms[family]}${engine} language:TypeScript fork:false archived:false is:public`,
+    `${terms[family]} language:JavaScript fork:false archived:false is:public`,
   ];
 }

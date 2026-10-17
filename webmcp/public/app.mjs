@@ -40,11 +40,19 @@ function renderRepositories(run) {
   repositoryKey = key;
   const root = $('repositories');
   root.replaceChildren(node('h3', '相似游戏仓库 · 原型检索'));
+  if (run.githubNetwork) {
+    const g = run.githubNetwork;
+    root.append(
+      node(
+        'p',
+        `GitHub 联网：${g.enabled ? '有限开启' : '关闭'} · 本创意 HTTP 预留次数 ${g.ideaRequests}/15 · 本机近一小时 ${g.usedLastHour}/30${g.cooldownUntil ? ` · 暂停至 ${g.cooldownUntil}` : ''}`,
+        'notice',
+      ),
+    );
+  }
   const result = job?.result;
   if (!result) {
-    root.append(
-      node('p', job?.error || '正在检索仓库并读取源码，完成后显示可核查的证据。', 'muted hint'),
-    );
+    root.append(node('p', job?.error || '正在查找候选；默认只使用本地缓存。', 'muted hint'));
     return;
   }
   if (result.status === 'failed') {
@@ -55,7 +63,7 @@ function renderRepositories(run) {
   root.append(
     node(
       'p',
-      `${result.isMock ? '模拟测试数据' : '真实检索结果'} · ${result.candidates.length} 个候选 · ${result.provider}`,
+      `${result.isMock ? '模拟测试数据' : '真实来源候选（可能来自缓存）'} · ${result.candidates.length} 个候选 · ${result.provider}`,
       'muted hint',
     ),
   );
@@ -67,7 +75,7 @@ function renderRepositories(run) {
     card.append(
       node(
         'p',
-        `固定版本：${candidate.source.revision?.slice(0, 12) || '未知'} · 许可证标识：${candidate.license?.identifier || '未知'} · 玩法未验证`,
+        `固定版本：${candidate.source.revision?.slice(0, 12) || '尚未固定，只有搜索线索'} · 许可证标识：${candidate.license?.identifier || '未知'} · 玩法未验证`,
         'muted hint',
       ),
     );
@@ -631,7 +639,9 @@ try {
   const providers = await api('/api/providers');
   $('provider-status').textContent = [
     providers.archetypes === 'github-archetype-research'
-      ? '原型：WebMCP 直接检索 GitHub，并读取固定版本的源码。'
+      ? providers.github?.enabled
+        ? 'GitHub 有限联网：每创意最多 15 次，本机共享 30 次/小时、120 次/天；遇限流暂停，不自动重试。'
+        : 'GitHub 联网已关闭：只使用本地缓存，刷新和新建任务均不会访问 GitHub。缓存不足时仍可使用默认提案。'
       : `原型 provider：${providers.archetypes}（测试配置请核对结果中的模拟标识）。`,
     providers.materials === 'material-portal-not-configured'
       ? '素材门户：尚未接入，机制候选会明确标记缺口。'

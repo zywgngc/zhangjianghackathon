@@ -87,7 +87,7 @@ Builder 可继续使用已验证的 Node22；以 `--research-node /path/to/node2
 
 蓝图中 `proposal.known` 保留用户文字；`decisions[].source` 标记默认、已保存偏好或开发者选择。验收草案从生效选择派生，带 `provisional: true` 与 `derivedFrom`，不会默认带入三个案例的 225 项规格。选择其他原型会替换原型专属问题，缺失选择继续采用明确默认。系统补全、采用默认和开发者逐项确认是不同来源，不能混为一谈。
 
-当前补全依赖跑酷、生存、解谜、平台跳跃四类规则模板。**开源游戏原型仓库由 WebMCP 自己检索 GitHub、固定 commit 并静态读取少量源码**，不再委托材料门户；新增 `/api/research/providers` 透传接入状态。机制材料仍保留 teammate-owned `MaterialPortalPort`，收到生效选项、来源、原始特征和图片引用，v0.2 wire contract 不变。默认材料门户未配置时明确返回缺口；只有显式 fixtures 模式生成模拟数据。原型内部重查有独立计数，不占材料门户的 3 次额度。首次选项修改原型/引擎/候选数时，会免费修正一次查询并将旧证据保留为历史。视觉理解和模型规划仍待接入；更改方案后证据按修订失效。详见 [仓库检索的实现与边界](../webmcp/github-research.md)。
+当前补全依赖跑酷、生存、解谜、平台跳跃四类规则模板。**开源游戏原型仓库由 WebMCP 负责；默认仅读本地缓存，显式开启有限联网后只对首选仓库固定 commit 并静态读取少量源码**，不再委托材料门户；新增 `/api/research/providers` 透传接入状态。机制材料仍保留 teammate-owned `MaterialPortalPort`，收到生效选项、来源、原始特征和图片引用，v0.2 wire contract 不变。默认材料门户未配置时明确返回缺口；只有显式 fixtures 模式生成模拟数据。原型内部重查有独立计数，不占材料门户的 3 次额度。首次选项修改原型/引擎/候选数时，会免费修正一次查询并将旧证据保留为历史。视觉理解和模型规划仍待接入；更改方案后证据按修订失效。详见 [仓库检索的实现与边界](../webmcp/github-research.md)。
 
 历史 `caseId` 请求与显式 `mode: benchmark` 继续保留全部案例规格和引擎锁。Python harness 只增加一个 `/decisions` 透传路由；生成、QA、发布和主项目入口的所有权不变。
 

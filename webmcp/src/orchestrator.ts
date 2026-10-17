@@ -124,6 +124,13 @@ export class ResearchOrchestrator {
   private provider(request: MaterialSearchRequest): ArchetypeResearchPort | PortalAdapter {
     return request.purpose === 'archetype' ? this.archetypes : this.portal;
   }
+  private canRetry(request: MaterialSearchRequest): boolean {
+    const provider = this.provider(request);
+    return (
+      provider.idempotentRequests &&
+      (!('automaticRetries' in provider) || provider.automaticRetries !== false)
+    );
+  }
   private jobTimeout(request: MaterialSearchRequest): number {
     return request.purpose === 'archetype' ? this.archetypeTimeoutMs : this.timeoutMs;
   }
@@ -770,7 +777,7 @@ export class ResearchOrchestrator {
         (j) => j.state === 'running' && j.leaseUntil <= this.now(),
       )) {
         job.leaseOwner = null;
-        if (this.provider(job.request).idempotentRequests && job.attempts < this.maxAttempts) {
+        if (this.canRetry(job.request) && job.attempts < this.maxAttempts) {
           job.state = 'queued';
           job.availableAt = this.now();
           this.event(run, 'recovered', job.request.requestId);
@@ -873,7 +880,7 @@ export class ResearchOrchestrator {
           error: {
             code: 'TIMEOUT',
             message: failure,
-            retryable: this.provider(job.request).idempotentRequests,
+            retryable: this.canRetry(job.request),
             retryAfterMs: 100,
           },
         };
@@ -902,7 +909,7 @@ export class ResearchOrchestrator {
         if (
           result?.status === 'failed' &&
           result.error.retryable &&
-          this.provider(job.request).idempotentRequests &&
+          this.canRetry(job.request) &&
           current.attempts < this.maxAttempts
         ) {
           current.state = 'queued';
