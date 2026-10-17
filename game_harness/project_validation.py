@@ -240,7 +240,11 @@ RUN_SCENARIO = """async ({scenario, sourceHash, specHash, caseId}) => {
 }"""
 
 
+SURVIVOR_CONTROLLER_SOURCE = (Path(__file__).with_name("static") / "survivors_controller.js").read_text(encoding="utf-8")
+SURVIVOR_CONTROLLER_SHA256 = hashlib.sha256(SURVIVOR_CONTROLLER_SOURCE.encode()).hexdigest()
+
 RUN_NORMAL_ROUTE = """async ({route, sourceHash, specHash, caseId}) => {
+""" + SURVIVOR_CONTROLLER_SOURCE + """
   const api=window.__HARNESS__, copy=value=>JSON.parse(JSON.stringify(value));
   if(!api || typeof api.snapshot!=='function' || typeof api.advance!=='function' || typeof api.events!=='function' || (typeof api.command!=='function' && typeof api.dispatch!=='function'))
     throw Error('HARNESS_ADAPTER: normal play requires production snapshot, advance, events and command/dispatch methods');
@@ -262,8 +266,16 @@ RUN_NORMAL_ROUTE = """async ({route, sourceHash, specHash, caseId}) => {
   const captured=new Set(),observedLabels=new Set();let powerBefore=false,previousPower=trace.initial.player?.power;
   const capture=async(scene)=>{if(!window.__HARNESS_HOST_CAPTURE__||captured.has(scene)||route.endurance)return;
     captured.add(scene);await new Promise(resolve=>requestAnimationFrame(resolve));await window.__HARNESS_HOST_CAPTURE__({scene});};
+  const bounds=trace.configuration?.worldBounds;
+  const survivor=caseId==='GAME-TEST-002'?createSurvivorController(trace.configuration||{enemies:[]},{
+    worldHalfWidth:bounds?(bounds.maxX-bounds.minX)/2:undefined,
+    worldHalfHeight:bounds?(bounds.maxY-bounds.minY)/2:undefined}):null;
+  const decisionMs=survivor?100:200, checkpointMs=survivor?10000:1000;
+  if(survivor)trace.input_policy={name:'survivor-observation-mpc-v2',decision_interval_ms:decisionMs,
+    checkpoint_interval_ms:checkpointMs,controller_sha256:'__SURVIVOR_POLICY_SHA256__',
+    scope:'Only observes production snapshots/configuration and sends ordinary movement/upgrade commands; no fixtures or state writes'};
   const maxMs=(route.maxSimSeconds || 150)*1000;
-  for(let elapsed=0;elapsed<=maxMs;elapsed+=200) {
+  for(let elapsed=0;elapsed<=maxMs;elapsed+=decisionMs) {
     const s=await api.snapshot();
     rememberProcess(s);
     if(s.phase==='VICTORY' || s.phase==='DEFEAT' || s.phase==='DEADLOCK') break;
@@ -301,26 +313,20 @@ RUN_NORMAL_ROUTE = """async ({route, sourceHash, specHash, caseId}) => {
       if(s.phase==='LEVEL_UP' || (s.upgradeChoices||s.choices||[]).length) {
         const choices=s.upgradeChoices||s.choices||[];
         if(!choices.length) throw Error('LEVEL_UP has no observable choices');
-        const priority=route.strategy.upgradePriority||[];
+        const choice=survivor.chooseUpgrade(s);
+        if(!choice)throw Error('No selectable production upgrade');
         const id=c=>typeof c==='string'?c:c.id;
-        const rank=c=>{const value=id(c),i=priority.findIndex(p=>value===p||value.startsWith(p+'-'));return i<0?100:i;};
-        const owned=new Set((s.skills?.active||[]).map(value=>value.id));
-        const needNew=owned.size<2&&time>=15 || owned.size<3&&time>=30;
-        const newActive=needNew?choices.find(c=>/^W\\d{2}$/.test(id(c))&&!owned.has(id(c))):null;
-        const choice=newActive || [...choices].sort((a,b)=>rank(a)-rank(b))[0];
         await capture(choices.some(c=>/^E\\d{2}$/.test(id(c)))?'ultimate_evolution':'upgrade_cards');
         await send('chooseUpgrade',{id:id(choice)});
+        // Selecting a card resumes the same world. Observe it before moving
+        // time forward so the next input uses the newly applied upgrade.
+        continue;
       } else {
-        const enemies=entities.filter(e=>['enemy','elite','boss'].includes(e.kind));
-        const nearest=[...enemies].sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];
-        const gems=entities.filter(e=>e.kind==='gem'||e.kind==='xp').sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y));
-        let dx=Math.cos(time*0.7),dy=Math.sin(time*0.7);
-        if(nearest && Math.hypot(nearest.x-p.x,nearest.y-p.y)<150) {dx=p.x-nearest.x;dy=p.y-nearest.y;const d=Math.hypot(dx,dy)||1;dx/=d;dy/=d;}
-        else if(gems.length) {dx=gems[0].x-p.x;dy=gems[0].y-p.y;const d=Math.hypot(dx,dy)||1;dx/=d;dy/=d;}
+        const {dx,dy}=survivor.movement(s);
         await send('move',{dx,dy});
       }
     }
-    await api.advance(200);
+    await api.advance(decisionMs);
     if(caseId==='GAME-TEST-003' && window.__HARNESS_HOST_OBSERVE_POWER__ && trace.power_label_frames.length<120) {
       const current=await api.snapshot(),selected=(current.entities||[]).find(e=>e.id===target&&e.active!==false&&['enemy','boss'].includes(e.kind));
       if(selected&&!observedLabels.has(selected.id)&&Math.hypot(selected.x-current.player.x,selected.z-current.player.z)<=1.5) {
@@ -332,15 +338,16 @@ RUN_NORMAL_ROUTE = """async ({route, sourceHash, specHash, caseId}) => {
       }
     }
     if(Math.floor(elapsed/1000)!==lastCheckpoint) {
-      lastCheckpoint=Math.floor(elapsed/1000);trace.checkpoints.push(await observe());
-      rememberProcess(trace.checkpoints[trace.checkpoints.length-1]);await drainEvents();
+      lastCheckpoint=Math.floor(elapsed/1000);
+      if(elapsed%checkpointMs<decisionMs){trace.checkpoints.push(await observe());rememberProcess(trace.checkpoints[trace.checkpoints.length-1]);}
+      await drainEvents();
       await new Promise(resolve=>setTimeout(resolve,0));
     }
   }
   trace.final=await observe();
   rememberProcess(trace.final);await drainEvents();
   return trace;
-}"""
+}""".replace("__SURVIVOR_POLICY_SHA256__", SURVIVOR_CONTROLLER_SHA256)
 
 
 class ProjectValidator:
