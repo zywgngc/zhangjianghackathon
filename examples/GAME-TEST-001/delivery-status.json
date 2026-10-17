@@ -1,0 +1,1602 @@
+{
+  "version": 1,
+  "delivery_kind": "accepted",
+  "accepted": true,
+  "source_sha256": "ff20b0be5e62aec6e18c52a51a1e691bcebe7a077a91e6b089b3a090495353ea",
+  "engine": "babylon",
+  "case_id": "GAME-TEST-001",
+  "build_current": true,
+  "validation_report_current": true,
+  "reported_validation_passed": true,
+  "recomputed_acceptance": {
+    "version": 1,
+    "case_id": "GAME-TEST-001",
+    "spec_sha256": "b99717267f61fdac53bbc6e3508c4e9128017284387fa5ae6819f768d7b23f1b",
+    "project_sha256": "ff20b0be5e62aec6e18c52a51a1e691bcebe7a077a91e6b089b3a090495353ea",
+    "source_sha256": "ff20b0be5e62aec6e18c52a51a1e691bcebe7a077a91e6b089b3a090495353ea",
+    "status": "passed",
+    "complete": true,
+    "counts": {
+      "passed": 54,
+      "failed": 0,
+      "not_run": 0,
+      "manual_required": 0,
+      "visual_required": 0
+    },
+    "tests": [
+      {
+        "id": "GAME-TEST-001/T01",
+        "test_id": "T01",
+        "text": "The game starts normally.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 20814,
+          "end": 20844,
+          "line_start": 1452,
+          "line_end": 1453,
+          "sha256": "8d5459c6924a41f4da757e8946389df459da537d23636d0a878a29106090c1a5"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-0.json",
+            "sha256": "da122b62466184f1302f63036ca6b41d812a40d82ccfb564a661f263f3fb57c0"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T02",
+        "test_id": "T02",
+        "text": "The squad moves forward automatically.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 20846,
+          "end": 20889,
+          "line_start": 1455,
+          "line_end": 1456,
+          "sha256": "e458528e70fe64edb344831120979647c52ac31d280970a6e169729f753562f7"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-12.json",
+            "sha256": "c78e1c64f67d143cd0cda3bd80cf7dad9d126c62a9863a1ce0119f2caf04aefe"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T03",
+        "test_id": "T03",
+        "text": "Horizontal touch dragging controls the squad.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 20891,
+          "end": 20941,
+          "line_start": 1458,
+          "line_end": 1459,
+          "sha256": "202e8e27974f4ce30f76f1a6a41297868ab3dfc2e6be59ffca6b00753bc445ab"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-portrait-drag.json",
+            "sha256": "e371b29df80ee86f846b7af25f8170450e5259b2174d54ed882b8ec7e6c2280b"
+          },
+          {
+            "path": "project-r1-landscape-drag.json",
+            "sha256": "69630c31a7c0607986567c35c8a5ab6f314fc577679c69c7d65bb2768e57e5a4"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T04",
+        "test_id": "T04",
+        "text": "Releasing touch stops horizontal movement.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 20943,
+          "end": 20990,
+          "line_start": 1461,
+          "line_end": 1462,
+          "sha256": "e1a297b4754170d5b6b354170d229ef23cdc260a5c29aac1de5a88682226bfea"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-desktop-release.json",
+            "sha256": "b60f65b600806df9ef74ca020a8f655a7965a87e3c88f652e39e7ac9d8175914"
+          },
+          {
+            "path": "project-r1-portrait-release.json",
+            "sha256": "567f01910e32e5c23038efedaa216067cfee5d59e91685b456870567befb8fbb"
+          },
+          {
+            "path": "project-r1-landscape-release.json",
+            "sha256": "f391a0722bf20e1ff5b5aa2ccbcd58429c4cd78077bc8c5ad8a95bd0237499d0"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T05",
+        "test_id": "T05",
+        "text": "All soldiers shoot automatically.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 20992,
+          "end": 21030,
+          "line_start": 1464,
+          "line_end": 1465,
+          "sha256": "62a031bf4418ea8164641c3f1ba84ac08146b49246b32cb7b057cf38b31bf079"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-11.json",
+            "sha256": "fdf8afabd8f3cd5d263f90e88ae859d49ce374c0dc7bfec850252fddff19aa0d"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T06",
+        "test_id": "T06",
+        "text": "Passing +5 with 1 soldier results in 6 soldiers.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 21032,
+          "end": 21085,
+          "line_start": 1467,
+          "line_end": 1468,
+          "sha256": "0b5eaf503edb6d1f76d7b5a818e3e4bb8b6c88f01444f99936b2c67d20b8ad8f"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-2.json",
+            "sha256": "2b885cb486e803c1886a5d239381eb998af89ab32610b566aa4052ed293e7212"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T07",
+        "test_id": "T07",
+        "text": "Passing ×3 with 6 soldiers results in 18 soldiers.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 21087,
+          "end": 21142,
+          "line_start": 1470,
+          "line_end": 1471,
+          "sha256": "5c6d35451628fd8529b3311f4a6bcb12bcea860a3b5253021a1f8a3d284a25bb"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-3.json",
+            "sha256": "8d9626925f0c526174fbedad6f0639e4ecfafb283ad7157356e174fb19b49fb3"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T08",
+        "test_id": "T08",
+        "text": "Passing -4 with 18 soldiers results in 14 soldiers.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 21144,
+          "end": 21200,
+          "line_start": 1473,
+          "line_end": 1474,
+          "sha256": "2e385a4fcc3a63939bdb17578ef9e41f4cfe0adb54190b4aaa861e1682138bb9"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-4.json",
+            "sha256": "ce20e56f233444c82e2d488e39e9d7dd34d73a35554c847115ded04f25940ebd"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T09",
+        "test_id": "T09",
+        "text": "Passing ÷2 with 5 soldiers results in 2 soldiers.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 21202,
+          "end": 21256,
+          "line_start": 1476,
+          "line_end": 1477,
+          "sha256": "2d3d031c90b2f69541ef6fefb21fc62b8b74a0d3a9b98cf37148e480bd53ee57"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-5.json",
+            "sha256": "57e85914938a9bda8ef1867ef6eaf6cd0b1b1a60e6912a4491e180dc41a3fa5f"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T10",
+        "test_id": "T10",
+        "text": "A mathematical gate activates only once.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 21258,
+          "end": 21303,
+          "line_start": 1479,
+          "line_end": 1480,
+          "sha256": "7f253a287f7d0e812a4a1e6bab1f644fc5fdb91609f6e1de78084f6d31bcbba1"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-13.json",
+            "sha256": "e12525c5e0ebd1b3e254cf19c499527490352c56d21bdd4d5913fed4d47425a5"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T11",
+        "test_id": "T11",
+        "text": "Only one gate per gate group can activate.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 21305,
+          "end": 21352,
+          "line_start": 1482,
+          "line_end": 1483,
+          "sha256": "eb349b0ebcfae8513e2a5c16e52fa0644ec556c4b5d2afdba7572b6fc6ceae3a"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-13.json",
+            "sha256": "e12525c5e0ebd1b3e254cf19c499527490352c56d21bdd4d5913fed4d47425a5"
+          },
+          {
+            "path": "project-r1-scenario-14.json",
+            "sha256": "a7abb70937d11c998912dd7f016fd97b447759de6f4ce673d8d649abb1e3ff5f"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T12",
+        "test_id": "T12",
+        "text": "Soldier count never exceeds 200.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 21354,
+          "end": 21391,
+          "line_start": 1485,
+          "line_end": 1486,
+          "sha256": "84a84ac4af59d223032b63ebeed5d72560552ab5c1c0ac0b96cd461c10d264cd"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-6.json",
+            "sha256": "ab4fcd58e5fb4baee11b2dd8c883e7682ddfef97f702a7fa0af43c415b853b54"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T13",
+        "test_id": "T13",
+        "text": "Soldier count reaching zero causes defeat.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 21393,
+          "end": 21440,
+          "line_start": 1488,
+          "line_end": 1489,
+          "sha256": "37c79ba8c1b58dca5439a7d357653816af0712aa24cea8a9494df837305e6a43"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-7.json",
+            "sha256": "f2d412573796844760e1ec07b72170d50fa7f30a0e666a6986e87d6fc46127f9"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T14",
+        "test_id": "T14",
+        "text": "Each soldier contributes to shooting damage.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 21456,
+          "end": 21505,
+          "line_start": 1493,
+          "line_end": 1494,
+          "sha256": "566bfed2f830ddc523ed4e778ae011a6b33cc99194f757606c5ca82d195181e5"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-11.json",
+            "sha256": "fdf8afabd8f3cd5d263f90e88ae859d49ce374c0dc7bfec850252fddff19aa0d"
+          },
+          {
+            "path": "project-r1-scenario-15.json",
+            "sha256": "1d3417df93f8a83567dce015d7821c5ebb72dda504622f48a9531261ff727e3a"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T15",
+        "test_id": "T15",
+        "text": "Projectiles damage valid enemies.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 21507,
+          "end": 21545,
+          "line_start": 1496,
+          "line_end": 1497,
+          "sha256": "2ef34c06b3e0c379517c7cb9adc3ed18f7923996539d9b6de4b9694d04efee05"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-11.json",
+            "sha256": "fdf8afabd8f3cd5d263f90e88ae859d49ce374c0dc7bfec850252fddff19aa0d"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T16",
+        "test_id": "T16",
+        "text": "Enemy health reaches zero correctly.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 21547,
+          "end": 21588,
+          "line_start": 1499,
+          "line_end": 1500,
+          "sha256": "0ad4ef431b17a10ad83673622a80d150813b8c53d26e0231dd74829d4bf53c90"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-11.json",
+            "sha256": "fdf8afabd8f3cd5d263f90e88ae859d49ce374c0dc7bfec850252fddff19aa0d"
+          },
+          {
+            "path": "project-r1-scenario-22.json",
+            "sha256": "41261389b485a95c7d99db747d44d352813ad9fcb309a43eac22766a04c88ea5"
+          },
+          {
+            "path": "project-r1-scenario-23.json",
+            "sha256": "e7ecc904457ff5c3abc22293c03f058e92d59ad063806180c0c8cf84add3027f"
+          },
+          {
+            "path": "project-r1-scenario-24.json",
+            "sha256": "554af8b64ebf43707442c4d592c1890f3f61cdc1e86522247bf8b47142a85533"
+          },
+          {
+            "path": "project-r1-scenario-25.json",
+            "sha256": "7867a4167d39cc0023593039038660bade8e27e78d4059cd1ae1579465a200ee"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T17",
+        "test_id": "T17",
+        "text": "Enemy death removes the enemy.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 21590,
+          "end": 21625,
+          "line_start": 1502,
+          "line_end": 1503,
+          "sha256": "759d0a9d9de481e3301ce52b2a1cbdbda9e2421488e3205d6d7a8caa8937c36d"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-11.json",
+            "sha256": "fdf8afabd8f3cd5d263f90e88ae859d49ce374c0dc7bfec850252fddff19aa0d"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T18",
+        "test_id": "T18",
+        "text": "Obstacle collisions remove the correct\nnumber of soldiers.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 21627,
+          "end": 21690,
+          "line_start": 1505,
+          "line_end": 1507,
+          "sha256": "05ec3a6f6e50e00c46eccac4ef33052982b203ac1d208b29e0e22873713a7a3f"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-8.json",
+            "sha256": "98dd0974b85a53cdf96cdf00adee5362f08ccf418cac431969b6fbb8ea3ced52"
+          },
+          {
+            "path": "project-r1-scenario-9.json",
+            "sha256": "e86b41d525c08afc06db65cde5c5f2dd345e0c46be9e9dfbd1202a2d171978fa"
+          },
+          {
+            "path": "project-r1-scenario-10.json",
+            "sha256": "7d2461848b9ac3a20db348139b5aa86586434b14414c833421699c76f8ffd45e"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T19",
+        "test_id": "T19",
+        "text": "Boss health decreases according\nto actual projectile hits.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 21692,
+          "end": 21755,
+          "line_start": 1509,
+          "line_end": 1511,
+          "sha256": "c8c3ff697f1d47b9c818e0e86c365bfed4315e8a2f725d74cf29fd951d629b0d"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-16.json",
+            "sha256": "391c05682b65b3be271436a99e38d484848b2eabb6906ae2654277b378b01538"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T20",
+        "test_id": "T20",
+        "text": "Boss health reaching zero causes victory.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 21757,
+          "end": 21803,
+          "line_start": 1513,
+          "line_end": 1514,
+          "sha256": "b145daa2afc29b78f65c38d4092efaee1ad81992304cf2f5cfacdbf340a66263"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-16.json",
+            "sha256": "391c05682b65b3be271436a99e38d484848b2eabb6906ae2654277b378b01538"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T21",
+        "test_id": "T21",
+        "text": "Reaching the end with Boss HP above zero\ncauses defeat.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 21805,
+          "end": 21865,
+          "line_start": 1516,
+          "line_end": 1518,
+          "sha256": "106ec262506b2c28a3eee337f215ef61da21eceb22d829cdea0e463cc0ad0d50"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-17.json",
+            "sha256": "c39b404cf8610dc23b557b4ceb5d4d3aee09acfcd554805094b234582cf51416"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T22",
+        "test_id": "T22",
+        "text": "Level 1 can be completed.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 21880,
+          "end": 21910,
+          "line_start": 1522,
+          "line_end": 1523,
+          "sha256": "a25330b3f4db23373d84a0ede825922c11ab7d5fecf8abd5d24b5e754d9ee363"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-normal-level-1.json",
+            "sha256": "5e926641ef7e47861d2509cd3ef25d656725da115a70ce70e37ef73d3f43a454"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T23",
+        "test_id": "T23",
+        "text": "Level 2 can be completed.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 21912,
+          "end": 21942,
+          "line_start": 1525,
+          "line_end": 1526,
+          "sha256": "8a3dd7d72de75d7b3583410e6568ff3cf035466f4ba75d0f1bc11e219ba472db"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-normal-level-2.json",
+            "sha256": "7a664ea6d7cd8c6d52df994e4d285683532a05d75c9e22b8523ac1c539bb1bad"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T24",
+        "test_id": "T24",
+        "text": "Level 3 can be completed.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 21944,
+          "end": 21974,
+          "line_start": 1528,
+          "line_end": 1529,
+          "sha256": "d124ae8d1ed11e0603c3fcdcf8c3b07fa5c20ff54c0d3a277be543c16c0f79cc"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-normal-level-3.json",
+            "sha256": "36b3f390fcf583c311e9b604a74c1ff1796e557c1cfa7b90494ae2e2a1857719"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T25",
+        "test_id": "T25",
+        "text": "Completing a level unlocks the next level.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 21976,
+          "end": 22023,
+          "line_start": 1531,
+          "line_end": 1532,
+          "sha256": "e6a1d290ca7bb7caa77afee52b19b7ee0b14e1a8c74a0652618c38ba662d40ce"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-normal-level-1.json",
+            "sha256": "5e926641ef7e47861d2509cd3ef25d656725da115a70ce70e37ef73d3f43a454"
+          },
+          {
+            "path": "project-r1-normal-level-2.json",
+            "sha256": "7a664ea6d7cd8c6d52df994e4d285683532a05d75c9e22b8523ac1c539bb1bad"
+          },
+          {
+            "path": "project-r1-normal-level-3.json",
+            "sha256": "36b3f390fcf583c311e9b604a74c1ff1796e557c1cfa7b90494ae2e2a1857719"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T26",
+        "test_id": "T26",
+        "text": "Restarting restores the level's original\ntemporary state.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22025,
+          "end": 22087,
+          "line_start": 1534,
+          "line_end": 1536,
+          "sha256": "59bcb918fd136cca766deb9b71a54156acf30fe49b6b650fdfa4a522629676fb"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-19.json",
+            "sha256": "d47ce72a0debd3f817df4b75ac34a5c57af2a0909d3c5def55b7fdfcd955e783"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T27",
+        "test_id": "T27",
+        "text": "Gold rewards are added correctly.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22104,
+          "end": 22142,
+          "line_start": 1540,
+          "line_end": 1541,
+          "sha256": "00110e1ecd873a9a213a174345c986ef28cd8a47eff8481988958e0853a1d2e6"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-normal-level-1.json",
+            "sha256": "5e926641ef7e47861d2509cd3ef25d656725da115a70ce70e37ef73d3f43a454"
+          },
+          {
+            "path": "project-r1-normal-level-2.json",
+            "sha256": "7a664ea6d7cd8c6d52df994e4d285683532a05d75c9e22b8523ac1c539bb1bad"
+          },
+          {
+            "path": "project-r1-normal-level-3.json",
+            "sha256": "36b3f390fcf583c311e9b604a74c1ff1796e557c1cfa7b90494ae2e2a1857719"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T28",
+        "test_id": "T28",
+        "text": "Upgrade costs are calculated correctly.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22144,
+          "end": 22188,
+          "line_start": 1543,
+          "line_end": 1544,
+          "sha256": "65153aa31fd18c70d1a613fada5e332434c6856100002da6944c87bb78d1fc28"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-18.json",
+            "sha256": "5c40519525237731586473c297795f9909542f396233229b7fd41141fca78098"
+          },
+          {
+            "path": "project-r1-scenario-26.json",
+            "sha256": "103d9c6e388a930769125d0172bc20c0b7e7af092ff01751a1cd14d3b8bd617f"
+          },
+          {
+            "path": "project-r1-scenario-27.json",
+            "sha256": "c3da3239959ffee49b2984caf04870f64fa29206869b2de4e70f53fca14be1a8"
+          },
+          {
+            "path": "project-r1-scenario-28.json",
+            "sha256": "45391de2e394faf8e6ad3c84b8d2f0478b61276b3c4a97253dcdae2017ec4bbf"
+          },
+          {
+            "path": "project-r1-scenario-29.json",
+            "sha256": "1d7765f052d3f6f2934815bce61ba9e9093b735e731af0a1c5ae015145871dc3"
+          },
+          {
+            "path": "project-r1-scenario-30.json",
+            "sha256": "76603ae3750d46610d894518b8b3745a6260c7a8dcdb727a89c4f9614935dc56"
+          },
+          {
+            "path": "project-r1-scenario-31.json",
+            "sha256": "94656ef749a5d6c753bd8565b4f81f45a27e779147ea36e4798b34b141ac6d8c"
+          },
+          {
+            "path": "project-r1-scenario-32.json",
+            "sha256": "537bc0ad22013dc78dad255431bc8b1c899e3245249c58c1a6104bb5f7cad3e2"
+          },
+          {
+            "path": "project-r1-scenario-33.json",
+            "sha256": "419be8d44961e5903251232be725152b2ae32b26a037d9c733e7ed80e85008f9"
+          },
+          {
+            "path": "project-r1-scenario-34.json",
+            "sha256": "ccd4d50602ed45d92ac57fe7afc78b6d8b93b287953a5e932fdb54c62b0c123e"
+          },
+          {
+            "path": "project-r1-scenario-35.json",
+            "sha256": "4ce29824bbe7aff68d4f47baf5fe97fdcf73b14c322d36203afd285b093444bf"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T29",
+        "test_id": "T29",
+        "text": "Upgrades modify the correct attributes.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22190,
+          "end": 22234,
+          "line_start": 1546,
+          "line_end": 1547,
+          "sha256": "54dc7f2b02ce92ff95b68d389158720b4b2b1d6c0dda701e2daa765a2afc5dba"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-18.json",
+            "sha256": "5c40519525237731586473c297795f9909542f396233229b7fd41141fca78098"
+          },
+          {
+            "path": "project-r1-scenario-22.json",
+            "sha256": "41261389b485a95c7d99db747d44d352813ad9fcb309a43eac22766a04c88ea5"
+          },
+          {
+            "path": "project-r1-scenario-26.json",
+            "sha256": "103d9c6e388a930769125d0172bc20c0b7e7af092ff01751a1cd14d3b8bd617f"
+          },
+          {
+            "path": "project-r1-scenario-27.json",
+            "sha256": "c3da3239959ffee49b2984caf04870f64fa29206869b2de4e70f53fca14be1a8"
+          },
+          {
+            "path": "project-r1-scenario-28.json",
+            "sha256": "45391de2e394faf8e6ad3c84b8d2f0478b61276b3c4a97253dcdae2017ec4bbf"
+          },
+          {
+            "path": "project-r1-scenario-29.json",
+            "sha256": "1d7765f052d3f6f2934815bce61ba9e9093b735e731af0a1c5ae015145871dc3"
+          },
+          {
+            "path": "project-r1-scenario-30.json",
+            "sha256": "76603ae3750d46610d894518b8b3745a6260c7a8dcdb727a89c4f9614935dc56"
+          },
+          {
+            "path": "project-r1-scenario-31.json",
+            "sha256": "94656ef749a5d6c753bd8565b4f81f45a27e779147ea36e4798b34b141ac6d8c"
+          },
+          {
+            "path": "project-r1-scenario-32.json",
+            "sha256": "537bc0ad22013dc78dad255431bc8b1c899e3245249c58c1a6104bb5f7cad3e2"
+          },
+          {
+            "path": "project-r1-scenario-33.json",
+            "sha256": "419be8d44961e5903251232be725152b2ae32b26a037d9c733e7ed80e85008f9"
+          },
+          {
+            "path": "project-r1-scenario-34.json",
+            "sha256": "ccd4d50602ed45d92ac57fe7afc78b6d8b93b287953a5e932fdb54c62b0c123e"
+          },
+          {
+            "path": "project-r1-scenario-35.json",
+            "sha256": "4ce29824bbe7aff68d4f47baf5fe97fdcf73b14c322d36203afd285b093444bf"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T30",
+        "test_id": "T30",
+        "text": "Gold and upgrades persist after refresh.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22236,
+          "end": 22281,
+          "line_start": 1549,
+          "line_end": 1550,
+          "sha256": "96e57c08b78a60fcf4ffeaa430587595834fc3d158ca725f30ae5df1cbeb3d7b"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-ui-purchase-refresh-2.json",
+            "sha256": "e108e3e452e7fa92fa244c185aeb9f4dedaa39d8d7658533d8129909506ecc6c"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T31",
+        "test_id": "T31",
+        "text": "Main menu works.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22293,
+          "end": 22314,
+          "line_start": 1554,
+          "line_end": 1555,
+          "sha256": "7e16f98c342af714df3a549db4438eaf64a55fdc82f6ab229417687f9323b73e"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-desktop-main-menu.json",
+            "sha256": "f164cad656040d37f48e38a0184e0fac088b84a951b89f4ac0027ac8c75dca33"
+          },
+          {
+            "path": "project-r1-portrait-main-menu.json",
+            "sha256": "f164cad656040d37f48e38a0184e0fac088b84a951b89f4ac0027ac8c75dca33"
+          },
+          {
+            "path": "project-r1-landscape-main-menu.json",
+            "sha256": "f164cad656040d37f48e38a0184e0fac088b84a951b89f4ac0027ac8c75dca33"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T32",
+        "test_id": "T32",
+        "text": "Pause and resume work.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22316,
+          "end": 22343,
+          "line_start": 1557,
+          "line_end": 1558,
+          "sha256": "e675581b307d56b649c9313403261fb4070378c26c1c372b2697c69c36f22c16"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-1.json",
+            "sha256": "f620af407988981f6cb7cde0ae045666fc59d16e867036d53e9353b7c55d7ee3"
+          },
+          {
+            "path": "project-r1-desktop-pause.json",
+            "sha256": "bccf881e1280d0a3150409edb551af298167edb66aeec6d7023ec229f5aeb663"
+          },
+          {
+            "path": "project-r1-desktop-resume.json",
+            "sha256": "5c3c14bbdfe9beb87fd800d6490a288fbdde7dd41aa2979481274ed7a90fd302"
+          },
+          {
+            "path": "project-r1-portrait-pause.json",
+            "sha256": "35d1ed9e285c38df9824e74e01346d31904481b2ad015fecaa93023a6f7c4499"
+          },
+          {
+            "path": "project-r1-portrait-resume.json",
+            "sha256": "e40cd6dc2950a0cd964b6eee814196ca36f4a9f9f672d67580d89cc80585d0a4"
+          },
+          {
+            "path": "project-r1-landscape-pause.json",
+            "sha256": "a7d61097286c4c6d5a7d9590ddcf7897a94e87e5eb642c974cc38abd836acd04"
+          },
+          {
+            "path": "project-r1-landscape-resume.json",
+            "sha256": "56839b6f498f7c91fb5a91334db28080fc9804d777df9b0d26bbe99120b48e3d"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T33",
+        "test_id": "T33",
+        "text": "Victory screen works.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22345,
+          "end": 22371,
+          "line_start": 1560,
+          "line_end": 1561,
+          "sha256": "879839ad4def1157df25af7ec1cb47a74645f7f41d7094be860a8b61da29d645"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-victory-ui-level-1.json",
+            "sha256": "d66a5fc048b8e49426ad628ac2c866b07699f0441ff22f440afd3c7d759f9874"
+          },
+          {
+            "path": "project-r1-victory-ui-level-2.json",
+            "sha256": "e2802d977172ba7021a83412e1d1647254d4382ed5c0558ad2cd091e4b378e03"
+          },
+          {
+            "path": "project-r1-victory-ui-level-3.json",
+            "sha256": "feac96804d81dfdde09bd06b77f642698e6eed499f26aa38bfbe7b69b7190541"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T34",
+        "test_id": "T34",
+        "text": "Defeat screen works.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22373,
+          "end": 22398,
+          "line_start": 1563,
+          "line_end": 1564,
+          "sha256": "6bdd180b63149c15a78b97b2a3e7087b9ed7cfb52e5f42c3bbf74a99f1113df3"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-ui-defeat-ui-4.json",
+            "sha256": "d0a18cdc6c25382fa7628244ee09ed25551b666da6ba26928f6809fb4f020240"
+          },
+          {
+            "path": "project-r1-ui-isolated-defeat-noninterference-5.json",
+            "sha256": "2f0d6474e69b28860347033aeabdad3d58f0844274d90673d7d3229ab51194d3"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T35",
+        "test_id": "T35",
+        "text": "Upgrade screen works.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22400,
+          "end": 22426,
+          "line_start": 1566,
+          "line_end": 1567,
+          "sha256": "062beb8c1b1ae5201262c56d56c36ae0b817db7d21defb887a5a674c7851e840"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-ui-upgrade-screen-1.json",
+            "sha256": "a0b0978e7cef0b09ed3c0df5e37e8147f7b7086d0ff5e99baf666f20eba54708"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T36",
+        "test_id": "T36",
+        "text": "Audio settings work.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22428,
+          "end": 22453,
+          "line_start": 1569,
+          "line_end": 1570,
+          "sha256": "c924c37f12d820af5be762be2d6d89f834fee8f233e75262627dd4d7dce685c5"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-ui-settings-3.json",
+            "sha256": "615da0b0ef1770157f8fa77261b5506e9a523374644e2e1c5a055d9b97ffd0d6"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T37",
+        "test_id": "T37",
+        "text": "Portrait layout works.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22476,
+          "end": 22503,
+          "line_start": 1574,
+          "line_end": 1575,
+          "sha256": "0f024d48798d8c5cf748aa6c53c1fd1da3571771dee206431ed1d6b218c05021"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-portrait-layout.json",
+            "sha256": "c0e0b6f120fbddbf81c38068e5455bc67f163799a14f8b6c0ecd99a9f31cfd0e"
+          },
+          {
+            "path": "project-visual-ff20b0be5e62-5343065d-1.input.json",
+            "sha256": "9886cb824eb25b0e1c71d10badd2d50106c9e670d0c15e73a0c2a31b8228a500"
+          },
+          {
+            "path": "project-visual-ff20b0be5e62-5343065d-1.model.json",
+            "sha256": "44ce9205fca0849587ce199d4bf8555bcefa9d4fd21ed752da98aaddd24d13c3"
+          },
+          {
+            "path": "project-visual-ff20b0be5e62-5343065d-1.review.json",
+            "sha256": "cc4b45486f7576e2a0deb9c0e85969764776e8cf7108e337b95de43357e1ad14"
+          },
+          {
+            "path": "project-r1-desktop.png",
+            "sha256": "23e1f64d7e7410f964b4f4d189eb2ede2e6366dd4c56b5a26bac97216892e9c9"
+          },
+          {
+            "path": "project-r1-portrait.png",
+            "sha256": "cf443f617df96e30174e7f2c463a2af9dd5af17e09b4afa27ad32d470121ce19"
+          },
+          {
+            "path": "project-r1-landscape.png",
+            "sha256": "e6d525781c723608c52ed9bc2aae1a8eee4722c1d28535d5ce6a530ed9a334ca"
+          },
+          {
+            "path": "project-r1-ui-settings-1.png",
+            "sha256": "90227c0244aba6635aabc0f82b8fc271b3f01b5d0b068b1dfe1868dbe0bab7ef"
+          },
+          {
+            "path": "project-r1-ui-defeat-1.png",
+            "sha256": "55de00519d3a906660d216760714e3a33343edba06167515187b39cb4e530589"
+          },
+          {
+            "path": "project-r1-desktop-gameplay.png",
+            "sha256": "f5a82095199b2204f95f0cb61f484dbc93a2fe41dbfa1f04aef226f544680051"
+          },
+          {
+            "path": "project-r1-portrait-gameplay.png",
+            "sha256": "c0bcab2c00fcc6ee8457bf25dbe6cd194883560924e26ebae8c09e70bfeac403"
+          },
+          {
+            "path": "project-r1-landscape-gameplay.png",
+            "sha256": "d4ed0dd9eff1e0b13dde3cde850ddb6ca114529aea00408a8b1719b6476255a3"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T38",
+        "test_id": "T38",
+        "text": "Landscape layout works.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22505,
+          "end": 22533,
+          "line_start": 1577,
+          "line_end": 1578,
+          "sha256": "6d8ed9d2fe9669fe7826616c1b11ba876d13b35f639928d3bcfcbfda2ed19481"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-landscape-layout.json",
+            "sha256": "f6c65fd9d61268b5c3c2760e6df81f18d490ab1662104dad340598a9ecc67311"
+          },
+          {
+            "path": "project-visual-ff20b0be5e62-5343065d-1.input.json",
+            "sha256": "9886cb824eb25b0e1c71d10badd2d50106c9e670d0c15e73a0c2a31b8228a500"
+          },
+          {
+            "path": "project-visual-ff20b0be5e62-5343065d-1.model.json",
+            "sha256": "44ce9205fca0849587ce199d4bf8555bcefa9d4fd21ed752da98aaddd24d13c3"
+          },
+          {
+            "path": "project-visual-ff20b0be5e62-5343065d-1.review.json",
+            "sha256": "cc4b45486f7576e2a0deb9c0e85969764776e8cf7108e337b95de43357e1ad14"
+          },
+          {
+            "path": "project-r1-desktop.png",
+            "sha256": "23e1f64d7e7410f964b4f4d189eb2ede2e6366dd4c56b5a26bac97216892e9c9"
+          },
+          {
+            "path": "project-r1-portrait.png",
+            "sha256": "cf443f617df96e30174e7f2c463a2af9dd5af17e09b4afa27ad32d470121ce19"
+          },
+          {
+            "path": "project-r1-landscape.png",
+            "sha256": "e6d525781c723608c52ed9bc2aae1a8eee4722c1d28535d5ce6a530ed9a334ca"
+          },
+          {
+            "path": "project-r1-ui-settings-1.png",
+            "sha256": "90227c0244aba6635aabc0f82b8fc271b3f01b5d0b068b1dfe1868dbe0bab7ef"
+          },
+          {
+            "path": "project-r1-ui-defeat-1.png",
+            "sha256": "55de00519d3a906660d216760714e3a33343edba06167515187b39cb4e530589"
+          },
+          {
+            "path": "project-r1-desktop-gameplay.png",
+            "sha256": "f5a82095199b2204f95f0cb61f484dbc93a2fe41dbfa1f04aef226f544680051"
+          },
+          {
+            "path": "project-r1-portrait-gameplay.png",
+            "sha256": "c0bcab2c00fcc6ee8457bf25dbe6cd194883560924e26ebae8c09e70bfeac403"
+          },
+          {
+            "path": "project-r1-landscape-gameplay.png",
+            "sha256": "d4ed0dd9eff1e0b13dde3cde850ddb6ca114529aea00408a8b1719b6476255a3"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T39",
+        "test_id": "T39",
+        "text": "Touch controls work on mobile.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22535,
+          "end": 22570,
+          "line_start": 1580,
+          "line_end": 1581,
+          "sha256": "859484ef50493de7e1b8d3dee7bff860dfca5b722280f091d9edebeb5bd94948"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-portrait-drag.json",
+            "sha256": "e371b29df80ee86f846b7af25f8170450e5259b2174d54ed882b8ec7e6c2280b"
+          },
+          {
+            "path": "project-r1-landscape-drag.json",
+            "sha256": "69630c31a7c0607986567c35c8a5ab6f314fc577679c69c7d65bb2768e57e5a4"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T40",
+        "test_id": "T40",
+        "text": "Mouse controls work on desktop.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22572,
+          "end": 22608,
+          "line_start": 1583,
+          "line_end": 1584,
+          "sha256": "108ec808ce646301e9e824e5e42b970b01736ea0b7078e4536ae4f213f7e6aff"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-desktop-drag.json",
+            "sha256": "142c4409d9ac762139208a8008c3476498b2a8fbfd1e6e95a9e92b8bda025a4a"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T41",
+        "test_id": "T41",
+        "text": "Orientation changes preserve game state.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22610,
+          "end": 22655,
+          "line_start": 1586,
+          "line_end": 1587,
+          "sha256": "774e75694e992764399b4108b8b1375261a83c5948897b6ddad7324bcd78aa9e"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-desktop-orientation.json",
+            "sha256": "4a3bade2acd417b3e4ec1b47c39f6e4b294764bb88e4ec563ad316b215ced4a1"
+          },
+          {
+            "path": "project-r1-portrait-orientation.json",
+            "sha256": "faa4699d0e08942938ca4f9c1e5be5e9b05579ac84518f75049a0b6f757a0efa"
+          },
+          {
+            "path": "project-r1-landscape-orientation.json",
+            "sha256": "faa4699d0e08942938ca4f9c1e5be5e9b05579ac84518f75049a0b6f757a0efa"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T42",
+        "test_id": "T42",
+        "text": "The game does not require runtime\nthird-party API calls.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22657,
+          "end": 22718,
+          "line_start": 1589,
+          "line_end": 1591,
+          "sha256": "dfc483c6031e9128640b6e6a2b52c6399dbf0a25785764020af91a4572785b04"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-desktop-local-only.json",
+            "sha256": "ca5c26410fc0662d567027bccef1a5e6b8c700fd162605479a92f9baa53a5ca4"
+          },
+          {
+            "path": "project-r1-portrait-local-only.json",
+            "sha256": "ca5c26410fc0662d567027bccef1a5e6b8c700fd162605479a92f9baa53a5ca4"
+          },
+          {
+            "path": "project-r1-landscape-local-only.json",
+            "sha256": "ca5c26410fc0662d567027bccef1a5e6b8c700fd162605479a92f9baa53a5ca4"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T43",
+        "test_id": "T43",
+        "text": "The game remains functional with\n200 soldiers.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22739,
+          "end": 22790,
+          "line_start": 1595,
+          "line_end": 1597,
+          "sha256": "8de0a94b4344b5c5fc2e7d1bad3bb024221fd9ec2c52eff53c948b3a7a3bbcac"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-21.json",
+            "sha256": "857372e5c5d73a4573b32a835b6dd267a38f5d94eb85d0c2a9f98283de078675"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T44",
+        "test_id": "T44",
+        "text": "Projectiles do not accumulate indefinitely.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22792,
+          "end": 22840,
+          "line_start": 1599,
+          "line_end": 1600,
+          "sha256": "27ac10d475a6b220a215b5e30321e1fa5d1369254edc592e799561fba025cddf"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-20.json",
+            "sha256": "fd44864290fa9b36616a43efbc7649d751fe6c0fcabc779dd16d6d42530b60d7"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T45",
+        "test_id": "T45",
+        "text": "Restarting repeatedly does not create\nduplicate update loops.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22842,
+          "end": 22908,
+          "line_start": 1602,
+          "line_end": 1604,
+          "sha256": "ca4ce57e6bfd796823eb9eb4287162f95d04b172134cc1223950c853f95d3f53"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-desktop-restart-loop.json",
+            "sha256": "9efde249ce88dc8fffeaa9e959393e79e4af94ca61b4e320a932573635f1944e"
+          },
+          {
+            "path": "project-r1-portrait-restart-loop.json",
+            "sha256": "9efde249ce88dc8fffeaa9e959393e79e4af94ca61b4e320a932573635f1944e"
+          },
+          {
+            "path": "project-r1-landscape-restart-loop.json",
+            "sha256": "9efde249ce88dc8fffeaa9e959393e79e4af94ca61b4e320a932573635f1944e"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T46",
+        "test_id": "T46",
+        "text": "Game resources are cleaned up correctly.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22910,
+          "end": 22955,
+          "line_start": 1606,
+          "line_end": 1607,
+          "sha256": "14881cbc580837e57be4e7b53877554982627420d30c74e01056dd14f2b4bc1e"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-desktop-restart-resource-cleanup.json",
+            "sha256": "b85a1cf19f07f2bed591ff7ec1f0293ee9c9aa2242d782994f1b68969176a65d"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T47",
+        "test_id": "T47",
+        "text": "Mathematical gates change soldier count,\nnot weapon count.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 22983,
+          "end": 23046,
+          "line_start": 1611,
+          "line_end": 1613,
+          "sha256": "22a0a103dff95ec5f7b42c670883a52e522f7c398ee88f2ff42cb45cfbb93df7"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-13.json",
+            "sha256": "e12525c5e0ebd1b3e254cf19c499527490352c56d21bdd4d5913fed4d47425a5"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T48",
+        "test_id": "T48",
+        "text": "Soldiers automatically shoot.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 23048,
+          "end": 23082,
+          "line_start": 1615,
+          "line_end": 1616,
+          "sha256": "a02e69fb1d53b31e9c4356ce53434320e582ed5e7dc39b2f2ab6fbab954fb1c5"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-11.json",
+            "sha256": "fdf8afabd8f3cd5d263f90e88ae859d49ce374c0dc7bfec850252fddff19aa0d"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T49",
+        "test_id": "T49",
+        "text": "Squad growth visibly increases total firepower.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 23084,
+          "end": 23136,
+          "line_start": 1618,
+          "line_end": 1619,
+          "sha256": "ce2fdcb8d3945f04f7574db02388f91ba9d7c637127d9bbc3c2daf49034ee118"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-15.json",
+            "sha256": "1d3417df93f8a83567dce015d7821c5ebb72dda504622f48a9531261ff727e3a"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T50",
+        "test_id": "T50",
+        "text": "The player can choose between gate alternatives.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 23138,
+          "end": 23191,
+          "line_start": 1621,
+          "line_end": 1622,
+          "sha256": "b682672d82f96c4a50d2a7458dd62331a8a64b08d2821cf3185338c1ad27467f"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-13.json",
+            "sha256": "e12525c5e0ebd1b3e254cf19c499527490352c56d21bdd4d5913fed4d47425a5"
+          },
+          {
+            "path": "project-r1-scenario-14.json",
+            "sha256": "a7abb70937d11c998912dd7f016fd97b447759de6f4ce673d8d649abb1e3ff5f"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T51",
+        "test_id": "T51",
+        "text": "Enemies and hazards reduce squad effectiveness.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 23193,
+          "end": 23245,
+          "line_start": 1624,
+          "line_end": 1625,
+          "sha256": "56d03a9a073ef98de15836f9346b15a3861957637021f18e96bfad39513f14ea"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-8.json",
+            "sha256": "98dd0974b85a53cdf96cdf00adee5362f08ccf418cac431969b6fbb8ea3ced52"
+          },
+          {
+            "path": "project-r1-scenario-9.json",
+            "sha256": "e86b41d525c08afc06db65cde5c5f2dd345e0c46be9e9dfbd1202a2d171978fa"
+          },
+          {
+            "path": "project-r1-scenario-10.json",
+            "sha256": "7d2461848b9ac3a20db348139b5aa86586434b14414c833421699c76f8ffd45e"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T52",
+        "test_id": "T52",
+        "text": "Boss combat and victory conditions work.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 23247,
+          "end": 23292,
+          "line_start": 1627,
+          "line_end": 1628,
+          "sha256": "861dcf02c2638bfcb0bc56164940d3eff4f86c4dfb2902859da2d83629faec1a"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-16.json",
+            "sha256": "391c05682b65b3be271436a99e38d484848b2eabb6906ae2654277b378b01538"
+          },
+          {
+            "path": "project-r1-normal-level-1.json",
+            "sha256": "5e926641ef7e47861d2509cd3ef25d656725da115a70ce70e37ef73d3f43a454"
+          },
+          {
+            "path": "project-r1-normal-level-2.json",
+            "sha256": "7a664ea6d7cd8c6d52df994e4d285683532a05d75c9e22b8523ac1c539bb1bad"
+          },
+          {
+            "path": "project-r1-normal-level-3.json",
+            "sha256": "36b3f390fcf583c311e9b604a74c1ff1796e557c1cfa7b90494ae2e2a1857719"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T53",
+        "test_id": "T53",
+        "text": "Permanent upgrades function across levels.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 23294,
+          "end": 23341,
+          "line_start": 1630,
+          "line_end": 1631,
+          "sha256": "31c5bc0b367f4790817945dd22284b079b1ca360b6f2e60097fd3a2dd53f2ccd"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r1-scenario-18.json",
+            "sha256": "5c40519525237731586473c297795f9909542f396233229b7fd41141fca78098"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-001/T54",
+        "test_id": "T54",
+        "text": "The game uses the required warfare theme.",
+        "source": {
+          "path": "case1-Number_Gate_Shooter/001数字门枪手.txt",
+          "start": 23343,
+          "end": 23389,
+          "line_start": 1633,
+          "line_end": 1634,
+          "sha256": "21d8d565878b506d44b286964de11e6754be7ceaac3549e09b5ddd7c92b977ff"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-visual-ff20b0be5e62-5343065d-1.input.json",
+            "sha256": "9886cb824eb25b0e1c71d10badd2d50106c9e670d0c15e73a0c2a31b8228a500"
+          },
+          {
+            "path": "project-visual-ff20b0be5e62-5343065d-1.model.json",
+            "sha256": "44ce9205fca0849587ce199d4bf8555bcefa9d4fd21ed752da98aaddd24d13c3"
+          },
+          {
+            "path": "project-visual-ff20b0be5e62-5343065d-1.review.json",
+            "sha256": "cc4b45486f7576e2a0deb9c0e85969764776e8cf7108e337b95de43357e1ad14"
+          },
+          {
+            "path": "project-r1-desktop.png",
+            "sha256": "23e1f64d7e7410f964b4f4d189eb2ede2e6366dd4c56b5a26bac97216892e9c9"
+          },
+          {
+            "path": "project-r1-portrait.png",
+            "sha256": "cf443f617df96e30174e7f2c463a2af9dd5af17e09b4afa27ad32d470121ce19"
+          },
+          {
+            "path": "project-r1-landscape.png",
+            "sha256": "e6d525781c723608c52ed9bc2aae1a8eee4722c1d28535d5ce6a530ed9a334ca"
+          },
+          {
+            "path": "project-r1-ui-settings-1.png",
+            "sha256": "90227c0244aba6635aabc0f82b8fc271b3f01b5d0b068b1dfe1868dbe0bab7ef"
+          },
+          {
+            "path": "project-r1-ui-defeat-1.png",
+            "sha256": "55de00519d3a906660d216760714e3a33343edba06167515187b39cb4e530589"
+          },
+          {
+            "path": "project-r1-desktop-gameplay.png",
+            "sha256": "f5a82095199b2204f95f0cb61f484dbc93a2fe41dbfa1f04aef226f544680051"
+          },
+          {
+            "path": "project-r1-portrait-gameplay.png",
+            "sha256": "c0bcab2c00fcc6ee8457bf25dbe6cd194883560924e26ebae8c09e70bfeac403"
+          },
+          {
+            "path": "project-r1-landscape-gameplay.png",
+            "sha256": "d4ed0dd9eff1e0b13dde3cde850ddb6ca114529aea00408a8b1719b6476255a3"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      }
+    ],
+    "unexecuted_is_passed": false,
+    "source_requirement_count": 508,
+    "source_constraint_count": 146,
+    "trusted_plan_error": null,
+    "scope": "The complete numbered section-14 acceptance suite; raw section requirements remain in the implementation plan"
+  },
+  "evidence_ledger": "project-evidence-1.json",
+  "counts": {
+    "passed": 54,
+    "failed": 0,
+    "not_run": 0,
+    "manual_required": 0,
+    "visual_required": 0
+  },
+  "adapter_failures": [],
+  "blockers": [],
+  "original_reports_modified": false,
+  "scope": "A verified playable candidate is not full gameplay acceptance; original evidence reports are copied byte-for-byte."
+}
