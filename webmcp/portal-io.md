@@ -2,6 +2,8 @@
 
 **Version 0.1 — proposal for the portal owner.** Tool names, transport, authentication, image resolution, and service limits still need integration agreement. The examples are synthetic fixtures and do not claim real source discoveries.
 
+See the [recipient handoff](handoff.md) for current implementation status, the upstream main-application boundary, and the integration information needed from each team. The behavior below is a proposed contract, not a claim that an adapter or service is running.
+
 ## Ownership
 
 | Component | Owner | Responsibility |

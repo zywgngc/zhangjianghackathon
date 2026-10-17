@@ -2,9 +2,11 @@
 
 **Proposed design — v0.1.** Based on the selected web-game architecture and the external portal boundary agreed for this project.
 
+For implementation status, responsibilities, and a worked example, read the [recipient handoff](handoff.md). Behavior described below is proposed; this package contains design and contract artifacts, not a running MAS.
+
 ## Scope and ownership
 
-Our component accepts a description, reference images, the selected engine/architecture, and developer preferences. It produces an implementation blueprint for the existing Builder and QA stages.
+Our component is intended to accept a description, reference images, the selected engine/architecture, and developer preferences. It should produce an implementation blueprint for the downstream Builder and QA stages defined in the overall architecture. Their runtime availability is not established by this package.
 
 Our team owns the research workflow, defaulted decisions, mechanic partitioning, candidate evaluation, shared state, and the browser WebMCP adapter. Another teammate owns the MCP material portal, its retrieval infrastructure, and material delivery. We implement only the application port and its client adapter for that portal.
 

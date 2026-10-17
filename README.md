@@ -73,6 +73,8 @@ curl http://127.0.0.1:18080/api/runs \
 
 [WebMCP 架构及素材门户契约](webmcp/README.md) 定义了团队外部素材门户的接入边界；当前文档是提案，示例为 mock，不能当成真实检索证据。
 
+[WebMCP 当前交接说明](webmcp/handoff.md) 列出了交付物、组件归属、输入输出及后续工作；其中的研究 MAS runtime 和真实门户接入仍待实现。
+
 `tests` 分支提供数字门枪手、武林幸存者、百炼英雄的长规格和参考图片。它们包含严格的引擎与内容要求，与 Python 回归测试分别管理；能力预检不会将不支持的引擎自动改为 Canvas。
 
 运行 `.venv/bin/python scripts/check_benchmarks.py` 查看三份规格的能力预检；也可访问 `/api/benchmarks`。素材门户 bridge、mock 证据规则和当前能力缺口见 [团队组件接入状态](docs/team-integration.md)。
