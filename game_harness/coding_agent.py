@@ -468,7 +468,7 @@ class CodingAgent:
                 text = self._read(path)
             except (ValueError, OSError):
                 continue
-            if text is None or len(text) > 8_000:
+            if text is None:
                 continue
             entry = {"path": path, "sha256": _text_hash(text), "characters": len(text),
                      "content": text, "complete": True,

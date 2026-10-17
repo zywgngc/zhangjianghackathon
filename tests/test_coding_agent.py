@@ -512,11 +512,12 @@ async def test_five_identical_nonprogress_reads_stop_before_spending_the_session
 
 
 @pytest.mark.parametrize("owned_path", ["src/game/InputManager.ts", "src/game/skills/ActiveSkillSystem.ts", "src/game/enemies/AI.ts"])
-async def test_shared_types_and_interfaces_remain_complete_when_configuration_and_history_compete(store, request_data, tmp_path, owned_path):
+@pytest.mark.parametrize("type_characters", [7_978, 8_078])
+async def test_shared_types_and_interfaces_remain_complete_when_configuration_and_history_compete(store, request_data, tmp_path, owned_path, type_characters):
     rid = run_id(store, request_data)
     workspace = Workspace(tmp_path / "game")
     types = "export type PRNG = () => number;\nexport type EventSink = (event: string) => void;\n"
-    types = (types + "// 真实共享接口字段\n" * 1_000)[:7_978]
+    types = (types + "// 真实共享接口字段\n" * 1_000)[:type_characters]
     workspace.write_file("src/game/types.ts", types)
     interfaces = "export function updatePlayerNavigation(state: GameState, dt: number, rng: PRNG, emit: EventSink): void;\n" * 15
     configuration = {"unrelatedSkillRows": "全部技能数值" * 1_000}
@@ -528,7 +529,7 @@ async def test_shared_types_and_interfaces_remain_complete_when_configuration_an
             assert packet["context"]["interfaces"] == interfaces
             resident = packet["resident_files"][0]
             assert resident["path"] == "src/game/types.ts" and resident["content"] == types
-            assert resident["complete"] and resident["characters"] == 7_978
+            assert resident["complete"] and resident["characters"] == type_characters
             assert resident["sha256"] == hashlib.sha256(types.encode()).hexdigest()
             assert resident["exports"] == ["PRNG", "EventSink"]
             if len(self.inputs) == 1:
