@@ -29,6 +29,11 @@ class Settings:
     portal_url: str = field(default_factory=lambda: os.getenv("MATERIAL_PORTAL_URL", ""))
     portal_token: str = field(default_factory=lambda: os.getenv("MATERIAL_PORTAL_TOKEN", ""))
     portal_schema: Path = field(default_factory=lambda: Path(os.getenv("MATERIAL_PORTAL_SCHEMA", str(Path(__file__).resolve().parents[1] / "webmcp/material-portal.schema.json"))))
+    project_max_calls: int = field(default_factory=lambda: int(os.getenv("PROJECT_MAX_MODEL_CALLS", "600")))
+    project_max_tokens: int = field(default_factory=lambda: int(os.getenv("PROJECT_MAX_TOTAL_TOKENS", "6000000")))
+    project_timeout: int = field(default_factory=lambda: int(os.getenv("PROJECT_TIMEOUT_SECONDS", "21600")))
+    project_feature_steps: int = field(default_factory=lambda: int(os.getenv("PROJECT_FEATURE_STEPS", "36")))
+    project_repair_rounds: int = field(default_factory=lambda: int(os.getenv("PROJECT_REPAIR_ROUNDS", "8")))
 
     def role_model(self, role: str) -> str:
         return os.getenv("MODEL_" + role.upper(), self.model)

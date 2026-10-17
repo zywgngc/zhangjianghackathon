@@ -41,13 +41,21 @@ class Store:
         finally:
             con.close()
 
-    def create(self, request: dict) -> dict:
+    def create(self, request: dict, initial_status="queued") -> dict:
+        if initial_status not in {"queued", "preparing"}:
+            raise ValueError("invalid initial status")
         rid, now = uuid.uuid4().hex, time.time()
         with self.connect() as con:
-            con.execute("INSERT INTO runs(id,request,status,stage,created,updated) VALUES(?,?,'queued','queued',?,?)",
-                        (rid, json.dumps(request, ensure_ascii=False), now, now))
-        self.event(rid, "queued", "queued", {"message": "已加入生成队列"})
+            con.execute("INSERT INTO runs(id,request,status,stage,created,updated) VALUES(?,?,?,?,?,?)",
+                        (rid, json.dumps(request, ensure_ascii=False), initial_status, initial_status, now, now))
+        self.event(rid, initial_status, initial_status, {"message": "已加入生成队列" if initial_status == "queued" else "完整规格已保存，准备项目"})
         return self.get(rid)
+
+    def request(self, rid: str):
+        """Internal complete input; public polling never repeatedly transfers a long specification."""
+        with self.connect() as con:
+            row = con.execute("SELECT request FROM runs WHERE id=?", (rid,)).fetchone()
+        return json.loads(row["request"]) if row else None
 
     def get(self, rid: str):
         with self.connect() as con:
@@ -56,6 +64,10 @@ class Store:
             return None
         result = dict(row)
         result["request"] = json.loads(result["request"])
+        if result["request"].get("mode") == "project":
+            specification = result["request"].pop("specification", "")
+            result["request"]["specification_characters"] = len(specification)
+            result["request"]["specification_sha256"] = hashlib.sha256(specification.encode()).hexdigest()
         result["artifacts"] = sorted(p.name for p in self.directory(rid).iterdir() if not p.name.startswith("."))
         return result
 

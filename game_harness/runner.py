@@ -9,15 +9,18 @@ from .schemas import Brief, Design, Review
 
 
 class Harness:
-    def __init__(self, settings, store, agents, retriever, validator):
+    def __init__(self, settings, store, agents, retriever, validator, projects=None):
         self.settings, self.store, self.agents = settings, store, agents
         self.retriever, self.validator = retriever, validator
         self.active = {}
         self.workers = []
         self.stopping = False
+        self.projects = projects
 
     async def start(self):
         self.store.recover()
+        if self.projects:
+            self.projects.ledger.recover()
         self.workers = [asyncio.create_task(self.worker()) for _ in range(self.settings.concurrency)]
 
     async def stop(self):
@@ -60,7 +63,11 @@ class Harness:
             started = starts[0] if starts else time.time()
             if not starts:
                 self.store.event(rid, "execution", "execution_started", {})
-            remaining = self.settings.run_timeout - (time.time() - started)
+            project = self.store.get(rid)["request"].get("mode") == "project"
+            timeout = self.settings.project_timeout if project else self.settings.run_timeout
+            policy = self.store.read_json(rid, 'execution-policy.json') or {}
+            timeout = policy.get('timeout_seconds', timeout)
+            remaining = timeout - (time.time() - started)
             if remaining <= 0:
                 raise asyncio.TimeoutError()
             start = time.monotonic()
@@ -98,6 +105,11 @@ class Harness:
 
     async def pipeline(self, rid):
         request = self.store.get(rid)["request"]
+        if request.get("mode") == "project":
+            if not self.projects:
+                raise RuntimeError("项目运行时未初始化")
+            await self.projects.run(rid)
+            return
         brief = await self.checkpoint(rid, "brief", "rewrite",
             "你是需求改写代理。将用户的一句话变成可实现且可验收的游戏需求；保留原意和具体数值，补充核心循环、操作、胜负与横竖屏要求。"
             "user_requirements 仅列用户描述或 engine 参数明确要求，不得把系统默认要求归为用户原话。"

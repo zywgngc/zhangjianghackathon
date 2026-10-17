@@ -7,3 +7,6 @@ __pycache__/
 *.pyc
 *.egg-info/
 .DS_Store
+.harness-dev/
+node_modules/
+dist/

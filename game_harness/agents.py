@@ -105,8 +105,11 @@ class AgentClient:
                 encoded = base64.b64encode(path.read_bytes()).decode()
                 user_content.append({"type": "image_url", "image_url": {"url": "data:image/png;base64," + encoded}})
         messages = [{"role": "system", "content": COMMON + system}, {"role": "user", "content": user_content}]
+        policy = self.store.read_json(rid, 'execution-policy.json') or {}
+        max_calls = policy.get('max_calls', self.settings.max_calls)
+        max_total_tokens = policy.get('max_tokens', self.settings.max_tokens)
         for attempt in range(3):
-            remaining = self.store.reserve_call(rid, self.settings.max_calls, self.settings.max_tokens)
+            remaining = self.store.reserve_call(rid, max_calls, max_total_tokens)
             # Reserve room for estimated input and maximum output before a request.
             input_estimate = estimate_input_tokens(COMMON + system + serialized, images)
             output_limit = min(max_tokens, remaining - input_estimate)
@@ -139,14 +142,14 @@ class AgentClient:
                 "seconds": round(time.monotonic() - start, 2), "finish_reason": finish or "incomplete"})
             if not content or finish != "stop":
                 raise RuntimeError("模型输出为空、被截断或流式响应未完整结束；请检查输出长度与模型预算")
-            if self.store.get(rid)["tokens"] > self.settings.max_tokens:
+            if self.store.get(rid)["tokens"] > max_total_tokens:
                 raise RuntimeError("模型 token 预算已用尽")
             return content
 
-    async def structured(self, rid, stage, role, instruction, data, schema, images=None):
+    async def structured(self, rid, stage, role, instruction, data, schema, images=None, max_tokens=4000):
         contract = "\n只输出一个 JSON 对象，严格遵循此 JSON Schema：\n" + json.dumps(schema.model_json_schema(), ensure_ascii=False)
         for attempt in range(2):
-            content = await self.complete(rid, stage, role, instruction + contract, data, images=images)
+            content = await self.complete(rid, stage, role, instruction + contract, data, images=images, max_tokens=max_tokens)
             try:
                 clean = re.sub(r"^```(?:json)?\s*|\s*```$", "", content.strip())
                 blocks = re.findall(r"```(?:json)?\s*\n?(.*?)```", content, flags=re.DOTALL)

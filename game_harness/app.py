@@ -12,7 +12,7 @@ from .agents import AgentClient
 from .config import load_settings
 from .rag import Retriever
 from .runner import Harness
-from .schemas import RunRequest
+from .schemas import RunRequest, ProjectRequest
 from .store import Store
 from .validation import BrowserValidator, CSP
 
@@ -31,14 +31,18 @@ def create_app(settings=None, agents_factory=AgentClient, validator_factory=Brow
             except BlockingIOError:
                 raise RuntimeError("此 DATA_DIR 已有服务运行；请使用单个 uvicorn worker") from None
             agents = agents_factory(settings, store)
-            harness = Harness(settings, store, agents, retriever, validator_factory(settings, store))
+            from .project_runner import ProjectOrchestrator
+            projects = ProjectOrchestrator(settings, store)
+            harness = Harness(settings, store, agents, retriever, validator_factory(settings, store), projects=projects)
             app.state.harness = harness
+            app.state.projects = projects
             await harness.start()
             try:
                 yield
             finally:
                 await harness.stop()
                 await agents.close()
+                await projects.close()
         finally:
             lock.close()
 
@@ -68,10 +72,79 @@ def create_app(settings=None, agents_factory=AgentClient, validator_factory=Brow
     @app.get("/api/config", dependencies=auth)
     async def config():
         return {"model": settings.model, "role_models": {r: settings.role_model(r) for r in ["rewrite", "design", "build", "qa", "repair"]},
-                "engines": ["auto", "canvas", "dom"], "max_repairs": settings.max_repairs,
+                "engines": ["auto", "canvas", "dom", "phaser", "babylon"], "max_repairs": settings.max_repairs,
                 "max_calls": settings.max_calls, "max_tokens": settings.max_tokens,
                 "reasoning_effort": settings.reasoning_effort, "stream_build": settings.stream_build,
                 "knowledge_chunks": len(retriever.documents), "external_rag": bool(settings.rag_url), "vision_qa": settings.vision_qa}
+
+    @app.post("/api/projects", status_code=202, dependencies=auth)
+    async def create_project(body: ProjectRequest):
+        from .specifications import load_case, ingest_text
+        if not settings.api_key:
+            raise HTTPException(503, "服务端尚未配置模型密钥")
+        if body.case_id:
+            if body.specification is not None:
+                raise HTTPException(422, "官方 case 使用完整原始规格；自定义规格请省略 case_id")
+            spec = load_case(body.case_id)
+            if body.engine != "auto" and body.engine != spec.engine:
+                raise HTTPException(422, "引擎参数违反原始规格锁定")
+            engine = spec.engine
+        elif body.specification:
+            spec = ingest_text(body.specification)
+            if spec.engine in {'phaser', 'babylon'} and body.engine not in {'auto', spec.engine}:
+                raise HTTPException(422, '引擎参数违反完整规格中的技术栈锁定')
+            engine = body.engine if body.engine != "auto" else spec.engine if spec.engine in {"phaser", "babylon"} else "phaser"
+        else:
+            raise HTTPException(422, "请提供完整 specification 或官方 case_id")
+        return store.create({"mode": "project", "description": (spec.names or [spec.case_id])[-1] + " · 完整项目",
+            "engine": engine, "case_id": spec.case_id, "specification": spec.text, "source_path": spec.source_path,
+            "reference_images": spec.reference_images})
+
+    @app.post("/api/benchmarks/{case_id}/runs", status_code=202, dependencies=auth)
+    async def start_benchmark(case_id: str):
+        if case_id not in {"GAME-TEST-001", "GAME-TEST-002", "GAME-TEST-003"}:
+            raise HTTPException(404, "未知测试 case")
+        for run in store.list(200):
+            if run['request'].get('case_id') == case_id and run['status'] in {'preparing', 'queued', 'running'}:
+                return run
+        return await create_project(ProjectRequest(case_id=case_id))
+
+    @app.get("/api/projects/{rid}", dependencies=auth)
+    async def project_status(rid: str):
+        run = require_run(rid)
+        if run['request'].get('mode') != 'project':
+            raise HTTPException(404, "非项目任务")
+        from .project_state import ProjectLedger
+        return {"run": run, **ProjectLedger(store).summary(rid),
+                "validation": store.read_json(rid, 'project-validation.json')}
+
+    @app.get("/api/projects/{rid}/candidate", dependencies=auth)
+    async def project_candidate(rid: str):
+        run = require_run(rid)
+        if run['request'].get('mode') != 'project':
+            raise HTTPException(404, "非项目任务")
+        from .project_runtime import ProjectWorkspace, WorkspaceError
+        workspace = ProjectWorkspace(store.directory(rid) / 'project', run['request']['engine'])
+        try:
+            html = workspace.inline_preview()
+        except (WorkspaceError, FileNotFoundError) as exc:
+            raise HTTPException(409, "尚无可预览的完整构建") from None
+        return HTMLResponse(html, headers={"Content-Security-Policy": CSP, "Cache-Control": "no-store",
+            "X-Harness-Acceptance": run['status'], "X-Harness-Source-SHA256": workspace.snapshot()['sha256'],
+            "X-Content-Type-Options": "nosniff"})
+
+    @app.get("/api/projects/{rid}/archive", dependencies=auth)
+    async def project_archive(rid: str):
+        run = require_run(rid)
+        if run['request'].get('mode') != 'project':
+            raise HTTPException(404, "非项目任务")
+        from .project_runtime import ProjectWorkspace
+        workspace = ProjectWorkspace(store.directory(rid) / 'project', run['request']['engine'])
+        try:
+            app.state.projects.package(rid, workspace)
+        except (OSError, RuntimeError, ValueError):
+            raise HTTPException(409, '项目正在更新或尚未初始化，稍后重试下载') from None
+        return FileResponse(store.path(rid, 'project-delivery.zip'), filename=rid + '-project.zip')
 
     @app.post("/api/runs", status_code=202, dependencies=auth)
     async def create_run(body: RunRequest):
@@ -145,7 +218,13 @@ def create_app(settings=None, agents_factory=AgentClient, validator_factory=Brow
     async def benchmarks():
         from .benchmarks import inventory
         try:
-            return {"scope": "资料与能力预检，不代表游戏验收通过", "cases": inventory()}
+            cases = inventory()
+            runs = store.list(200)
+            for case in cases:
+                latest = next((run for run in runs if run['request'].get('case_id') == case['case_id']), None)
+                if latest:
+                    case.update(latest_run_id=latest['id'], execution=latest['status'], stage=latest['stage'])
+            return {"scope": "完整项目运行能力及真实任务状态；ready不代表游戏验收通过", "cases": cases}
         except FileNotFoundError:
             raise HTTPException(503, "验收规格未随当前安装提供，请在完整仓库中运行") from None
 
