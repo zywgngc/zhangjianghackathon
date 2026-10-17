@@ -1,6 +1,6 @@
 # WebMCP mechanics research MAS
 
-**Proposed design — v0.1.** Based on the selected web-game architecture and the external portal boundary agreed for this project.
+**Proposed design — v0.2.** Based on the selected web-game architecture and the external portal boundary agreed for this project.
 
 For implementation status, responsibilities, and a worked example, read the [recipient handoff](handoff.md). Behavior described below is proposed; this package contains design and contract artifacts, not a running MAS.
 
@@ -33,7 +33,7 @@ flowchart TB
     J --> K["Existing Builder and QA"]
 ```
 
-The durable orchestrator owns scheduling, project revisions, retry budgets, checkpoints, and acceptance of agent results. The workflow is application code. Agents return structured proposals and evidence; they do not overwrite project state directly.
+The durable orchestrator owns scheduling, project revisions, retry budgets, checkpoints, and acceptance of agent results. It also owns two independent follow-up counters: at most three main → MAS follow-ups and three MAS → material portal follow-ups per run, excluding initial requests. The workflow is application code. Agents return structured proposals and evidence; they do not overwrite project state directly.
 
 ## Agent roles
 
@@ -63,6 +63,12 @@ Apply explicit developer choices and locked constraints first, then project pref
 
 For a 2D tower-defense brief, plausible defaults are fixed paths, automatic targeting, normal difficulty, finite waves, and simple high-contrast visuals. Difficulty becomes concrete parameters such as enemy health, spawn intervals, and starting resources. Visual style is carried to the later presentation stage.
 
+## Bounded discussion with main and material
+
+Main can refine the brief, question a recommendation, or answer a batched clarification up to three times in the same run. The MAS can refine portal searches, ask for missing evidence, or answer portal questions using a separate allowance of three follow-ups shared across all mechanics. Use full current search specifications plus run/thread/parent/round correlation; optional questions retain defaults.
+
+The portal may return `needs_clarification`. Established project facts and valid defaults can answer it locally; unresolved consequential choices can be surfaced to main. The orchestrator reserves slots atomically, persists them across retries/restarts/revisions, and rejects a fourth follow-up before dispatch. At exhaustion, return the best supported result with explicit gaps. See [discussion-policy.md](discussion-policy.md) for the protocol and [discussion.ts](discussion.ts) for shared types and the main follow-up command.
+
 ## Mechanic contracts
 
 Each mechanic owns behavior, state, inputs/outputs, dependencies, invariants, runtime constraints, and acceptance checks. Establish shared foundations early: engine adapter, simulation timing, world coordinates, entity representation, and physics ownership.
@@ -90,7 +96,7 @@ When no candidate meets a required mechanic, return a visible gap or an original
 
 ## Browser WebMCP boundary
 
-The studio UI and browser tools call the same authenticated project commands. Proposed application tools are `get_research_context`, `start_research`, `get_research_state`, `set_preferences`, `resolve_decision`, `compare_candidates`, `select_candidate`, and `get_implementation_blueprint`.
+The studio UI and browser tools call the same authenticated project commands. Proposed application tools are `get_research_context`, `start_research`, `get_research_state`, `follow_up_research`, `set_preferences`, `resolve_decision`, `compare_candidates`, `select_candidate`, and `get_implementation_blueprint`. During a run, research-changing preference, decision, and candidate commands share the main follow-up ledger; exposing separate tool names must not bypass the cap. Batch related changes into one command. Status reads and automatic default application do not consume main slots.
 
 Mutations require authorization, schema validation, an expected project revision, and an idempotency key. Long operations return a durable run ID; the backend continues across page reloads. Closing a page does not cancel a run. Cancellation is an explicit application command, which propagates to active workers and portal calls.
 

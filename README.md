@@ -75,6 +75,8 @@ curl http://127.0.0.1:18080/api/runs \
 
 [WebMCP 当前交接说明](webmcp/handoff.md) 列出了交付物、组件归属、输入输出及后续工作；其中的研究 MAS runtime 和真实门户接入仍待实现。
 
+最新 [v0.2 三轮讨论提案](webmcp/discussion-policy.md) 定义了主应用与研究 MAS、MAS 与门户各自独立的追问预算。当前 HTTP bridge 支持带关联信息的首轮检索，并保留门户澄清问题；完整追问与持久化预算尚未实现。
+
 `tests` 分支提供数字门枪手、武林幸存者、百炼英雄的长规格和参考图片。它们包含严格的引擎与内容要求，与 Python 回归测试分别管理；能力预检不会将不支持的引擎自动改为 Canvas。
 
 运行 `.venv/bin/python scripts/check_benchmarks.py` 查看三份规格的能力预检；也可访问 `/api/benchmarks`。素材门户 bridge、mock 证据规则和当前能力缺口见 [团队组件接入状态](docs/team-integration.md)。

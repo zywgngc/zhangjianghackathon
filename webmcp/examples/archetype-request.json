@@ -1,5 +1,5 @@
 {
-  "contractVersion": "0.1",
+  "contractVersion": "0.2",
   "requestId": "fixture-archetype-001",
   "projectRevision": 1,
   "purpose": "archetype",
@@ -16,8 +16,21 @@
     "engineVersion": null,
     "platform": "web",
     "language": "typescript",
-    "inputModes": ["pointer", "touch"]
+    "inputModes": [
+      "pointer",
+      "touch"
+    ]
   },
-  "materialKinds": ["game_repository", "source_code"],
-  "limit": 3
+  "materialKinds": [
+    "game_repository",
+    "source_code"
+  ],
+  "limit": 3,
+  "discussion": {
+    "runId": "fixture-run-001",
+    "threadId": "fixture-archetypes",
+    "round": 0,
+    "inReplyToRequestId": null,
+    "followUp": null
+  }
 }
