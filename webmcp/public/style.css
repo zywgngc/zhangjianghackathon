@@ -1,0 +1,173 @@
+:root {
+  font:
+    16px/1.55 system-ui,
+    sans-serif;
+  color: #e9edf3;
+  background: #10151c;
+  color-scheme: dark;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+main {
+  max-width: 1180px;
+  margin: auto;
+  padding: 40px 24px;
+}
+header {
+  max-width: 780px;
+  margin-bottom: 30px;
+}
+h1 {
+  font-size: clamp(30px, 4vw, 46px);
+  line-height: 1.14;
+  letter-spacing: -0.04em;
+  margin: 12px 0 20px;
+}
+h2 {
+  font-size: 20px;
+  margin: 0 0 18px;
+}
+h3 {
+  font-size: 16px;
+}
+.eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  color: #91cfc3;
+}
+.muted {
+  color: #a0acbc;
+}
+.notice {
+  border-left: 3px solid #d8ac65;
+  padding: 10px 16px;
+  background: #25231e;
+  color: #e0c79f;
+}
+.columns {
+  display: grid;
+  grid-template-columns: minmax(270px, 1fr) minmax(360px, 1.5fr);
+  gap: 20px;
+}
+section {
+  background: #18212c;
+  border: 1px solid #2a3747;
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+label {
+  display: block;
+  margin: 14px 0 6px;
+  font-size: 14px;
+}
+input,
+select,
+textarea {
+  font: inherit;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #425069;
+  border-radius: 7px;
+  background: #111924;
+  color: #edf2f7;
+}
+textarea {
+  resize: vertical;
+}
+button {
+  font: inherit;
+  font-weight: 600;
+  background: #91cfc3;
+  color: #122723;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  margin: 16px 0;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.secondary {
+  background: #293749;
+  color: #e5edf8;
+  border: 1px solid #485973;
+}
+.heading,
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.heading button {
+  margin: 0 0 16px;
+}
+.counters {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.counters span {
+  background: #25344a;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+li {
+  margin: 8px 0;
+}
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 440px;
+  overflow: auto;
+  font:
+    12px/1.6 ui-monospace,
+    monospace;
+  color: #bfccdd;
+}
+summary {
+  cursor: pointer;
+}
+.mechanics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 14px;
+}
+.mechanics article {
+  border: 1px solid #364358;
+  border-radius: 9px;
+  padding: 15px;
+}
+.mechanics article p {
+  font-size: 14px;
+  color: #bbc7d7;
+}
+#error {
+  color: #ffa6a6;
+}
+a {
+  color: #91cfc3;
+}
+:focus-visible {
+  outline: 2px solid #91cfc3;
+  outline-offset: 3px;
+}
+@media (max-width: 760px) {
+  main {
+    padding: 24px 14px;
+  }
+  .columns {
+    grid-template-columns: 1fr;
+  }
+  section {
+    padding: 18px;
+  }
+}

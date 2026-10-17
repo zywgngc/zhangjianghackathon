@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>WebMCP research studio</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="eyebrow">WEBMCP · RESEARCH SERVICE</p>
+        <h1>From game requirements<br />to mechanic research.</h1>
+        <p>
+          Explore the three reference cases, inspect decisions, and export a versioned blueprint.
+        </p>
+        <p class="notice">
+          Demo provider: synthetic materials. No real source discovery or game acceptance tests are
+          performed.
+        </p>
+        <p id="webmcp" class="muted">Checking browser tool support…</p>
+      </header>
+      <div class="columns">
+        <section>
+          <h2>Start research</h2>
+          <form id="start">
+            <label for="case">Reference case</label
+            ><select id="case"></select
+            ><label for="brief">Additional research context</label
+            ><textarea
+              id="brief"
+              rows="3"
+              placeholder="Optional. Fixed gameplay requirements remain locked."
+            ></textarea
+            ><label for="style">Implementation preference</label
+            ><select id="style">
+              <option value="">Use default</option>
+              <option value="engine_native">Engine-native integration</option>
+              <option value="portable">Portable algorithms</option></select
+            ><button>Start with defaults</button>
+          </form>
+          <h2>Previous runs</h2>
+          <select id="runs">
+            <option value="">Select a run</option>
+          </select>
+          <p id="error" role="alert"></p>
+        </section>
+        <section>
+          <div class="heading">
+            <h2>Research state</h2>
+            <button id="refresh" class="secondary">Refresh</button>
+          </div>
+          <p id="status">Start a case to see its plan and candidate alternatives.</p>
+          <div id="counters" class="counters"></div>
+          <ul id="decisions"></ul>
+          <form id="follow">
+            <label for="note">Follow-up to the MAS</label
+            ><textarea
+              id="note"
+              rows="3"
+              placeholder="Add research context or ask for reconsideration."
+              required
+            ></textarea
+            ><label for="preference">Implementation preference</label
+            ><select id="preference">
+              <option value="">Keep current preference</option>
+              <option value="engine_native">Engine-native integration</option>
+              <option value="portable">Portable algorithms</option></select
+            ><button id="send">Send follow-up</button>
+          </form>
+          <div class="actions">
+            <button id="export" class="secondary">Export blueprint</button
+            ><button id="cancel" class="secondary">Cancel run</button>
+          </div>
+          <div id="clarifications"></div>
+          <details>
+            <summary>Full state and pending portal questions</summary>
+            <pre id="state">No run selected.</pre>
+          </details>
+        </section>
+      </div>
+      <section>
+        <h2>Mechanics and evidence</h2>
+        <div id="mechanics" class="mechanics">
+          <p class="muted">The archetype search runs before mechanic planning.</p>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="/app.mjs"></script>
+  </body>
+</html>

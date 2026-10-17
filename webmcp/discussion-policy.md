@@ -1,6 +1,6 @@
 # Bounded follow-up discussion — v0.2
 
-**Design and contract proposal; runtime enforcement is not implemented yet.** The original v0.1 design allowed preference changes and repeated research, but did not define a conversation protocol or round limit. This revision adds the requested limit on both boundaries.
+**Contract v0.2, with runtime enforcement in the local reference service.** The original v0.1 design allowed preference changes and repeated research, but did not define a conversation protocol or round limit. This revision adds the requested limit on both boundaries. See [runtime.md](runtime.md) for implemented behavior, tests, and remaining live integration work.
 
 ## Two independent budgets
 
@@ -23,7 +23,7 @@ When our Planner needs clarification, expose a question batch through the run st
 
 Optional questions always have defaults. Automatic mode applies them without waiting and records their provenance. Guided mode may present a batch with “Use defaults”; submitting the answer batch uses one main follow-up slot. Lack of a reply must not turn an optional decision into an indefinite block. A required clarification, such as incompatible locks, has no fabricated default and may remain unresolved.
 
-Accept a main command atomically: authorize it, validate its expected revision and parent request, check the budget, record the request once, reserve the next main slot, and persist the change. Increment the project revision only when effective project inputs change; explanatory requests can retain the revision. Invalidate dependent research and resume the same run. Return an acknowledgement with the run ID, accepted request ID, resulting project revision, reserved round, and remaining main follow-ups. The complete upstream response schema is still to be defined.
+Accept a main command atomically: authorize it, validate its expected revision and parent request, check the budget, record the request once, reserve the next main slot, and persist the change. Increment the project revision when effective project inputs change. The reference service treats each follow-up message as new research context and increments the revision; a future explanation-only command could retain it. Invalidate dependent research and resume the same run. Return an acknowledgement with the run ID, accepted request ID, resulting project revision, reserved round, and remaining main follow-ups; see `MainAck` in [model.ts](src/model.ts).
 
 An explicit main follow-up can move a `completed` or `partial` run back to `running` while its follow-up, time, and cost budgets remain. Preserve earlier blueprint versions and publish a new one after review. A clarification response to a pending batch moves `waiting_input` back to `running` under the same checks. Cancelled, fatally failed, or deadline-expired runs require an explicit new-run command; follow-ups do not extend the original deadline or silently replenish any budget.
 
@@ -87,6 +87,6 @@ sequenceDiagram
 
 v0.2 is a breaking proposal update: portal requests require `discussion`; results echo its run/thread/round reference; `needs_clarification` is a new result variant. Existing fixtures are updated to round zero. Do not pass v0.2 payloads to a v0.1-only provider without an explicit adapter mapping and locally persisted discussion state. Do not silently discard a request for clarification.
 
-The [shared TypeScript types](discussion.ts), [portal types](material-portal.ts), [JSON Schema](material-portal.schema.json), and [fixtures](examples/README.md) describe the payloads. The schema's named definitions also include `MainFollowUpRequest`; the full main start/status/blueprint API is still outside this contract.
+The [shared TypeScript types](discussion.ts), [portal types](material-portal.ts), [JSON Schema](material-portal.schema.json), and [fixtures](examples/README.md) describe the payloads. The schema's named definitions also include `MainFollowUpRequest`; the implemented start/status/blueprint API is described separately in [runtime.md](runtime.md).
 
 Runtime acceptance must demonstrate: fourth-round rejection on each boundary, independent counters, batched questions and valid defaults, retry idempotency, concurrent last-slot contention, stale-revision handling, restart recovery, partial output at exhaustion, and no counter reset when changing threads. Type/schema checks alone cannot establish these behaviors.

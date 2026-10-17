@@ -1,0 +1,282 @@
+{
+  "caseId": "GAME-TEST-001",
+  "title": "数字门枪手",
+  "engine": "babylon",
+  "source": {
+    "commit": "81fc5366aa417754ccdba07d5d3dc08daa8f6a02",
+    "path": "case1:Number_Gate_Shooter/001数字门枪手.txt",
+    "url": "https://github.com/zywgngc/zhangjianghackathon/blob/81fc5366aa417754ccdba07d5d3dc08daa8f6a02/case1%3ANumber_Gate_Shooter/001%E6%95%B0%E5%AD%97%E9%97%A8%E6%9E%AA%E6%89%8B.txt"
+  },
+  "checks": [
+    {
+      "id": "GAME-TEST-001/T01",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "The game starts normally."
+    },
+    {
+      "id": "GAME-TEST-001/T02",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "The squad moves forward automatically."
+    },
+    {
+      "id": "GAME-TEST-001/T03",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Horizontal touch dragging controls the squad."
+    },
+    {
+      "id": "GAME-TEST-001/T04",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Releasing touch stops horizontal movement."
+    },
+    {
+      "id": "GAME-TEST-001/T05",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "All soldiers shoot automatically."
+    },
+    {
+      "id": "GAME-TEST-001/T06",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Passing +5 with 1 soldier results in 6 soldiers."
+    },
+    {
+      "id": "GAME-TEST-001/T07",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Passing ×3 with 6 soldiers results in 18 soldiers."
+    },
+    {
+      "id": "GAME-TEST-001/T08",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Passing -4 with 18 soldiers results in 14 soldiers."
+    },
+    {
+      "id": "GAME-TEST-001/T09",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Passing ÷2 with 5 soldiers results in 2 soldiers."
+    },
+    {
+      "id": "GAME-TEST-001/T10",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "A mathematical gate activates only once."
+    },
+    {
+      "id": "GAME-TEST-001/T11",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Only one gate per gate group can activate."
+    },
+    {
+      "id": "GAME-TEST-001/T12",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Soldier count never exceeds 200."
+    },
+    {
+      "id": "GAME-TEST-001/T13",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Soldier count reaching zero causes defeat."
+    },
+    {
+      "id": "GAME-TEST-001/T14",
+      "category": "COMBAT TESTS",
+      "requirement": "Each soldier contributes to shooting damage."
+    },
+    {
+      "id": "GAME-TEST-001/T15",
+      "category": "COMBAT TESTS",
+      "requirement": "Projectiles damage valid enemies."
+    },
+    {
+      "id": "GAME-TEST-001/T16",
+      "category": "COMBAT TESTS",
+      "requirement": "Enemy health reaches zero correctly."
+    },
+    {
+      "id": "GAME-TEST-001/T17",
+      "category": "COMBAT TESTS",
+      "requirement": "Enemy death removes the enemy."
+    },
+    {
+      "id": "GAME-TEST-001/T18",
+      "category": "COMBAT TESTS",
+      "requirement": "Obstacle collisions remove the correct number of soldiers."
+    },
+    {
+      "id": "GAME-TEST-001/T19",
+      "category": "COMBAT TESTS",
+      "requirement": "Boss health decreases according to actual projectile hits."
+    },
+    {
+      "id": "GAME-TEST-001/T20",
+      "category": "COMBAT TESTS",
+      "requirement": "Boss health reaching zero causes victory."
+    },
+    {
+      "id": "GAME-TEST-001/T21",
+      "category": "COMBAT TESTS",
+      "requirement": "Reaching the end with Boss HP above zero causes defeat."
+    },
+    {
+      "id": "GAME-TEST-001/T22",
+      "category": "LEVEL TESTS",
+      "requirement": "Level 1 can be completed."
+    },
+    {
+      "id": "GAME-TEST-001/T23",
+      "category": "LEVEL TESTS",
+      "requirement": "Level 2 can be completed."
+    },
+    {
+      "id": "GAME-TEST-001/T24",
+      "category": "LEVEL TESTS",
+      "requirement": "Level 3 can be completed."
+    },
+    {
+      "id": "GAME-TEST-001/T25",
+      "category": "LEVEL TESTS",
+      "requirement": "Completing a level unlocks the next level."
+    },
+    {
+      "id": "GAME-TEST-001/T26",
+      "category": "LEVEL TESTS",
+      "requirement": "Restarting restores the level's original temporary state."
+    },
+    {
+      "id": "GAME-TEST-001/T27",
+      "category": "ECONOMY TESTS",
+      "requirement": "Gold rewards are added correctly."
+    },
+    {
+      "id": "GAME-TEST-001/T28",
+      "category": "ECONOMY TESTS",
+      "requirement": "Upgrade costs are calculated correctly."
+    },
+    {
+      "id": "GAME-TEST-001/T29",
+      "category": "ECONOMY TESTS",
+      "requirement": "Upgrades modify the correct attributes."
+    },
+    {
+      "id": "GAME-TEST-001/T30",
+      "category": "ECONOMY TESTS",
+      "requirement": "Gold and upgrades persist after refresh."
+    },
+    {
+      "id": "GAME-TEST-001/T31",
+      "category": "UI TESTS",
+      "requirement": "Main menu works."
+    },
+    {
+      "id": "GAME-TEST-001/T32",
+      "category": "UI TESTS",
+      "requirement": "Pause and resume work."
+    },
+    {
+      "id": "GAME-TEST-001/T33",
+      "category": "UI TESTS",
+      "requirement": "Victory screen works."
+    },
+    {
+      "id": "GAME-TEST-001/T34",
+      "category": "UI TESTS",
+      "requirement": "Defeat screen works."
+    },
+    {
+      "id": "GAME-TEST-001/T35",
+      "category": "UI TESTS",
+      "requirement": "Upgrade screen works."
+    },
+    {
+      "id": "GAME-TEST-001/T36",
+      "category": "UI TESTS",
+      "requirement": "Audio settings work."
+    },
+    {
+      "id": "GAME-TEST-001/T37",
+      "category": "COMPATIBILITY TESTS",
+      "requirement": "Portrait layout works."
+    },
+    {
+      "id": "GAME-TEST-001/T38",
+      "category": "COMPATIBILITY TESTS",
+      "requirement": "Landscape layout works."
+    },
+    {
+      "id": "GAME-TEST-001/T39",
+      "category": "COMPATIBILITY TESTS",
+      "requirement": "Touch controls work on mobile."
+    },
+    {
+      "id": "GAME-TEST-001/T40",
+      "category": "COMPATIBILITY TESTS",
+      "requirement": "Mouse controls work on desktop."
+    },
+    {
+      "id": "GAME-TEST-001/T41",
+      "category": "COMPATIBILITY TESTS",
+      "requirement": "Orientation changes preserve game state."
+    },
+    {
+      "id": "GAME-TEST-001/T42",
+      "category": "COMPATIBILITY TESTS",
+      "requirement": "The game does not require runtime third-party API calls."
+    },
+    {
+      "id": "GAME-TEST-001/T43",
+      "category": "PERFORMANCE TESTS",
+      "requirement": "The game remains functional with 200 soldiers."
+    },
+    {
+      "id": "GAME-TEST-001/T44",
+      "category": "PERFORMANCE TESTS",
+      "requirement": "Projectiles do not accumulate indefinitely."
+    },
+    {
+      "id": "GAME-TEST-001/T45",
+      "category": "PERFORMANCE TESTS",
+      "requirement": "Restarting repeatedly does not create duplicate update loops."
+    },
+    {
+      "id": "GAME-TEST-001/T46",
+      "category": "PERFORMANCE TESTS",
+      "requirement": "Game resources are cleaned up correctly."
+    },
+    {
+      "id": "GAME-TEST-001/T47",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "Mathematical gates change soldier count, not weapon count."
+    },
+    {
+      "id": "GAME-TEST-001/T48",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "Soldiers automatically shoot."
+    },
+    {
+      "id": "GAME-TEST-001/T49",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "Squad growth visibly increases total firepower."
+    },
+    {
+      "id": "GAME-TEST-001/T50",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "The player can choose between gate alternatives."
+    },
+    {
+      "id": "GAME-TEST-001/T51",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "Enemies and hazards reduce squad effectiveness."
+    },
+    {
+      "id": "GAME-TEST-001/T52",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "Boss combat and victory conditions work."
+    },
+    {
+      "id": "GAME-TEST-001/T53",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "Permanent upgrades function across levels."
+    },
+    {
+      "id": "GAME-TEST-001/T54",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "The game uses the required warfare theme."
+    }
+  ]
+}

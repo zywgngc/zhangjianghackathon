@@ -10,3 +10,10 @@ __pycache__/
 .harness-dev/
 node_modules/
 dist/
+.pnpm-store/
+webmcp/.data/
+webmcp/.demo/
+webmcp/coverage/
+*.tsbuildinfo
+.env.*
+!.env.example

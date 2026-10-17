@@ -2,7 +2,7 @@
 
 **Proposed design — v0.2.** Based on the selected web-game architecture and the external portal boundary agreed for this project.
 
-For implementation status, responsibilities, and a worked example, read the [recipient handoff](handoff.md). Behavior described below is proposed; this package contains design and contract artifacts, not a running MAS.
+For implementation status, responsibilities, and a worked example, read the [recipient handoff](handoff.md). The [runnable reference slice](runtime.md) implements the durable workflow with deterministic role components and synthetic materials. This document describes the wider target design; live research, model-backed agents, and verification workers remain pending.
 
 ## Scope and ownership
 
