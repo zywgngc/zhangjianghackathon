@@ -2,6 +2,8 @@
 
 **Version 0.2 — proposal for the portal owner.** Tool names, transport, authentication, image resolution, and service limits still need integration agreement. The examples are synthetic fixtures and do not claim real source discoveries.
 
+**Runtime ownership update:** WebMCP itself now owns GitHub game-repository archetype discovery. The current orchestrator sends only mechanic searches to the external MaterialPortal. The v0.2 schema retains its archetype variant for compatibility and is reused by the internal `ArchetypeResearchPort`; older archetype portal examples below are contract illustrations, not the current external dispatch path. See [the implemented boundary](github-research.md).
+
 See the [recipient handoff](handoff.md) for current implementation status and the [runtime guide](runtime.md) for the implemented mock adapter, injected-function adapter, and service. The external teammate-owned service is not connected yet; its actual MCP mapping still needs agreement.
 
 ## Ownership

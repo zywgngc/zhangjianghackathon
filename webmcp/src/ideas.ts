@@ -78,7 +78,9 @@ export function propose(input: StartRequest, candidates: MaterialCandidate[] = [
     warnings: [
       '这是可修改的提案；文字原意保留在已知信息中，规则规划器无法保证理解任意描述或识别否定、冲突与复合玩法。请检查补全方案是否符合原意。',
       ...(input.images?.length
-        ? ['参考图片已转交素材门户，本组件未识别图片内容；图片描述是用户输入，不是视觉识别结果。']
+        ? [
+            '参考图片保留在请求中，待素材门户解析；本组件未识别图片内容。图片描述是用户输入，不是视觉识别结果。',
+          ]
         : []),
       candidates.length
         ? '候选提示只用于推荐排序，尚未验证相似性与源码行为。'

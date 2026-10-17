@@ -183,6 +183,22 @@ summary {
   border: 1px solid #91cfc3;
   border-radius: 9px;
 }
+.repository {
+  border: 1px solid #425069;
+  border-radius: 9px;
+  padding: 14px;
+  margin: 14px 0;
+  overflow-wrap: anywhere;
+}
+.repository h3 {
+  margin-top: 0;
+}
+.repository li {
+  font-size: 13px;
+}
+.repository details {
+  margin-top: 12px;
+}
 .proposal-form .hint {
   margin: 5px 0;
 }

@@ -143,6 +143,8 @@ export interface Run {
   deadline: number;
   mainUsed: number;
   materialUsed: number;
+  /** Internal archetype refreshes are independent of the teammate portal's three follow-ups. */
+  archetypeUsed?: number;
   portalAttempts: number;
   maxPortalAttempts: number;
   mainThreadId: string;

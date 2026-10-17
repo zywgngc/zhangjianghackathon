@@ -43,6 +43,10 @@ def install_research_routes(app, research, auth):
     async def cases():
         return await research.request("GET", "/api/cases")
 
+    @router.get("/providers")
+    async def providers():
+        return await research.request("GET", "/api/providers")
+
     @router.get("/contract")
     async def contract():
         return await research.request("GET", "/api/contract")

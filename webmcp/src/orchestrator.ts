@@ -18,6 +18,8 @@ import type {
   ProposalSelection,
 } from './model.ts';
 import type { PortalAdapter } from './portal.ts';
+import type { ArchetypeResearchPort } from './archetypes.ts';
+import { GitHubArchetypeResearcher } from './github-archetypes.ts';
 import { RunStore } from './store.ts';
 import {
   hash,
@@ -32,6 +34,8 @@ const scope = (r: MaterialSearchRequest): string =>
   r.purpose === 'archetype' ? 'archetypes' : `mechanic:${r.mechanicId}`;
 const latest = (run: Run, key: string): PortalJob | undefined =>
   run.jobs.filter((j) => scope(j.request) === key).at(-1);
+const boundary = (request: MaterialSearchRequest): 'archetype' | 'material' =>
+  request.purpose === 'archetype' ? 'archetype' : 'material';
 const questions = (): ClarificationQuestion[] => [
   {
     questionId: 'implementationStyle',
@@ -66,11 +70,13 @@ export interface MaterialFollowUp {
 export class ResearchOrchestrator {
   readonly store: RunStore;
   readonly portal: PortalAdapter;
+  readonly archetypes: ArchetypeResearchPort;
   private planner: PlannerPort;
   private researcher = new Researcher();
   private reviewer = new EvidenceReviewer();
   private now: () => number;
   private timeoutMs: number;
+  private archetypeTimeoutMs: number;
   private maxAttempts: number;
   private controllers = new Map<string, { runId: string; controller: AbortController }>();
   constructor(
@@ -81,12 +87,16 @@ export class ResearchOrchestrator {
       timeoutMs?: number;
       maxAttempts?: number;
       planner?: PlannerPort;
+      archetypes?: ArchetypeResearchPort;
+      archetypeTimeoutMs?: number;
     } = {},
   ) {
     this.store = store;
     this.portal = portal;
+    this.archetypes = options.archetypes ?? new GitHubArchetypeResearcher();
     this.now = options.now ?? Date.now;
     this.timeoutMs = options.timeoutMs ?? 10000;
+    this.archetypeTimeoutMs = options.archetypeTimeoutMs ?? options.timeoutMs ?? 60000;
     this.maxAttempts = options.maxAttempts ?? 3;
     this.planner = options.planner ?? new ReferencePlanner();
   }
@@ -104,8 +114,21 @@ export class ResearchOrchestrator {
     if (run.revision !== expected)
       throw new AppError('STALE_REVISION', `Expected current revision ${run.revision}.`);
   }
-  private limit(run: Run, boundary: 'main' | 'material'): void {
-    if ((boundary === 'main' ? run.mainUsed : run.materialUsed) >= 3)
+  private used(run: Run, boundary: 'main' | 'material' | 'archetype'): number {
+    return boundary === 'main'
+      ? run.mainUsed
+      : boundary === 'material'
+        ? run.materialUsed
+        : (run.archetypeUsed ?? 0);
+  }
+  private provider(request: MaterialSearchRequest): ArchetypeResearchPort | PortalAdapter {
+    return request.purpose === 'archetype' ? this.archetypes : this.portal;
+  }
+  private jobTimeout(request: MaterialSearchRequest): number {
+    return request.purpose === 'archetype' ? this.archetypeTimeoutMs : this.timeoutMs;
+  }
+  private limit(run: Run, boundary: 'main' | 'material' | 'archetype'): void {
+    if (this.used(run, boundary) >= 3)
       throw new AppError(
         'FOLLOW_UP_LIMIT_REACHED',
         `${boundary} follow-up allowance is exhausted.`,
@@ -136,6 +159,7 @@ export class ResearchOrchestrator {
       deadline: now + (input.limits?.maxRunMs ?? (isIdea(input) ? 3600000 : 120000)),
       mainUsed: 0,
       materialUsed: 0,
+      archetypeUsed: 0,
       portalAttempts: 0,
       maxPortalAttempts: input.limits?.maxPortalAttempts ?? 32,
       mainThreadId: `main:${id}`,
@@ -202,6 +226,7 @@ export class ResearchOrchestrator {
         ].includes(input.requestId)
       )
         throw new AppError('IDEMPOTENCY_CONFLICT', 'Request ID belongs to another command.');
+      const before = this.researcher.request(run);
       this.applyChoices(run, input.answers);
       run.initialSelection = { requestId: input.requestId, hash: digest };
       this.event(
@@ -210,7 +235,21 @@ export class ResearchOrchestrator {
         'Initial choices resolved; omitted answers retain defaults. No follow-up slots consumed.',
       );
       const result = latest(run, 'archetypes')?.result ?? null;
-      this.planAfterArchetypes(run, result);
+      const after = this.researcher.request(run);
+      const searchChanged =
+        input.answers.some((a) =>
+          ['archetype', 'engine', 'candidateCount'].includes(a.questionId),
+        ) &&
+        (before.description !== after.description || before.limit !== after.limit);
+      if (searchChanged) {
+        // Exactly one refinement of the initial proposal, guarded by initialSelection above.
+        // Keep the exploratory evidence as history; it cannot stand in for the selected scope.
+        for (const job of run.jobs) if (job.request.purpose === 'archetype') job.state = 'stale';
+        after.requestId = randomUUID();
+        after.discussion.threadId = `archetypes:selected:${run.id}`;
+        run.stage = 'archetypes';
+        this.reserve(run, after, true);
+      } else this.planAfterArchetypes(run, result);
       this.finalize(run);
       return { runId: id, projectRevision: run.revision };
     });
@@ -232,7 +271,7 @@ export class ResearchOrchestrator {
     }
     refreshIdeaQuestions(run);
   }
-  private reserve(run: Run, request: MaterialSearchRequest): PortalJob {
+  private reserve(run: Run, request: MaterialSearchRequest, initialRefinement = false): PortalJob {
     const digest = hash(request);
     const old = run.jobs.find((j) => j.request.requestId === request.requestId);
     if (old) {
@@ -240,7 +279,7 @@ export class ResearchOrchestrator {
         throw new AppError('IDEMPOTENCY_CONFLICT', 'Portal request ID has different content.');
       return old;
     }
-    if (request.discussion.round > 0) this.limit(run, 'material');
+    if (request.discussion.round > 0) this.limit(run, boundary(request));
     validateContract('MaterialSearchRequest', request);
     if (
       run.mainRecords.some((r) => r.command.requestId === request.requestId) ||
@@ -271,14 +310,14 @@ export class ResearchOrchestrator {
       throw new AppError('INVALID_INPUT', 'Unknown mechanic scope.', 400);
     const parent = latest(run, key);
     if (request.discussion.round === 0) {
-      if (parent)
+      if (parent && !initialRefinement)
         throw new AppError(
           'FOLLOW_UP_REQUIRED',
           'This scope already has an initial search; changing threads does not reset its budget.',
         );
     } else {
-      this.limit(run, 'material');
-      if (request.discussion.round !== run.materialUsed + 1)
+      this.limit(run, boundary(request));
+      if (request.discussion.round !== this.used(run, boundary(request)) + 1)
         throw new AppError(
           'ROUND_CONFLICT',
           'The next material slot must be reserved by the server.',
@@ -309,7 +348,8 @@ export class ResearchOrchestrator {
           'CLARIFICATION_REQUIRED',
           'Required portal questions must be answered explicitly.',
         );
-      run.materialUsed++;
+      if (request.purpose === 'archetype') run.archetypeUsed = (run.archetypeUsed ?? 0) + 1;
+      else run.materialUsed++;
     }
     const job: PortalJob = {
       request: structuredClone(request),
@@ -324,7 +364,11 @@ export class ResearchOrchestrator {
     };
     run.jobs.push(job);
     run.status = 'running';
-    this.event(run, 'portal_queued', `${key}, material round ${request.discussion.round}`);
+    this.event(
+      run,
+      'research_queued',
+      `${key}, ${boundary(request)} round ${request.discussion.round}`,
+    );
     return job;
   }
   private queueScope(run: Run, mechanic?: Mechanic): void {
@@ -335,7 +379,7 @@ export class ResearchOrchestrator {
       request.discussion = {
         runId: run.id,
         threadId: parent.request.discussion.threadId,
-        round: (run.materialUsed + 1) as 1 | 2 | 3,
+        round: (this.used(run, boundary(request)) + 1) as 1 | 2 | 3,
         inReplyToRequestId: parent.request.requestId,
         followUp: {
           message:
@@ -372,6 +416,12 @@ export class ResearchOrchestrator {
       const previous = run.jobs.find((j) => j.request.requestId === input.requestId);
       const parent = run.jobs.find((j) => j.request.requestId === input.parentRequestId);
       if (!parent) throw new AppError('PARENT_CONFLICT', 'Unknown material parent request.');
+      if (parent.request.purpose === 'archetype')
+        throw new AppError(
+          'INVALID_INPUT',
+          'Archetype research belongs to WebMCP; use a main follow-up to refine repository research.',
+          400,
+        );
       const request: MaterialSearchRequest = structuredClone(parent.request);
       request.requestId = input.requestId;
       request.projectRevision = input.expectedProjectRevision;
@@ -486,11 +536,11 @@ export class ResearchOrchestrator {
         request.discussion = {
           runId: run.id,
           threadId: portalParent.request.discussion.threadId,
-          round: (run.materialUsed + 1) as 1 | 2 | 3,
+          round: (this.used(run, boundary(request)) + 1) as 1 | 2 | 3,
           inReplyToRequestId: portalParent.request.requestId,
           followUp: structuredClone(content),
         };
-        if (run.materialUsed < 3) this.reserve(run, request);
+        if (this.used(run, boundary(request)) < 3) this.reserve(run, request);
         else
           run.issues.push(
             'Material follow-up budget exhausted; answered questions could not be sent.',
@@ -595,9 +645,9 @@ export class ResearchOrchestrator {
           source: 'system_default',
         });
       }
-      if (run.materialUsed >= 3) {
+      if (this.used(run, boundary(job.request)) >= 3) {
         run.issues.push(
-          `${scope(job.request)}: material discussion exhausted with unresolved portal questions.`,
+          `${scope(job.request)}: ${boundary(job.request)} discussion exhausted with unresolved questions.`,
         );
         return;
       }
@@ -606,7 +656,7 @@ export class ResearchOrchestrator {
       next.discussion = {
         runId: run.id,
         threadId: job.request.discussion.threadId,
-        round: (run.materialUsed + 1) as 1 | 2 | 3,
+        round: (this.used(run, boundary(job.request)) + 1) as 1 | 2 | 3,
         inReplyToRequestId: job.request.requestId,
         followUp: {
           message: 'Apply the provided optional defaults; retain all locked project requirements.',
@@ -638,14 +688,19 @@ export class ResearchOrchestrator {
       )
     )
       return;
-    const pending = run.jobs.some(
+    const pendingJobs = run.jobs.filter(
       (j) =>
         j.request.projectRevision === run.revision &&
         latest(run, scope(j.request)) === j &&
         j.result?.status === 'needs_clarification' &&
         j.result.questions.some((q) => q.required),
     );
-    if (pending && run.mainUsed < 3 && run.materialUsed < 3 && this.now() < run.deadline) {
+    const pending = pendingJobs.length > 0;
+    if (
+      pendingJobs.some((j) => this.used(run, boundary(j.request)) < 3) &&
+      run.mainUsed < 3 &&
+      this.now() < run.deadline
+    ) {
       run.status = 'waiting_input';
       return;
     }
@@ -715,7 +770,7 @@ export class ResearchOrchestrator {
         (j) => j.state === 'running' && j.leaseUntil <= this.now(),
       )) {
         job.leaseOwner = null;
-        if (this.portal.idempotentRequests && job.attempts < this.maxAttempts) {
+        if (this.provider(job.request).idempotentRequests && job.attempts < this.maxAttempts) {
           job.state = 'queued';
           job.availableAt = this.now();
           this.event(run, 'recovered', job.request.requestId);
@@ -750,7 +805,7 @@ export class ResearchOrchestrator {
       job.attempts++;
       run.portalAttempts++;
       job.leaseOwner = randomUUID();
-      job.leaseUntil = this.now() + this.timeoutMs + 1000;
+      job.leaseUntil = this.now() + this.jobTimeout(job.request) + 1000;
       run.status = 'running';
       this.event(run, 'portal_dispatched', `${job.request.requestId}, attempt ${job.attempts}`);
       return structuredClone(job);
@@ -778,14 +833,16 @@ export class ResearchOrchestrator {
     try {
       const remaining = this.store.get(job.request.discussion.runId).deadline - this.now();
       const raw = await Promise.race([
-        this.portal.search(structuredClone(job.request), { signal: controller.signal }),
+        this.provider(job.request).search(structuredClone(job.request), {
+          signal: controller.signal,
+        }),
         new Promise<never>((_, reject) => {
           timer = setTimeout(
             () => {
               reject(new AppError('TIMEOUT', 'Portal call timed out.', 504));
               controller.abort();
             },
-            Math.max(1, Math.min(this.timeoutMs, remaining)),
+            Math.max(1, Math.min(this.jobTimeout(job.request), remaining)),
           );
           controller.signal.addEventListener(
             'abort',
@@ -809,14 +866,14 @@ export class ResearchOrchestrator {
             threadId: job.request.discussion.threadId,
             round: job.request.discussion.round,
           },
-          provider: this.portal.provider,
+          provider: this.provider(job.request).provider,
           retrievedAt: new Date(this.now()).toISOString(),
           isMock: false,
           status: 'failed',
           error: {
             code: 'TIMEOUT',
             message: failure,
-            retryable: this.portal.idempotentRequests,
+            retryable: this.provider(job.request).idempotentRequests,
             retryAfterMs: 100,
           },
         };
@@ -845,7 +902,7 @@ export class ResearchOrchestrator {
         if (
           result?.status === 'failed' &&
           result.error.retryable &&
-          this.portal.idempotentRequests &&
+          this.provider(job.request).idempotentRequests &&
           current.attempts < this.maxAttempts
         ) {
           current.state = 'queued';

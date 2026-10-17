@@ -8,7 +8,9 @@ Atomics.add(barrier, 0, 1);
 Atomics.notify(barrier, 0);
 while (Atomics.load(barrier, 0) < 2) Atomics.wait(barrier, 0, 1, 2000);
 try {
-  const engine = new ResearchOrchestrator(store, new MockMaterialPortal());
+  const engine = new ResearchOrchestrator(store, new MockMaterialPortal(), {
+    archetypes: new MockMaterialPortal(),
+  });
   const ack = engine.mainFollowUp(workerData.command);
   store.close();
   parentPort!.postMessage({ ok: true, ack });

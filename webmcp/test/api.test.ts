@@ -25,6 +25,11 @@ test('HTTP authorization, origin validation, and current-revision blueprint deli
   try {
     assert.equal((await fetch(server.origin + '/health')).status, 200);
     assert.equal((await fetch(server.origin + '/api/cases')).status, 401);
+    assert.equal((await fetch(server.origin + '/api/providers')).status, 401);
+    assert.deepEqual(await (await fetch(server.origin + '/api/providers', { headers })).json(), {
+      archetypes: engine.archetypes.provider,
+      materials: engine.portal.provider,
+    });
     assert.equal(
       (
         await fetch(server.origin + '/api/cases', {

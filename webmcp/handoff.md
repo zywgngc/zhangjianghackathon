@@ -2,7 +2,7 @@
 
 **Status: sparse-idea proposal flow and reference benchmarks plus optional harness adapter. Original runtime branch: `Webmcp`; current implementation/review branch: `codex/webmcp-harness-integration`. Material contract: v0.2.**
 
-This branch now delivers a runnable local research service alongside the architecture, contracts, and examples. It includes a SQLite orchestrator, deterministic Researcher/Planner/Reviewer components, a mock portal, an HTTP API, a studio, and a browser WebMCP adapter. **Live portal retrieval, model-backed general planning, source verification, and playable-game generation remain pending.** Read [runtime.md](runtime.md) to run it and integrate the next adapter.
+This branch now delivers a runnable local research service alongside the architecture, contracts, and examples. It includes a SQLite orchestrator, WebMCP-owned live GitHub archetype discovery with bounded static source inspection, deterministic proposal/planning roles, an HTTP API, a Chinese studio, and a browser WebMCP adapter. **The external material portal, model/vision planning, behavior verification, and playable-game generation remain pending.** [GitHub research](github-research.md) describes the current ownership and evidence semantics; [runtime.md](runtime.md) covers setup. Default execution reports the missing material port instead of supplying fixtures.
 
 **Latest design change:** ordinary users provide a sparse idea or image reference, not a full benchmark specification. After archetype retrieval, the runtime presents optional choices with defaults; `decisionMode: auto` skips this pause. `POST …/decisions` resolves the first batch without consuming a follow-up. Later main and material discussions each allow three run-wide follow-ups. The [runtime guide](runtime.md) describes the new input, provenance, and acceptance drafts. The [discussion protocol](discussion-policy.md) still governs later rounds.
 
@@ -34,11 +34,11 @@ The output is a plan backed by traceable sources and explicit validation evidenc
 | Follow-up discussion | Atomic durable reservations, correlation, default/required question handling, and exhaustion behavior | Provider-native session mapping and production authorization |
 | External MCP material portal | Boundary and expected behavior documented | Teammate-owned implementation; its availability has not been verified here |
 | Browser WebMCP | Feature detection, seven shared tools including initial proposal resolution, authenticated gateway, and browser start/state verification | Wider browser/agent compatibility |
-| Source research and review | Evidence levels and composition rules documented | Real searches, source inspection, pinned revisions, and verification workers |
+| Source research and review | Live public GitHub archetype search, pinned commits, bounded source reads, file/line evidence, candidate shortfalls, separate material routing | Semantic matching beyond four rule families, external mechanic materials, and sandboxed behavior verification |
 | Durable execution | SQLite run/job history, leases, bounded retries, cancellation, and safe restart recovery | Postgres/distributed workers and provider asynchronous-job reconciliation |
 | Builder handoff | Versioned partial blueprints; v1 `/api/runs` adapter with revision/evidence/engine admission and pinned-context hooks | Verified source combinations, a compatible ready blueprint, and v2 `/api/projects` receiver integration |
 
-The top-level contract `.ts` files contain declarations; [src](src) contains the executable runtime. The example JSON and default portal use synthetic materials. `architecture.html` remains a static diagram export; `pnpm start` serves the working research studio. Setup, commands, and limitations are in [runtime.md](runtime.md).
+The top-level contract `.ts` files contain declarations; [src](src) contains the executable runtime. The example JSON, `pnpm demo`, and explicit fixture mode use synthetic materials. Default `pnpm start` uses GitHub discovery and an unconfigured material port. `architecture.html` remains an earlier static design export; the current ownership diagram is in [github-research.md](github-research.md).
 
 ## 3. Ownership and the three interfaces
 
@@ -48,7 +48,7 @@ The top-level contract `.ts` files contain declarations; [src](src) contains the
 | Our research service → external material portal | Our `MaterialPortalPort` client adapter | Teammate's MCP service | Search from descriptions/images/constraints and return candidate materials |
 | Our research service → game builder | Our reviewed blueprint | Downstream Builder/QA | Implement and verify the chosen mechanics using the supplied contracts and evidence |
 
-Our team owns research logic, project/research state handling, defaulted decisions, mechanic contracts, evidence review, and both client-facing and portal-facing adapters. The portal teammate owns discovery/retrieval infrastructure and material delivery. The builder team owns the playable-game implementation. These are responsibility boundaries, not a requirement to deploy a separate microservice for every role.
+Our team owns open-source game repository discovery/source exploration, research state handling, defaulted decisions, mechanic contracts, evidence review, and both client-facing and portal-facing adapters. The portal teammate owns retrieval/delivery for requested mechanic materials and image/description references. The builder team owns the playable-game implementation. Repository archetypes do not depend on the external material portal. These are responsibility boundaries, not a requirement to deploy a separate microservice for every role.
 
 **Browser WebMCP and the external MCP portal are separate.** Browser tools expose our studio commands. The portal provides candidate materials. A portal response neither answers a developer decision nor authorizes a final implementation choice.
 
@@ -172,7 +172,7 @@ Unknown metadata is acceptable if reported explicitly. If source-file retrieval 
 | D. Demonstrate the research slice | Our team | One engine and archetype family, four to six mechanics, zero optional answers, multiple alternatives where available, and an honest readiness result |
 | E. Integrate the builder | Our team + builder owner | Builder consumes a versioned blueprint and reports integration/test outcomes against its mechanic checks |
 
-Milestone B is implemented for the three reference cases and can run while the portal details in A are finalized. It validates our workflow, not live retrieval or source quality. C–D remain pending. E now has a harness adapter and fixed-version handoff hooks, tested using explicitly synthetic integration fixtures; a real ready blueprint and compatible engine are still required. See [harness integration](../docs/webmcp-integration.md). Milestone D requires real source evidence and a declared readiness policy; candidate shortfalls must be visible rather than filled with fixtures.
+Milestone B covers the three reference cases and sparse ideas. C now has WebMCP-owned live GitHub archetype discovery and static inspection; external mechanic materials remain pending. D still requires behavior verification and a declared readiness policy. E has a harness adapter and fixed-version handoff hooks, tested using explicitly synthetic integration fixtures; a real ready blueprint and compatible engine are still required. See [harness integration](../docs/webmcp-integration.md) and [the live research record](github-research.md). Candidate shortfalls remain visible rather than filled with fixtures.
 
 For the first live slice, acceptance should cover automatic defaults, one preference change and dependency invalidation, a portal error or timeout, cancellation/recovery behavior, incompatible candidate rejection, and a blueprint whose claimed evidence can be traced to sources and checks. Also demonstrate three-round limits on both boundaries, idempotent retries, concurrent last-slot contention, and partial output at exhaustion. Broad genre coverage and all three engine routes follow this slice.
 

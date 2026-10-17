@@ -195,7 +195,7 @@ def test_real_node_runtime_through_fastapi_gateway(settings, tmp_path, request_d
         port = sock.getsockname()[1]
     headers = configure(settings)
     settings.research_url = f"http://127.0.0.1:{port}"
-    env = {**os.environ, "PORT": str(port), "WEBMCP_TOKEN": settings.research_token,
+    env = {**os.environ, "PORT": str(port), "WEBMCP_TOKEN": settings.research_token, "WEBMCP_RESEARCH_MODE": "fixtures",
            "WEBMCP_DB": str(tmp_path / "research.sqlite")}
     process = subprocess.Popen([node, "src/server.ts"], cwd=ROOT / "webmcp", env=env,
         stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
@@ -212,6 +212,8 @@ def test_real_node_runtime_through_fastapi_gateway(settings, tmp_path, request_d
             else: pytest.fail("Node runtime did not start")
         app = create_app(settings)
         with TestClient(app) as api:
+            assert api.get('/api/research/providers', headers=headers).json() == {
+                'archetypes': 'synthetic-reference-portal', 'materials': 'synthetic-reference-portal'}
             start = {"requestId": "gateway-live", "projectId": "gateway-project", "caseId": "GAME-TEST-001",
                      "images": [{"uri": "https://ref.example/input.png", "mimeType": "image/png", "description": "fixture"}]}
             r = api.post("/api/research/runs", json=start, headers=headers)
