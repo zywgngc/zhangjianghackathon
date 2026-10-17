@@ -1,5 +1,7 @@
 # Web Game Generator — Architecture diagrams
 
+**WebMCP work:** [Research architecture, diagrams, and proposed material portal I/O contract](webmcp/README.md).
+
 Proposed multi-agent architecture for browser games, including mobile browsers.
 
 [Editable Markdown / Mermaid](web-game-generator-mas-plan.md) · [Standalone HTML export](web-game-generator-mas-plan.html)

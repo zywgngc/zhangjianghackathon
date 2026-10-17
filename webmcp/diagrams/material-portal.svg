@@ -1,0 +1,89 @@
+<svg role="img" aria-labelledby="material-portal-title material-portal-desc" width="714pt" height="584pt"
+ viewBox="0.00 0.00 714.00 584.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="material-portal-graph0" class="graph" transform="scale(1 1) rotate(0) translate(18 565.8)">
+<title id="material-portal-title">Material portal boundary</title><desc id="material-portal-desc">Our MAS calls an application port. A client adapter connects to the teammate-owned MCP portal and validates its responses.</desc>
+<!-- researcher&#45;&gt;port -->
+<g id="material-portal-edge1" class="edge">
+<title>researcher&#45;&gt;port</title>
+<path fill="none" stroke="#8d9195" d="M172.18,-486.99C172.18,-470.75 172.18,-450.43 172.18,-433.1"/>
+<polygon fill="#8d9195" stroke="#8d9195" points="174.45,-433.38 172.18,-426.88 169.9,-433.38 174.45,-433.38"/>
+<text style="paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round" xml:space="preserve" text-anchor="middle" x="264.22" y="-452.52" font-family="Arial" font-size="12.00" fill="#555a60">Description + images + constraints</text>
+</g>
+<!-- port&#45;&gt;adapter -->
+<g id="material-portal-edge2" class="edge">
+<title>port&#45;&gt;adapter</title>
+<path fill="none" stroke="#8d9195" d="M172.18,-363.99C172.18,-348.93 172.18,-330.48 172.18,-314.48"/>
+<polygon fill="#8d9195" stroke="#8d9195" points="174.45,-314.85 172.18,-308.35 169.9,-314.85 174.45,-314.85"/>
+</g>
+<!-- adapter&#45;&gt;external -->
+<g id="material-portal-edge3" class="edge">
+<title>adapter&#45;&gt;external</title>
+<path fill="none" stroke="#8d9195" d="M344.63,-258.27C374.56,-257.01 405.4,-256.89 434.42,-258.8 438.35,-259.06 442.34,-259.36 446.37,-259.7"/>
+<polygon fill="#8d9195" stroke="#8d9195" points="445.96,-261.94 452.64,-260.25 446.37,-257.41 445.96,-261.94"/>
+<text style="paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round" xml:space="preserve" text-anchor="middle" x="399.41" y="-262.4" font-family="Arial" font-size="12.00" fill="#555a60">MCP request</text>
+</g>
+<!-- adapter&#45;&gt;validation -->
+<g id="material-portal-edge5" class="edge">
+<title>adapter&#45;&gt;validation</title>
+<path fill="none" stroke="#8d9195" d="M172.18,-245.46C172.18,-230.76 172.18,-212.69 172.18,-196.22"/>
+<polygon fill="#8d9195" stroke="#8d9195" points="174.45,-196.29 172.18,-189.79 169.9,-196.29 174.45,-196.29"/>
+</g>
+<!-- external&#45;&gt;adapter -->
+<g id="material-portal-edge4" class="edge">
+<title>external&#45;&gt;adapter</title>
+<path fill="none" stroke="#8d9195" d="M453.99,-276.2C422.34,-276.2 387.09,-276.2 352.53,-276.2"/>
+<polygon fill="#8d9195" stroke="#8d9195" points="352.72,-273.93 346.22,-276.2 352.72,-278.48 352.72,-273.93"/>
+<text style="paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round" xml:space="preserve" text-anchor="middle" x="399.41" y="-282.8" font-family="Arial" font-size="12.00" fill="#555a60">Material results</text>
+</g>
+<!-- validation&#45;&gt;reviewer -->
+<g id="material-portal-edge6" class="edge">
+<title>validation&#45;&gt;reviewer</title>
+<path fill="none" stroke="#8d9195" d="M172.18,-109.26C172.18,-96.2 172.18,-81.63 172.18,-68.65"/>
+<polygon fill="#8d9195" stroke="#8d9195" points="174.45,-68.82 172.18,-62.32 169.9,-68.82 174.45,-68.82"/>
+</g>
+<!-- researcher -->
+<g id="material-portal-node1" class="node">
+<title>researcher</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" d="M272.73,-547.8C272.73,-547.8 71.62,-547.8 71.62,-547.8 65.62,-547.8 59.62,-541.8 59.62,-535.8 59.62,-535.8 59.62,-499.32 59.62,-499.32 59.62,-493.32 65.62,-487.32 71.62,-487.32 71.62,-487.32 272.73,-487.32 272.73,-487.32 278.73,-487.32 284.73,-493.32 284.73,-499.32 284.73,-499.32 284.73,-535.8 284.73,-535.8 284.73,-541.8 278.73,-547.8 272.73,-547.8"/>
+<text xml:space="preserve" text-anchor="middle" x="172.18" y="-522.06" font-family="Arial" font-size="15.00" fill="#303030">Our MAS researcher</text>
+<text xml:space="preserve" text-anchor="middle" x="172.18" y="-504.06" font-family="Arial" font-size="15.00" fill="#303030">archetype or mechanic query</text>
+</g>
+<!-- port -->
+<g id="material-portal-node2" class="node">
+<title>port</title>
+<path fill="#edf4f7" stroke="#b9ccd6" d="M252.72,-424.92C252.72,-424.92 91.63,-424.92 91.63,-424.92 85.63,-424.92 79.63,-418.92 79.63,-412.92 79.63,-412.92 79.63,-376.44 79.63,-376.44 79.63,-370.44 85.63,-364.44 91.63,-364.44 91.63,-364.44 252.72,-364.44 252.72,-364.44 258.72,-364.44 264.72,-370.44 264.72,-376.44 264.72,-376.44 264.72,-412.92 264.72,-412.92 264.72,-418.92 258.72,-424.92 252.72,-424.92"/>
+<text xml:space="preserve" text-anchor="middle" x="172.18" y="-399.18" font-family="Arial" font-size="15.00" fill="#303030">MaterialPortalPort</text>
+<text xml:space="preserve" text-anchor="middle" x="172.18" y="-381.18" font-family="Arial" font-size="15.00" fill="#303030">application I/O contract</text>
+</g>
+<!-- adapter -->
+<g id="material-portal-node3" class="node">
+<title>adapter</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" d="M332.35,-306.44C332.35,-306.44 12,-306.44 12,-306.44 6,-306.44 0,-300.44 0,-294.44 0,-294.44 0,-257.96 0,-257.96 0,-251.96 6,-245.96 12,-245.96 12,-245.96 332.35,-245.96 332.35,-245.96 338.35,-245.96 344.35,-251.96 344.35,-257.96 344.35,-257.96 344.35,-294.44 344.35,-294.44 344.35,-300.44 338.35,-306.44 332.35,-306.44"/>
+<text xml:space="preserve" text-anchor="middle" x="172.18" y="-280.7" font-family="Arial" font-size="15.00" fill="#303030">Our client adapter</text>
+<text xml:space="preserve" text-anchor="middle" x="172.18" y="-262.7" font-family="Arial" font-size="15.00" fill="#303030">translate calls, manage retries and cancellation</text>
+</g>
+<!-- external -->
+<g id="material-portal-node4" class="node">
+<title>external</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-dasharray="5,2" d="M665.88,-315.44C665.88,-315.44 466.47,-315.44 466.47,-315.44 460.47,-315.44 454.47,-309.44 454.47,-303.44 454.47,-303.44 454.47,-248.96 454.47,-248.96 454.47,-242.96 460.47,-236.96 466.47,-236.96 466.47,-236.96 665.88,-236.96 665.88,-236.96 671.88,-236.96 677.88,-242.96 677.88,-248.96 677.88,-248.96 677.88,-303.44 677.88,-303.44 677.88,-309.44 671.88,-315.44 665.88,-315.44"/>
+<text xml:space="preserve" text-anchor="middle" x="566.18" y="-289.7" font-family="Arial" font-size="15.00" fill="#303030">External MCP material portal</text>
+<text xml:space="preserve" text-anchor="middle" x="566.18" y="-271.7" font-family="Arial" font-size="15.00" fill="#303030">retrieval + material delivery</text>
+<text xml:space="preserve" text-anchor="middle" x="566.18" y="-253.7" font-family="Arial" font-size="15.00" fill="#303030">OWNED BY TEAMMATE</text>
+</g>
+<!-- validation -->
+<g id="material-portal-node5" class="node">
+<title>validation</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" d="M301.93,-187.96C301.93,-187.96 42.42,-187.96 42.42,-187.96 36.42,-187.96 30.42,-181.96 30.42,-175.96 30.42,-175.96 30.42,-121.48 30.42,-121.48 30.42,-115.48 36.42,-109.48 42.42,-109.48 42.42,-109.48 301.93,-109.48 301.93,-109.48 307.93,-109.48 313.93,-115.48 313.93,-121.48 313.93,-121.48 313.93,-175.96 313.93,-175.96 313.93,-181.96 307.93,-187.96 301.93,-187.96"/>
+<text xml:space="preserve" text-anchor="middle" x="172.18" y="-162.22" font-family="Arial" font-size="15.00" fill="#303030">Validate returned payload</text>
+<text xml:space="preserve" text-anchor="middle" x="172.18" y="-144.22" font-family="Arial" font-size="15.00" fill="#303030">candidates + provenance + limitations</text>
+<text xml:space="preserve" text-anchor="middle" x="172.18" y="-126.22" font-family="Arial" font-size="15.00" fill="#303030">or structured failure</text>
+</g>
+<!-- reviewer -->
+<g id="material-portal-node6" class="node">
+<title>reviewer</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" d="M312.96,-60.48C312.96,-60.48 31.39,-60.48 31.39,-60.48 25.39,-60.48 19.39,-54.48 19.39,-48.48 19.39,-48.48 19.39,-12 19.39,-12 19.39,-6 25.39,0 31.39,0 31.39,0 312.96,0 312.96,0 318.96,0 324.96,-6 324.96,-12 324.96,-12 324.96,-48.48 324.96,-48.48 324.96,-54.48 318.96,-60.48 312.96,-60.48"/>
+<text xml:space="preserve" text-anchor="middle" x="172.18" y="-34.74" font-family="Arial" font-size="15.00" fill="#303030">Our reviewer</text>
+<text xml:space="preserve" text-anchor="middle" x="172.18" y="-16.74" font-family="Arial" font-size="15.00" fill="#303030">inspect evidence + compare compatibility</text>
+</g>
+</g>
+</svg>

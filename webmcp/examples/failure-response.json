@@ -1,0 +1,14 @@
+{
+  "contractVersion": "0.1",
+  "requestId": "fixture-movement-002",
+  "provider": "material-portal-fixture",
+  "retrievedAt": "2026-10-17T00:00:00Z",
+  "isMock": true,
+  "status": "failed",
+  "error": {
+    "code": "UNAVAILABLE",
+    "message": "Fixture: the external material portal is temporarily unavailable.",
+    "retryable": true,
+    "retryAfterMs": 2000
+  }
+}
