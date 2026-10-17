@@ -1,4 +1,3 @@
-import fcntl
 import hashlib
 import hmac
 from contextlib import asynccontextmanager
@@ -13,23 +12,22 @@ from .config import load_settings
 from .rag import Retriever
 from .runner import Harness
 from .schemas import RunRequest, ProjectRequest
+from .research import ResearchClient, ResearchError
+from .research_api import install_research_routes
+from .locking import owner_lock
 from .store import Store
 from .validation import BrowserValidator, CSP
 
 
-def create_app(settings=None, agents_factory=AgentClient, validator_factory=BrowserValidator):
+def create_app(settings=None, agents_factory=AgentClient, validator_factory=BrowserValidator, research_factory=ResearchClient):
     settings = settings or load_settings()
     store = Store(settings.data_dir)
     retriever = Retriever(settings)
+    research = research_factory(settings)
 
     @asynccontextmanager
     async def lifespan(app):
-        lock = (settings.data_dir / "server.lock").open("w")
-        try:
-            try:
-                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except BlockingIOError:
-                raise RuntimeError("此 DATA_DIR 已有服务运行；请使用单个 uvicorn worker") from None
+        with owner_lock(settings.data_dir / "server.lock"):
             agents = agents_factory(settings, store)
             from .project_runner import ProjectOrchestrator
             projects = ProjectOrchestrator(settings, store)
@@ -43,17 +41,17 @@ def create_app(settings=None, agents_factory=AgentClient, validator_factory=Brow
                 await harness.stop()
                 await agents.close()
                 await projects.close()
-        finally:
-            lock.close()
 
     app = FastAPI(title="游造 · 中文游戏生成 Harness", version="0.1.0", lifespan=lifespan)
     app.state.store = store
+    app.state.research = research
 
     async def authorize(request: Request):
         if settings.api_token and not hmac.compare_digest(request.headers.get("Authorization", ""), "Bearer " + settings.api_token):
             raise HTTPException(401, "访问口令无效")
 
     auth = [Depends(authorize)]
+    install_research_routes(app, research, auth)
 
     def require_run(rid):
         try:
@@ -75,7 +73,8 @@ def create_app(settings=None, agents_factory=AgentClient, validator_factory=Brow
                 "engines": ["auto", "canvas", "dom", "phaser", "babylon"], "max_repairs": settings.max_repairs,
                 "max_calls": settings.max_calls, "max_tokens": settings.max_tokens,
                 "reasoning_effort": settings.reasoning_effort, "stream_build": settings.stream_build,
-                "knowledge_chunks": len(retriever.documents), "external_rag": bool(settings.rag_url), "vision_qa": settings.vision_qa}
+                "knowledge_chunks": len(retriever.documents), "external_rag": bool(settings.rag_url), "vision_qa": settings.vision_qa,
+                "research_configured": research.configured, "research_workspace": "/research"}
 
     @app.post("/api/projects", status_code=202, dependencies=auth)
     async def create_project(body: ProjectRequest):
@@ -157,12 +156,19 @@ def create_app(settings=None, agents_factory=AgentClient, validator_factory=Brow
 
     @app.post("/api/runs", status_code=202, dependencies=auth)
     async def create_run(body: RunRequest):
+        artifacts = {}
+        if body.research:
+            handoff = await research.handoff(body.research, body.engine)
+            if not handoff["eligible"]:
+                raise ResearchError("RESEARCH_NOT_BUILDABLE", "; ".join(handoff["blockers"]), 409)
+            artifacts = {"research.blueprint.json": handoff["blueprint"],
+                         "research.handoff.json": {k: v for k, v in handoff.items() if k != "blueprint"}}
         if not settings.api_key:
             raise HTTPException(503, "服务端尚未配置模型密钥")
         queued = sum(r["status"] in {"queued", "running"} for r in store.list(200))
         if queued >= 20:
             raise HTTPException(429, "生成队列已满，请稍后再试")
-        return store.create(body.model_dump())
+        return store.create(body.model_dump(), artifacts=artifacts)
 
     @app.get("/api/runs", dependencies=auth)
     async def list_runs():

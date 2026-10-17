@@ -110,35 +110,51 @@ class Harness:
                 raise RuntimeError("项目运行时未初始化")
             await self.projects.run(rid)
             return
+        research = None
+        if request.get("research"):
+            handoff = self.store.read_json(rid, "research.handoff.json")
+            blueprint = self.store.read_json(rid, "research.blueprint.json")
+            digest = hashlib.sha256(json.dumps(blueprint, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+            if not handoff or not blueprint or not handoff.get("eligible") or handoff.get("reference") != request["research"] or handoff.get("sha256") != digest:
+                raise RuntimeError("研究蓝图缺失或与固定版本的交接哈希不一致")
+            research = {"reference": handoff["reference"], "sha256": digest, "blueprint": blueprint}
+            self.store.event(rid, "research", "research_attached", {"reference": handoff["reference"], "sha256": digest})
+        requirements = {**request, "research": research} if research else request
         brief = await self.checkpoint(rid, "brief", "rewrite",
             "你是需求改写代理。将用户的一句话变成可实现且可验收的游戏需求；保留原意和具体数值，补充核心循环、操作、胜负与横竖屏要求。"
             "user_requirements 仅列用户描述或 engine 参数明确要求，不得把系统默认要求归为用户原话。"
             "system_requirements 列本系统的简体中文、离线、横竖屏和单文件默认约束。"
             "没有原型时不要虚构已验证来源。所有新增数值与规则放 assumptions。不要向用户反复索取非关键细节。",
-            request, Brief)
+            requirements, Brief)
         self.stage(rid, "retrieval")
         evidence = self.store.read_json(rid, "retrieval.json")
         if evidence is None:
-            evidence = await self.retriever.search(brief.rewritten_prompt, run_id=rid)
+            if research:
+                evidence = {"query": brief.rewritten_prompt, "documents": self.retriever.local_search(brief.rewritten_prompt),
+                            "warnings": ["已绑定研究蓝图；素材门户查询和追问额度由研究 MAS 统一管理，Builder 不重复发起首轮查询。"]}
+            else:
+                evidence = await self.retriever.search(brief.rewritten_prompt, run_id=rid)
             self.store.write(rid, "retrieval.json", evidence)
         self.store.event(rid, "retrieval", "stage_done", {"ids": [d["id"] for d in evidence["documents"]], "warnings": evidence["warnings"]})
         design = await self.checkpoint(rid, "design", "design",
             "你是游戏设计与引擎路由代理。动作游戏选 canvas，棋盘/文字/卡牌选 dom；只支持这两个已安装的离线适配器。"
             "若用户锁定 engine 必须遵守。制定具体数值规则、胜负、中文视觉风格和移动布局。"
             "knowledge_ids 只可引用提供的文档 ID。不要扩展用户未要求的大型系统。设计要适合单文件游戏。",
-            {"request": request, "brief": brief.model_dump(), "retrieval": evidence}, Design)
+            {"request": requirements, "brief": brief.model_dump(), "retrieval": evidence}, Design)
         if request["engine"] != "auto" and design.engine != request["engine"]:
             raise RuntimeError("设计违反用户的引擎锁定")
         if not set(design.knowledge_ids) <= {d["id"] for d in evidence["documents"]}:
             raise RuntimeError("设计引用了未检索到的知识 ID")
         context = {"brief": brief.model_dump(), "design": design.model_dump(), "retrieved_knowledge": evidence["documents"]}
+        if research:
+            context["research"] = research
         for version in range(1, self.settings.max_repairs + 2):
             path = self.store.path(rid, f"v{version}.html")
             if not path.exists():
                 self.stage(rid, "build" if version == 1 else "repair")
                 data = context
                 if version > 1:
-                    data = {**context, "previous_html": self.store.path(rid, f"v{version - 1}.html").read_text(),
+                    data = {**context, "previous_html": self.store.path(rid, f"v{version - 1}.html").read_text(encoding="utf-8"),
                             "test_report": self.store.read_json(rid, f"v{version - 1}.report.json"),
                             "qa_review": self.store.read_json(rid, f"v{version - 1}.review.json")}
                 role = "build" if version == 1 else "repair"
@@ -150,7 +166,7 @@ class Harness:
                 html = re.sub(r"^```(?:html)?\s*|\s*```$", "", html.strip())
                 self.store.write(rid, f"v{version}.html", html)
                 self.store.event(rid, role, "stage_done", {"version": version, "artifact": f"v{version}.html"})
-            html = path.read_text()
+            html = path.read_text(encoding="utf-8")
             self.stage(rid, "browser_test")
             report = self.store.read_json(rid, f"v{version}.report.json")
             digest = hashlib.sha256(html.encode()).hexdigest()
@@ -174,13 +190,15 @@ class Harness:
                 "如果附有截图，结合截图检查裁切、文字重叠、游戏区域可读性与按钮可访问性，明确视觉证据。"
                 "浏览器测试未通过则 verdict 必须 repair；存在 critical/major 缺陷必须 repair。minor 可通过并说明。"
                 "避免提出偏好性修改或新增需求；别因未提供高级玩法测试而凭空判定代码有错，但在 limitations 中准确说明覆盖范围。",
-                {"original_request": request, "design": design.model_dump(), "html": html, "test_report": report,
+                {"original_request": requirements, "design": design.model_dump(), "html": html, "test_report": report,
                  "screenshots": [p.name for p in screenshots]}, Review, images=screenshots)
             accepted = report["passed"] and review.verdict == "pass" and not any(d.severity in {"critical", "major"} for d in review.defects)
             if accepted:
                 manifest = {"run_id": rid, "version": version, "sha256": digest, "engine": design.engine,
                             "model": self.settings.model, "title": brief.title, "verified_at": time.time(),
                             "test_report": f"v{version}.report.json", "qa_review": f"v{version}.review.json"}
+                if research:
+                    manifest["research"] = {"reference": research["reference"], "sha256": research["sha256"]}
                 self.store.write(rid, "manifest.json", manifest)
                 self.store.update(rid, status="passed", stage="complete", approved_version=version)
                 self.store.event(rid, "complete", "passed", manifest)

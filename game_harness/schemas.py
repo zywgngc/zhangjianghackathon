@@ -7,9 +7,16 @@ class Contract(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
 
+class ResearchReference(Contract):
+    runId: str = Field(min_length=1, max_length=200)
+    projectRevision: int = Field(ge=0, strict=True)
+    blueprintVersion: int = Field(ge=1, strict=True)
+
+
 class RunRequest(Contract):
     description: str = Field(min_length=5, max_length=8000)
     engine: Literal["auto", "canvas", "dom"] = "auto"
+    research: ResearchReference | None = None
 
 
 class ProjectRequest(BaseModel):

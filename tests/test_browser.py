@@ -10,7 +10,7 @@ from game_harness.validation import BrowserValidator
 @pytest.mark.parametrize("input_style", ["actions", "grid"])
 async def test_real_chromium_three_viewports(settings, store, request_data, input_style):
     rid = store.create(request_data)["id"]
-    html = (Path(__file__).parent / "fixtures" / "contract-game.html").read_text()
+    html = (Path(__file__).parent / "fixtures" / "contract-game.html").read_text(encoding="utf-8")
     # Regression: a legitimate modal duplicates a toolbar action and covers it.
     overlay = '''<div id="overlay" style="position:fixed;inset:0;z-index:10;background:#1238;display:grid;place-items:center">
       <button type="button" data-action="start" onclick="window.__GAME__.state='running';this.parentElement.remove()">开始游戏</button></div>'''

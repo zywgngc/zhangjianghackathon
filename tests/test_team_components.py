@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def fixture(name):
-    return json.loads((ROOT / "webmcp/examples" / name).read_text())
+    return json.loads((ROOT / "webmcp/examples" / name).read_text(encoding="utf-8"))
 
 
 def test_team_case_inventory_preserves_explicit_engine_locks():
@@ -66,7 +66,7 @@ def test_all_team_portal_examples_satisfy_their_canonical_schema(settings):
     # The standalone outage fixture has its own search thread.
     request["discussion"]["threadId"] = failure["discussion"]["threadId"]
     portal.validate_result(request, failure)
-    schema = json.loads(settings.portal_schema.read_text())
+    schema = json.loads(settings.portal_schema.read_text(encoding="utf-8"))
     Draft202012Validator({"$defs": schema["$defs"], "$ref": "#/$defs/MainFollowUpRequest"}).validate(fixture("main-follow-up.json"))
 
 

@@ -28,6 +28,8 @@ class Settings:
     rag_token: str = field(default_factory=lambda: os.getenv("RAG_API_TOKEN", ""))
     portal_url: str = field(default_factory=lambda: os.getenv("MATERIAL_PORTAL_URL", ""))
     portal_token: str = field(default_factory=lambda: os.getenv("MATERIAL_PORTAL_TOKEN", ""))
+    research_url: str = field(default_factory=lambda: os.getenv("WEBMCP_RESEARCH_URL", ""))
+    research_token: str = field(default_factory=lambda: os.getenv("WEBMCP_RESEARCH_TOKEN", ""))
     portal_schema: Path = field(default_factory=lambda: Path(os.getenv("MATERIAL_PORTAL_SCHEMA", str(Path(__file__).resolve().parents[1] / "webmcp/material-portal.schema.json"))))
     project_max_calls: int = field(default_factory=lambda: int(os.getenv("PROJECT_MAX_MODEL_CALLS", "600")))
     project_max_tokens: int = field(default_factory=lambda: int(os.getenv("PROJECT_MAX_TOTAL_TOKENS", "6000000")))

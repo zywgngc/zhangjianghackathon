@@ -6,6 +6,8 @@ The first executable slice is available on `Webmcp`. It has a durable local orch
 
 ## Quick start
 
+For the integrated Python harness and research workspace, use [the combined startup guide](../docs/webmcp-integration.md). The standalone commands below remain supported.
+
 Use Node.js 24.10 or newer within the Node 24 release line and pnpm. From the repository root:
 
 ```sh

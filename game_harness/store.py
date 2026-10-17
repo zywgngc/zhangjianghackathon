@@ -41,10 +41,13 @@ class Store:
         finally:
             con.close()
 
-    def create(self, request: dict, initial_status="queued") -> dict:
+    def create(self, request: dict, initial_status="queued", *, artifacts=None) -> dict:
         if initial_status not in {"queued", "preparing"}:
             raise ValueError("invalid initial status")
         rid, now = uuid.uuid4().hex, time.time()
+        # Publish the queued row only after its pinned research context is durably saved.
+        for name, value in (artifacts or {}).items():
+            self.write(rid, name, value)
         with self.connect() as con:
             con.execute("INSERT INTO runs(id,request,status,stage,created,updated) VALUES(?,?,?,?,?,?)",
                         (rid, json.dumps(request, ensure_ascii=False), initial_status, initial_status, now, now))
@@ -150,4 +153,4 @@ class Store:
 
     def read_json(self, rid: str, name: str):
         path = self.path(rid, name)
-        return json.loads(path.read_text()) if path.exists() else None
+        return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None

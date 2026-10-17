@@ -69,7 +69,7 @@ async def main():
                              "vision": grade_vision(outputs["vision"]["content"])}
         path = settings.data_dir / "diagnostics"
         path.mkdir(parents=True, exist_ok=True)
-        (path / "model-probe.json").write_text(json.dumps(outputs, ensure_ascii=False, indent=2))
+        (path / "model-probe.json").write_text(json.dumps(outputs, ensure_ascii=False, indent=2), encoding="utf-8")
         print(json.dumps(outputs, ensure_ascii=False, indent=2))
         if not outputs["checks"]["text_passed"] or not outputs["checks"]["stream_passed"] or not outputs["checks"]["vision"]["passed"]:
             raise SystemExit(1)

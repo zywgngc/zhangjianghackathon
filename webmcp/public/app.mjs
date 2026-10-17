@@ -4,13 +4,30 @@ let current = null;
 let busy = false;
 let questionKey = '';
 async function api(path, method = 'GET', body) {
+  const prefix = document.body.dataset.apiBase ?? '/api';
+  const tokenStore = document.body.dataset.authStore;
+  let token = '';
+  if (tokenStore) {
+    try {
+      token = sessionStorage.getItem(tokenStore) ?? '';
+    } catch {}
+  }
+  path = prefix + path.slice('/api'.length);
   const response = await fetch(path, {
     method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    headers: {
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: body ? JSON.stringify(body) : undefined,
   });
   const data = await response.json();
-  if (!response.ok) throw new Error(`${data.error.code}: ${data.error.message}`);
+  if (!response.ok)
+    throw new Error(
+      data.error
+        ? `${data.error.code}: ${data.error.message}`
+        : String(data.detail ?? `Request failed: ${response.status}`),
+    );
   return data;
 }
 function error(err) {
@@ -122,6 +139,8 @@ async function list() {
   $('runs').value = selected;
 }
 function render(run) {
+  if (current?.id !== run.id || current?.revision !== run.revision)
+    $('handoff-status').textContent = '';
   current = run;
   $('status').textContent =
     `${run.input.caseId} · ${run.status} · ${run.stage} · revision ${run.revision}`;
@@ -147,6 +166,7 @@ function render(run) {
   const blueprint = last?.projectRevision === run.revision ? last : null;
   $('send').disabled = run.mainUsed >= 3 || ['cancelled', 'failed'].includes(run.status);
   $('export').disabled = !blueprint;
+  $('handoff').disabled = !blueprint;
   $('state').textContent = JSON.stringify(run, null, 2);
   const mechanics = run.plan?.mechanics ?? [];
   renderQuestions(run);
@@ -259,6 +279,23 @@ $('export').onclick = async () => {
 };
 $('runs').onchange = () => refresh().catch(error);
 $('refresh').onclick = () => refresh().catch(error);
+$('handoff').hidden = document.body.dataset.handoff !== 'true';
+$('handoff').onclick = async () => {
+  if (!current) return;
+  try {
+    const run = current;
+    const result = await api(`/api/runs/${run.id}/handoff`, 'POST', {
+      runId: run.id,
+      projectRevision: run.revision,
+      blueprintVersion: run.blueprints.at(-1).version,
+    });
+    $('handoff-status').textContent = result.eligible
+      ? 'Compatible with the single-file Builder. The pinned reference can be supplied as research in POST /api/runs; this check does not start generation.'
+      : `Single-file Builder handoff blocked: ${result.blockers.join('; ')}. Full-project blueprint handoff is not connected yet. No generation was started.`;
+  } catch (e) {
+    error(e);
+  }
+};
 try {
   const cases = await api('/api/cases');
   $('case').replaceChildren(

@@ -15,9 +15,9 @@ from typing import Any
 
 
 CASES = {
-    "GAME-TEST-001": ("case1:Number_Gate_Shooter", "001数字门枪手.txt"),
-    "GAME-TEST-002": ("case2:Wuxia_Survivors", "002武林幸存者.txt"),
-    "GAME-TEST-003": ("case3:Power_Hunter", "003百炼英雄.txt"),
+    "GAME-TEST-001": ("case1-Number_Gate_Shooter", "001数字门枪手.txt"),
+    "GAME-TEST-002": ("case2-Wuxia_Survivors", "002武林幸存者.txt"),
+    "GAME-TEST-003": ("case3-Power_Hunter", "003百炼英雄.txt"),
 }
 SECTION = re.compile(r"^(\d{2})\. ([A-Z][A-Z /()\-]+)$", re.M)
 SUBSECTION = re.compile(r"^(\d{2}\.\d+) ([^\n]+)$", re.M)

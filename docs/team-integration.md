@@ -6,9 +6,11 @@ v2 保留 `prompting` 资料、`tests` 三份完整规格和参考图、`Webmcp`
 
 | case | 完整原文与引擎锁 | 本轮实际任务 ID | 验收状态 |
 | --- | --- | --- | --- |
-| `GAME-TEST-001` 数字门枪手 | `case1:Number_Gate_Shooter/001数字门枪手.txt`；Babylon.js + React + TS + Vite | `5534e13dfdc74d1aa810f2beb719e5ed` | 真实实现推进中，尚未完整通过 |
-| `GAME-TEST-002` 武林幸存者 | `case2:Wuxia_Survivors/002武林幸存者.txt`；Phaser + React + TS + Vite | `c0e2aefc313246fc879c5a89f505bdfb` | 真实实现推进中，尚未完整通过 |
-| `GAME-TEST-003` 百炼英雄／战力吞噬者 | `case3:Power_Hunter/003百炼英雄.txt`；Babylon.js + React + TS + Vite | `11fc08ffeb364846aadb87751eb842cf` | 真实实现推进中，尚未完整通过 |
+| `GAME-TEST-001` 数字门枪手 | `case1-Number_Gate_Shooter/001数字门枪手.txt`；Babylon.js + React + TS + Vite | `5534e13dfdc74d1aa810f2beb719e5ed` | 真实实现推进中，尚未完整通过 |
+| `GAME-TEST-002` 武林幸存者 | `case2-Wuxia_Survivors/002武林幸存者.txt`；Phaser + React + TS + Vite | `c0e2aefc313246fc879c5a89f505bdfb` | 真实实现推进中，尚未完整通过 |
+| `GAME-TEST-003` 百炼英雄／战力吞噬者 | `case3-Power_Hunter/003百炼英雄.txt`；Babylon.js + React + TS + Vite | `11fc08ffeb364846aadb87751eb842cf` | 真实实现推进中，尚未完整通过 |
+
+此表运行 ID/状态沿用 harness 负责人的上游交接记录，本次组件集成没有重跑或重新核实远程游戏任务。本分支为 Windows 检出把目录中的冒号改成连字符，原文和图片内容未改。
 
 任务在 210 的 `data/runs/<id>/` 保留原文、计划、真实编码动作、编译日志、失败/恢复轨迹和独立审查。可用 `GET /api/projects/{id}` 查询当前状态。上述 ID 是持续执行的实际回合，不是三个已完成游戏，也不应通过新建 ID 隐去失败或重置额度。
 
@@ -63,7 +65,7 @@ v2 已调用该检索边界，而非只预留接口：每个功能节点生成 `
 
 该服务已实现两套各最多三次的独立追问预算、必答澄清等待、可选问题默认值、修订与父请求关联、请求幂等、取消与迟到结果隔离，以及 SQLite 重启恢复和跨进程预算预留。门户请求只有在适配器明确保证 request-ID 幂等时才能安全重放。浏览器适配器提供六个研究工具，检测到 `modelContext` 才注册；普通 studio / HTTP API 可单独使用。自动化注册测试使用模拟 `modelContext`，不能作为本轮原生浏览器 WebMCP 注册成功的证据。
 
-Python `MaterialPortalClient` 的 v0.2 素材搜索请求与研究服务的 `POST /api/runs` 是不同协议：后者接受 `StartRequest` 并返回研究任务 ID，随后提供 partial 蓝图。**不能将研究服务地址直接填入 `MATERIAL_PORTAL_URL`**。现有 Python bridge 只执行首轮素材搜索，尚未接入研究服务的追问、版本和蓝图状态机；新的 Node 状态机测试成功不意味着这些流程已接通主 harness。
+Python `MaterialPortalClient` 的 v0.2 素材搜索请求与研究服务的 `POST /api/runs` 是不同协议：后者接受 `StartRequest` 并返回研究任务 ID，随后提供 partial 蓝图。**不能将研究服务地址直接填入 `MATERIAL_PORTAL_URL`**。`MaterialPortalClient` 仍只执行首轮素材搜索；研究服务的追问、修订和蓝图经独立 `/api/research` 适配器访问。Node 状态机测试成功不意味着研究蓝图已接通 v2 游戏生成。
 
 真实外部 MCP tool 名称、传输和鉴权、图片 URI 的获取与解读、来源代码和许可审查、非幂等外部作业恢复，以及蓝图到 Builder / QA 的适配仍需与组件负责人对齐。外部候选即使 `isMock: false` 也只标记 `discovered`；revision 或 confidence 不能替代来源与运行验证。这些接入事项不再阻止 harness 接收三份完整规格或使用真实引擎构建，游戏本身仍必须完成原文规定的全部正式验收。
 
@@ -92,6 +94,8 @@ pnpm check
 pnpm test
 pnpm demo
 ```
+
+新合并的 [研究组件适配器](webmcp-integration.md) 提供 `/api/research` 转发、`/research` 工作台及 v1 固定蓝图接收钩子。两套追问计数与修订仍由 Node 研究服务维护，Python 不重复计数。v2 `/api/projects` 的 ResearchReference 与按功能使用候选尚未接入，三个正式 case 继续执行完整原文工作流。
 
 ## 实测事实的范围
 

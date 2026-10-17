@@ -14,7 +14,7 @@ class PortalContractError(ValueError):
 class MaterialPortalClient:
     def __init__(self, settings, transport=None):
         self.settings, self.transport = settings, transport
-        schema = json.loads(settings.portal_schema.read_text())
+        schema = json.loads(settings.portal_schema.read_text(encoding="utf-8"))
         Draft202012Validator.check_schema(schema)
         self.validators = {name: Draft202012Validator({"$schema": schema["$schema"], "$defs": schema["$defs"],
             "$ref": "#/$defs/" + name}, format_checker=FormatChecker())

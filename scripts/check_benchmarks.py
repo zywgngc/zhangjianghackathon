@@ -13,7 +13,7 @@ def main():
     cases = inventory()
     report = {"scope": "资料完整性及能力预检；不代表游戏实现或验收已通过", "cases": cases}
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2))
+    args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(report, ensure_ascii=False, indent=2))
     if args.require_runnable and not all(c["runnable"] for c in cases):
         raise SystemExit(2)

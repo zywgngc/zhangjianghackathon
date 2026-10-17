@@ -20,7 +20,7 @@ async def test_approved_game_loads_and_runs_inside_workbench(settings, request_d
     store = app.state.store
     run = store.create(request_data)
     rid = run["id"]
-    html = (Path(__file__).parent / "fixtures/contract-game.html").read_text()
+    html = (Path(__file__).parent / "fixtures/contract-game.html").read_text(encoding="utf-8")
     store.write(rid, "v1.html", html)
     store.write(rid, "manifest.json", {"sha256": hashlib.sha256(html.encode()).hexdigest()})
     store.update(rid, status="passed", stage="complete", approved_version=1)
