@@ -81,14 +81,17 @@ class Harness:
         metadata = {"data": data, "model": self.settings.role_model(role), "instruction": instruction,
                     "images": [{"name": p.name, "sha256": hashlib.sha256(p.read_bytes()).hexdigest()} for p in images or []]}
         fingerprint = hashlib.sha256(json.dumps(metadata, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
-        previous_input = self.store.read_json(rid, name + ".input.json")
-        if saved is not None and previous_input and previous_input.get("fingerprint") == fingerprint:
+        completed = self.store.read_json(rid, name + ".checkpoint.json")
+        saved_digest = hashlib.sha256(json.dumps(saved, ensure_ascii=False, sort_keys=True).encode()).hexdigest() if saved is not None else None
+        if saved is not None and completed and completed.get("fingerprint") == fingerprint and completed.get("output_sha256") == saved_digest:
             self.store.event(rid, name, "checkpoint_reused", {"message": "复用已完成检查点"})
             return schema.model_validate(saved)
         self.stage(rid, name)
         self.store.write(rid, name + ".input.json", {"fingerprint": fingerprint, **metadata})
         result = await self.agents.structured(rid, name, role, instruction, data, schema, images=images)
         self.store.write(rid, name + ".json", result.model_dump())
+        output_digest = hashlib.sha256(json.dumps(result.model_dump(), ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+        self.store.write(rid, name + ".checkpoint.json", {"fingerprint": fingerprint, "output_sha256": output_digest})
         self.store.event(rid, name, "stage_done", {"artifact": name + ".json"})
         return result
 

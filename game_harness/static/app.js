@@ -94,6 +94,7 @@ async function selectRun(id) {
   for (const url of screenshotUrls.values()) URL.revokeObjectURL(url);
   screenshotUrls.clear();
   activeId = id;
+  history.replaceState(null, "", "#run=" + id);
   cursor = 0;
   previewKey = "";
   activeRun = null;
@@ -230,6 +231,7 @@ async function refreshRun() {
     const run = await json(`/api/runs/${rid}`);
     if (rid !== activeId) return;
     activeRun = run;
+    notice(run.error || "");
     $("run-title").textContent =
       run.request.description.length > 30
         ? run.request.description.slice(0, 30) + "…"
@@ -372,6 +374,8 @@ $("save-token").onclick = async () => {
   await loadConfig();
   try {
     await loadHistory();
+    const requested = location.hash.match(/^#run=([a-f0-9]{32})$/);
+    if (requested) await selectRun(requested[1]);
   } catch (e) {
     notice(e.message);
   }
@@ -404,6 +408,8 @@ document.querySelectorAll("[data-example]").forEach(
   await loadConfig();
   try {
     await loadHistory();
+    const requested = location.hash.match(/^#run=([a-f0-9]{32})$/);
+    if (requested) await selectRun(requested[1]);
   } catch (e) {
     notice(e.message);
   }

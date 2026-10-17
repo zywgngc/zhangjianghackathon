@@ -91,6 +91,15 @@ async def test_recovery_reuses_completed_stages(settings, store, request_data, c
     await h.execute(rid)
     assert agents.roles == ["qa"]
     assert validator.calls == 2
+    # The input trace alone is not a completed checkpoint: output integrity matters.
+    agents.roles.clear()
+    changed_brief = store.read_json(rid, "brief.json")
+    changed_brief["title"] = "未经检查点确认的输出"
+    store.write(rid, "brief.json", changed_brief)
+    store.update(rid, status="running")
+    await h.execute(rid)
+    assert agents.roles == ["rewrite"]
+    assert store.read_json(rid, "brief.json")["title"] == "接星星"
 
 
 async def test_critical_defect_prevents_publication(settings, store, request_data, contracts):
