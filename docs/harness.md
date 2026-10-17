@@ -15,11 +15,12 @@ flowchart TD
     Claim --> Agent[编码代理: 分页读取 / 写文件 / 精确补丁 / 构建]
     Agent --> Tools[受控工具 / 源码SHA / 动作日志 / 检查点]
     Tools --> Compile[固定工具链: npm ci / tsc / Vite]
-    Compile --> FeatureGate{本功能已改动且当前源码构建通过?}
+    Compile --> FeatureGate{目标文件齐备且当前源码构建通过?}
     FeatureGate -->|否| Agent
     FeatureGate -->|是| Next{仍有依赖节点?}
     Next -->|是| Claim
-    Next -->|否| Browser[独立Chromium与可信玩法场景]
+    Next -->|否| Integration[可信TypeScript AST模块接线审计]
+    Integration --> Browser[独立Chromium与可信玩法场景]
     Browser --> Visual[独立截图视觉审查]
     Visual --> Evidence[重读证据文件 / 校验SHA / 逐T断言]
     Evidence --> Gate{全部正式验收通过且源码一致?}
@@ -40,6 +41,8 @@ flowchart TD
 
 功能 `implemented` 只表示本功能已产出且当前源码构建有效；不表示对应玩法验收完成。整体验收还有独立报告。失败的功能与共享接口问题保留真实工具观察，可由有明确文件权限的协调修复回合处理；要求、owner 或文件归属发生变化时需要显式的新修订，不能静默复用原检查点。
 
+最终集成节点的 `finish` 还执行 `project_integration.py`：使用工程固定的 TypeScript 编译器解析真实 HTML 入口、消除被编译擦掉的类型/未使用导入，再沿本地运行依赖图核对计划中的具体模块。确认不可达的模块返回路径、owner和源码SHA；解析歧义或源变化返回 `unknown`。整体验证也保存同样的审计文件。静态可达只能证明存在导入路径，业务执行仍由独立玩法轨迹验证，不能以添加无用引用替代接线。
+
 SQLite 使用 rollback journal，适应当前单机 NFS 工作目录；进程锁避免同一数据目录启动第二个恢复服务。服务启动时恢复未完成任务及功能领取状态。当前不是跨主机分布式调度，不能用多个 uvicorn workers 共享此数据目录。
 
 ## 编码循环、上下文与恢复
@@ -53,10 +56,12 @@ SQLite 使用 rollback journal，适应当前单机 NFS 工作目录；进程锁
 | `write_file`、`apply_patch`、`delete_file` | 检查 feature 文件归属；补丁须唯一精确匹配；使用当前 SHA 前置条件 |
 | `build` | 运行固定 TypeScript / Vite 工具链，返回真实退出码、日志、错误和产物清单 |
 | `note` | 保存工作记忆；代理自述不作为验收证据 |
-| `finish` | 需要有效源码变更及与当前源 SHA 一致的真实成功构建 |
+| `finish` | 具体目标文件存在且非空，真实构建与当前源 SHA 一致；最终集成需通过模块接线检查 |
 | `blocked` | 记录无法完成的原因，不发布伪成功 |
 
 长原文完整保存在磁盘，提示上下文只放当前功能相关章节、契约、有限近期观察及索引。已读区间由主机生成 `read_receipts`，包含原始长度和下一未读位置；重复读取的检测避免不断从头阅读而不产出。阅读缓存与短记忆帮助调度，不能替代原始规则或成为测试通过依据。
+
+当前核心运行协议独立保留在每个活动包中，不因长报告被裁剪。主机保留已完整读取、仍与当前SHA一致的函数签名；签名视图不会授予覆盖整份文件的权限。编译诊断按文件去重，恢复工作文件优先选真实错误位置与最近读取的所属源文件，避免反复返回无关模块。
 
 每个动作保存输入、提案、工具结果和检查点。文件变更先记录意图及前后 SHA，再执行写入；崩溃发生在写入与检查点之间时，恢复检测目标内容是否已经达到预期 SHA，避免补丁应用两次。当前文件与预备动作前置 SHA 不同则拒绝覆盖。源码、上下文或参考图变化会使旧构建或验收失效；恢复不会把旧的“已实现”标记直接当成当前版本已完成。
 
@@ -81,6 +86,8 @@ SQLite 使用 rollback journal，适应当前单机 NFS 工作目录；进程锁
 `project_validation.ProjectValidator` 只服务当前有效构建的 manifest 资源，用独立 Chromium 运行可信场景，而不读取编码代理自报的结果。验证覆盖三种屏幕尺寸、真实桌面/触屏操作、生命周期、方向切换、真实引擎上下文与绘制、资源清理，以及各 case 的数值边界与正常玩法轨迹。
 
 统一 `window.__HARNESS__` 暴露生产 `Simulation` 的 `snapshot/config/dispatch/advance/events/isolatedSimulation`，以及真实引擎的 `engineInfo/projectEntity`。真实 UI、RAF 与测试推进使用同一套模拟逻辑；测试推进不能同时再跑第二套 RAF 更新。fixture 用于独立实例的初始边界条件，不能直接注入胜利、死亡、奖励或按测试 ID 返回预制结果。三关可赢必须另有从正常 `start` 出发、使用合法控制的完整轨迹；fixture 成功不能证明正常关卡可完成。
+
+正常通关必须观察到真实Boss存活或生成、同一ID的实际伤害和死亡，以及终点不再存活；单独的 `phase=VICTORY` 不算通关。数字门枪手还需逐关走完原文4/5/6组门并保留单组算术过程，战力吞噬者需有实际选Boss前的合法战力。未验证的胜利不能继续贡献正常获金、购买持久化或解锁证据。
 
 验证器检查实际引擎导入、WebGL / Canvas 创建与 draw 调用，点击测试使用真实相机投影与浏览器事件；模拟坐标变化不能冒充实际点击证据。内存、DOM/监听器和渲染资源观察与游戏自报计数分开。软件 WebGL 的无头桌面结果不能证明实体手机 60 FPS 或 Safari/微信兼容。
 

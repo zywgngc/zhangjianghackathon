@@ -30,7 +30,7 @@ EVIDENCE_NAMES = {
     "project-validation.json", "manifest.json", "summary.json", "validation-manifest.json", "source-snapshot.json",
 }
 EVIDENCE_PATTERNS = ("project-build-[0-9]*.json", "project-evidence-[0-9]*.json",
-    "project-r[0-9]*.json", "project-r[0-9]*.png", "project-visual-*.json")
+    "project-r[0-9]*.json", "project-r[0-9]*.png", "project-visual-*.json", "project-integration-*.json")
 
 
 def digest(raw: bytes) -> str:
@@ -108,6 +108,12 @@ def export_project(run_dir: Path, output: Path) -> dict:
             evidence_files[path.name] = path.read_bytes()
     references = [item for row in validation.get("acceptance", {}).get("tests", []) for item in row.get("evidence", [])]
     references += [item for row in validation.get("evidence_manifest", []) for item in row.get("artifacts", [])]
+    integration_audit = validation.get("integration_audit")
+    if integration_audit is not None:
+        if not isinstance(integration_audit, dict):
+            raise ValueError("Integration audit reference must be an object")
+        # This is a hashed static-wiring artifact, never official gameplay evidence.
+        references.append({"path": integration_audit.get("artifact"), "sha256": integration_audit.get("sha256")})
     # All exported evidence ledgers must retain the exact documents they cite.
     ledgers = []
     for name, raw in evidence_files.items():

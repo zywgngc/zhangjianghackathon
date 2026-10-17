@@ -166,6 +166,30 @@ def test_export_refuses_nonempty_output_and_symlink_artifacts(export_run, tmp_pa
         export_project.export_project(run, tmp_path / "safe")
 
 
+def test_export_retains_hashed_static_integration_audit_without_promoting_game_acceptance(export_run, tmp_path):
+    run, workspace = export_run
+    audit = run / "project-integration-fixture.json"
+    dump(audit, {"kind": "static_integration_audit", "source_sha256": workspace.snapshot()["sha256"],
+        "status": "gaps_observed", "counts": {"unreachable": 1}, "official_acceptance": False})
+    report = json.loads((run / "project-validation.json").read_text())
+    report["integration_audit"] = {"artifact": audit.name, "sha256": hashlib.sha256(audit.read_bytes()).hexdigest(),
+        "passed": False, "scope": "runtime_module_reachability", "official_acceptance": False,
+        "source_sha256": workspace.snapshot()["sha256"]}
+    dump(run / "project-validation.json", report)
+    original = (run / "project-validation.json").read_bytes()
+    output = tmp_path / "with-audit"
+    result = export_project.export_project(run, output)
+    assert not result["accepted"] and result["counts"]["passed"] == 0
+    assert (output / "evidence" / audit.name).read_bytes() == audit.read_bytes()
+    assert (output / "evidence/project-validation.json").read_bytes() == original
+    manifest = json.loads((output / "delivery-manifest.json").read_text())
+    assert any(row["path"] == "evidence/" + audit.name and row["sha256"] == report["integration_audit"]["sha256"] for row in manifest["files"])
+    audit.write_text(audit.read_text() + "\nchanged")
+    with pytest.raises(ValueError, match="hash changed"):
+        export_project.export_project(run, tmp_path / "tampered-audit")
+    assert not (tmp_path / "tampered-audit").exists()
+
+
 @pytest.mark.skipif(os.getenv("RUN_PROJECT_BUILDS") != "1", reason="Real npm/Chromium CLI flow is opt-in")
 @pytest.mark.asyncio
 async def test_real_template_validation_fails_honestly_and_exports_current_candidate(tmp_path, monkeypatch):

@@ -151,6 +151,33 @@ class ProjectOrchestrator:
                 'integration_requirements': proposal.get('integration_requirements', [])}
         return proposal
 
+    async def integration_check(self, rid, workspace, plan, build):
+        from .project_integration import audit_project_integration
+        audit = await audit_project_integration(workspace, plan)
+        name = 'project-integration-' + uuid.uuid4().hex + '.json'
+        digest = self.store.write(rid, name, audit)
+        bound = (audit.get('source_unchanged') is True
+                 and audit.get('source_sha256') == build.get('source_sha256') == workspace.snapshot()['sha256'])
+        passed = bound and audit.get('status') == 'no_static_gap_observed'
+        gaps = [{key: row.get(key) for key in ('path', 'owners', 'reason')}
+                for row in audit.get('gaps', [])]
+        missing = [row.get('path') for row in audit.get('modules', []) if row.get('status') == 'missing']
+        errors = (['Source or build changed during the integration audit'] if not bound else [])
+        if gaps:
+            errors.append('Declared runtime modules have no production import path: ' + ', '.join(row['path'] for row in gaps))
+        if missing:
+            errors.append('Declared integration outputs are missing: ' + ', '.join(missing))
+        if audit.get('status') == 'unknown':
+            errors.append('Runtime module reachability is unresolved; inspect the recorded audit, without assuming integration is complete')
+        if not passed and not errors:
+            errors.append('Runtime module integration has not been verified')
+        return {'passed': passed, 'scope': 'runtime_module_reachability', 'official_acceptance': False,
+            'source_sha256': audit.get('source_sha256'), 'artifact': name, 'sha256': digest,
+            'counts': audit.get('counts', {}), 'gaps': gaps, 'errors': errors,
+            'checks': [{'kind': 'static_runtime_import_graph', 'artifact': name, 'sha256': digest,
+                        'source_bound': bound, 'status': audit.get('status'),
+                        'limitation': 'Static reachability does not prove invocation or gameplay correctness'}]}
+
     def plan_errors(self, spec, plan):
         features = [feature.model_dump() for feature in plan.features]
         errors = []
@@ -318,7 +345,9 @@ class ProjectOrchestrator:
                         images.append(path)
                         seen.add(reference['sha256'])
             agent = CodingAgent(self.agents, self.store, workspace,
-                max_steps=self.settings.project_feature_steps, context_chars=32000, history_limit=3, images=images)
+                max_steps=self.settings.project_feature_steps, context_chars=32000, history_limit=3, images=images,
+                verifier=(lambda _feature, ws, build: self.integration_check(rid, ws, plan, build))
+                    if {'src/main.tsx', 'src/App.tsx'} <= set(feature['owned_paths']) else None)
             context = self.feature_context(rid, spec, plan, feature)
             retrieval_name = f'project-retrieval-{feature["id"]}.json'
             retrieval = self.store.read_json(rid, retrieval_name)
@@ -401,6 +430,13 @@ class ProjectOrchestrator:
             build = await workspace.build()
             self.store.write(rid, f'project-build-{round_no}.json', build)
             report = await validator.validate(rid, spec, workspace, build, round_no)
+            if build.get('passed'):
+                integration = await self.integration_check(rid, workspace, plan, build)
+                report['integration_audit'] = integration
+                if not integration['passed']:
+                    report.setdefault('errors', []).extend(integration['errors'])
+                    report.setdefault('actionable_failures', []).append({
+                        'id': 'runtime-module-integration', 'errors': integration['errors'], 'gaps': integration['gaps']})
             current = workspace.snapshot()['sha256']
             acceptance = report.get('acceptance', {})
             from .acceptance import evaluate_evidence
@@ -420,9 +456,13 @@ class ProjectOrchestrator:
                 acceptance = {'complete': False, 'tests': [], 'reason': 'Missing independent evidence ledger'}
             report['acceptance'] = acceptance
             report['passed'] = (acceptance.get('complete') is True
+                                and report.get('integration_audit', {}).get('passed') is True
                                 and not report.get('errors') and not report.get('adapter_failures'))
-            report['actionable_failures'] = [{'id': item['id'], 'text': item.get('text'), 'errors': item.get('errors', [])}
-                for item in acceptance.get('tests', []) if item.get('status') == 'failed'] or report.get('actionable_failures', [])
+            failures = [{'id': item['id'], 'text': item.get('text'), 'errors': item.get('errors', [])}
+                        for item in acceptance.get('tests', []) if item.get('status') == 'failed']
+            known_failures = {item['id'] for item in failures}
+            report['actionable_failures'] = failures + [row for row in report.get('actionable_failures', [])
+                                                      if row.get('id') not in known_failures]
             report['evidence_manifest'] = [{'requirement_id': check['requirement_id'],
                 'scenario_id': check.get('scenario_id'), 'artifacts': check['artifacts']}
                 for check in (evidence or {}).get('checks', [])]
@@ -518,6 +558,7 @@ class ProjectOrchestrator:
                             archive.write(license_path, 'licenses/npm/' + name + '/' + filename)
             evidence_patterns = ['specification.txt', 'specification.json', 'implementation-plan.json',
                 'project-validation.json', 'project-build-*.json', 'project-evidence-*.json',
+                'project-integration-*.json',
                 'project-r*.json', 'project-r*.png', 'manifest.json']
             archived = set()
             for path in self.store.directory(rid).iterdir():

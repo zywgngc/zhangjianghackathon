@@ -118,6 +118,11 @@ def install_fake_workers(monkeypatch, *, fail_first=None, report=None):
     module.ProjectValidator = Validator
     monkeypatch.setitem(sys.modules, "game_harness.project_validation", module)
     monkeypatch.setattr("game_harness.coding_agent.CodingAgent", Coder)
+    async def control_audit(workspace, plan):
+        return {"scope": "Control fixture only; no game was accepted", "source_unchanged": True,
+                "source_sha256": workspace.snapshot()["sha256"], "status": "no_static_gap_observed",
+                "gaps": [], "modules": [], "counts": {"unreachable": 0}}
+    monkeypatch.setattr("game_harness.project_integration.audit_project_integration", control_audit)
     return calls
 
 
@@ -228,7 +233,7 @@ async def test_publishing_requires_independent_complete_current_evidence(setting
     assert not packaged
 
 
-@pytest.mark.parametrize("defect", [None, "tampered_evidence", "stale_source"])
+@pytest.mark.parametrize("defect", [None, "tampered_evidence", "stale_source", "unused_runtime_module"])
 async def test_publish_recomputes_a_small_source_bound_process_criterion(settings, store, tmp_path, monkeypatch, defect):
     """Positive control: a real process checks a tiny custom source criterion.
 
@@ -270,6 +275,12 @@ async def test_publish_recomputes_a_small_source_bound_process_criterion(setting
                 "acceptance": acceptance, "errors": []}
 
     install_fake_workers(monkeypatch, report=real_process_report)
+    if defect == "unused_runtime_module":
+        async def disconnected_audit(workspace, plan):
+            return {"source_unchanged": True, "source_sha256": workspace.snapshot()["sha256"],
+                    "status": "gaps_observed", "modules": [], "counts": {"unreachable": 1},
+                    "gaps": [{"path": "feature-0.ts", "owners": ["feature-0"], "reason": "no import path"}]}
+        monkeypatch.setattr("game_harness.project_integration.audit_project_integration", disconnected_audit)
     await workflow.run(rid)
     if defect is None:
         assert store.get(rid)["status"] == "passed"
@@ -279,6 +290,11 @@ async def test_publish_recomputes_a_small_source_bound_process_criterion(setting
         assert store.get(rid)["status"] == "needs_attention"
         assert not store.path(rid, "manifest.json").exists()
         assert not packaged
+        if defect == "unused_runtime_module":
+            report = store.read_json(rid, "project-validation.json")
+            assert report["integration_audit"]["official_acceptance"] is False
+            assert report["integration_audit"]["gaps"][0]["path"] == "feature-0.ts"
+            assert any(row["id"] == "runtime-module-integration" for row in report["actionable_failures"])
 
 
 async def test_concurrent_cases_keep_source_and_progress_in_separate_workspaces(settings, store, tmp_path, monkeypatch):

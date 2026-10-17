@@ -242,21 +242,30 @@ RUN_SCENARIO = """async ({scenario, sourceHash, specHash, caseId}) => {
 
 RUN_NORMAL_ROUTE = """async ({route, sourceHash, specHash, caseId}) => {
   const api=window.__HARNESS__, copy=value=>JSON.parse(JSON.stringify(value));
+  if(!api || typeof api.snapshot!=='function' || typeof api.advance!=='function' || typeof api.events!=='function' || (typeof api.command!=='function' && typeof api.dispatch!=='function'))
+    throw Error('HARNESS_ADAPTER: normal play requires production snapshot, advance, events and command/dispatch methods');
   const observe=async()=>{const s=copy(await api.snapshot());s._entities=Object.fromEntries((s.entities||[]).map(e=>[e.id,e]));return s;};
   const command=async(name,args={})=> typeof api.command==='function' ? api.command(name,args) : api.dispatch({type:name,...args});
-  const trace={project_sha256:sourceHash,spec_sha256:specHash,scenario_id:route.id,fixture:null,mode:'normal_play',inputs:[],checkpoints:[],events:[]};
+  const trace={project_sha256:sourceHash,spec_sha256:specHash,scenario_id:route.id,fixture:null,mode:'normal_play',inputs:[],checkpoints:[],process_observations:[],events:[]};
   trace.configuration=typeof api.config==='function'?copy(await api.config()):null;
-  const send=async(name,args={})=>{await command(name,args);trace.inputs.push({simTime:(await api.snapshot()).simTime,name,args:copy(args)});};
+  const send=async(name,args={})=>{const before=await api.snapshot();await command(name,args);trace.inputs.push({simTime:(await api.snapshot()).simTime,name,args:copy(args),before:{phase:before.phase,playerPower:before.player?.power}});};
   await send('start',{level:route.level,seed:20261016});
   trace.initial=await observe();
   if(trace.initial.level!==route.level) throw Error('Level is locked or start(level) did not select the requested level');
   let target=null,targetSince=0,lastSeq=0,lastCheckpoint=-1;
+  const seenProcessEntities=new Set();
+  const rememberProcess=s=>{const entities=(s.entities||[]).filter(e=>(e.kind==='boss'||e.group==='boss'||e.kind==='gate')&&!seenProcessEntities.has(e.id));
+    if(entities.length){entities.forEach(e=>seenProcessEntities.add(e.id));trace.process_observations.push(copy({phase:s.phase,simTime:s.simTime,player:s.player,entities}));}};
+  const drainEvents=async()=>{const events=await api.events(lastSeq);if(!Array.isArray(events))throw Error('HARNESS_ADAPTER: events(afterSeq) must return an array');
+    for(const e of events){if(!Number.isInteger(e.seq))throw Error('HARNESS_ADAPTER: production events require monotonic integer seq');if(e.seq>lastSeq){trace.events.push(copy(e));lastSeq=e.seq;}}};
+  rememberProcess(trace.initial);
   const captured=new Set();let powerBefore=false,previousPower=trace.initial.player?.power;
   const capture=async(scene)=>{if(!window.__HARNESS_HOST_CAPTURE__||captured.has(scene)||route.endurance)return;
     captured.add(scene);await new Promise(resolve=>requestAnimationFrame(resolve));await window.__HARNESS_HOST_CAPTURE__({scene});};
   const maxMs=(route.maxSimSeconds || 150)*1000;
   for(let elapsed=0;elapsed<=maxMs;elapsed+=200) {
     const s=await api.snapshot();
+    rememberProcess(s);
     if(s.phase==='VICTORY' || s.phase==='DEFEAT' || s.phase==='DEADLOCK') break;
     const entities=(s.entities||[]).filter(e=>e.active!==false && !e.defeated && !e.collected);
     const p=s.player||{}, time=s.simTime || elapsed/1000;
@@ -314,11 +323,12 @@ RUN_NORMAL_ROUTE = """async ({route, sourceHash, specHash, caseId}) => {
     await api.advance(200);
     if(Math.floor(elapsed/1000)!==lastCheckpoint) {
       lastCheckpoint=Math.floor(elapsed/1000);trace.checkpoints.push(await observe());
-      if(typeof api.events==='function') {const events=await api.events(lastSeq);for(const e of events||[]) {if(e.seq>lastSeq){trace.events.push(copy(e));lastSeq=e.seq;}}}
+      rememberProcess(trace.checkpoints[trace.checkpoints.length-1]);await drainEvents();
       await new Promise(resolve=>setTimeout(resolve,0));
     }
   }
   trace.final=await observe();
+  rememberProcess(trace.final);await drainEvents();
   return trace;
 }"""
 
@@ -488,20 +498,39 @@ class ProjectValidator:
                 await page.goto(origin + "/", wait_until="networkidle")
                 await page.wait_for_function("() => Boolean(window.__HARNESS__ && typeof window.__HARNESS__.snapshot==='function')")
                 report["normal_play_started_in_clean_browser_context"] = True
-                normal_play_traces = []
+                normal_play_traces, verified_normal_completions = [], []
                 for route in plan["normal_play_routes"]:
                     try:
                         trace = await page.evaluate(RUN_NORMAL_ROUTE, {"route": route, "sourceHash": evidence["project_sha256"], "specHash": spec.sha256, "caseId": spec.case_id})
                         assertions = route["assertions"]
                     except Exception as exc:
                         trace = {"execution_error": str(exc)[:3000]}
-                        assertions = [{"pointer": "/execution_error", "op": "eq", "expected": None}]
+                        assertions = route["assertions"] + [{"pointer": "/execution_error", "op": "eq", "expected": None}]
                     normal_play_traces.append(trace)
-                    self._evidence(rid, spec, evidence, round_no, "normal-level-" + str(route["level"]), trace,
-                        route["acceptance_ids"], assertions, kind="gameplay", scenario_id=route["id"], mode="normal_play")
-                    report["scenarios"].append({"id": route["id"], "error": trace.get("execution_error"), "phase": trace.get("final", {}).get("phase")})
-                    if trace.get("final", {}).get("phase") != "VICTORY":
-                        break  # Subsequent levels are locked; do not bypass progression.
+                    adapter_errors, assertion_errors = [], []
+                    if trace.get("execution_error") and re.search(r"HARNESS_ADAPTER|not a function", trace["execution_error"], re.I):
+                        adapter_errors.append(trace["execution_error"])
+                    elif trace.get("execution_error"):
+                        assertion_errors.append("Production normal play failed: " + trace["execution_error"])
+                    for assertion in [] if trace.get("execution_error") else route["assertions"]:
+                        try:
+                            if not evaluate_assertion(trace, assertion):
+                                assertion_errors.append("Failed assertion: " + json.dumps(assertion, ensure_ascii=False))
+                        except (KeyError, IndexError, TypeError, StopIteration) as exc:
+                            adapter_errors.append("Observation adapter is missing a required field: " + str(exc))
+                        except Exception as exc:
+                            assertion_errors.append(type(exc).__name__ + ": " + str(exc)[:500])
+                    if adapter_errors:
+                        report["adapter_failures"].append({"scenario_id": route["id"], "acceptance_ids": route["acceptance_ids"], "errors": adapter_errors})
+                        self.store.write(rid, f"project-r{round_no}-normal-level-{route['level']}-adapter.json", trace)
+                    else:
+                        self._evidence(rid, spec, evidence, round_no, "normal-level-" + str(route["level"]), trace,
+                            route["acceptance_ids"], assertions, kind="gameplay", scenario_id=route["id"], mode="normal_play")
+                    report["scenarios"].append({"id": route["id"], "error": trace.get("execution_error"), "phase": trace.get("final", {}).get("phase"),
+                        "status": "not_run" if adapter_errors else "failed" if assertion_errors else "passed", "assertion_errors": assertion_errors, "adapter_errors": adapter_errors})
+                    if adapter_errors or assertion_errors or trace.get("final", {}).get("phase") != "VICTORY":
+                        break  # An unverified victory cannot seed unlock/economy evidence.
+                    verified_normal_completions.append(trace)
                     await page.wait_for_timeout(100)
                     screen_text = await page.locator("body").inner_text()
                     victory_id = 33 if spec.case_id.endswith("001") else 65 if spec.case_id.endswith("002") else 59
@@ -520,7 +549,7 @@ class ProjectValidator:
                                   {"pointer": "/after/progress/completedLevels", "op": "same", "other_pointer": "/before/progress/completedLevels"}]
                     self._evidence(rid, spec, evidence, round_no, "persistence-level-" + str(route["level"]),
                         {"before": before_reload, "after": after_reload}, [spec.case_id + "/T" + str(n).zfill(2) for n in persistence_ids], assertions, kind="browser")
-                if any(trace.get("final", {}).get("phase") == "VICTORY" for trace in normal_play_traces):
+                if verified_normal_completions:
                     before = await page.evaluate("() => JSON.parse(JSON.stringify(window.__HARNESS__.snapshot()))")
                     await page.evaluate("() => {const api=window.__HARNESS__;return api.command?api.command('start',{level:1,seed:20261016}):api.dispatch({type:'start',level:1,seed:20261016});}")
                     after = await page.evaluate("() => JSON.parse(JSON.stringify(window.__HARNESS__.snapshot()))")
@@ -535,7 +564,7 @@ class ProjectValidator:
                     await page.reload(wait_until="networkidle")
                     await page.wait_for_function("() => Boolean(window.__HARNESS__ && typeof window.__HARNESS__.snapshot==='function')")
                 from .project_ui_validation import capture_isolated_project_ui, validate_project_ui
-                merge_ui(await validate_project_ui(self, page, rid, spec, evidence, round_no, normal_play_traces=normal_play_traces))
+                merge_ui(await validate_project_ui(self, page, rid, spec, evidence, round_no, normal_play_traces=verified_normal_completions))
                 if spec.case_id.endswith("001"):
                     fixture = {"player": {"soldiers": 1, "x": 0, "z": 0},
                         "gates": [{"id": "loss", "group": "loss", "operator": "-", "operand": 3, "x": 0, "z": 1}], "boss": None, "trackEnd": 1000}

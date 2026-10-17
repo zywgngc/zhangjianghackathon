@@ -10,7 +10,8 @@ from urllib.error import HTTPError
 from urllib.request import urlopen
 from unittest.mock import AsyncMock, patch
 
-from game_harness.project_validation import INSTRUMENT_RENDERER, ProjectValidator, RUN_SCENARIO, verified_server
+from game_harness.acceptance import evaluate_assertion
+from game_harness.project_validation import INSTRUMENT_RENDERER, ProjectValidator, RUN_NORMAL_ROUTE, RUN_SCENARIO, verified_server
 from game_harness.specifications import ingest_text, load_case
 
 
@@ -120,6 +121,47 @@ class ProjectValidationGates(unittest.IsolatedAsyncioTestCase):
 
 @unittest.skipUnless(os.getenv("RUN_BROWSER_TESTS") == "1", "Real Chromium tests are opt-in")
 class RealProjectBrowserTests(unittest.IsolatedAsyncioTestCase):
+    async def test_normal_runner_records_boss_between_checkpoints_and_drains_terminal_events(self):
+        from playwright.async_api import async_playwright
+        async with async_playwright() as playwright:
+            browser = await playwright.chromium.launch(headless=True, chromium_sandbox=True)
+            try:
+                page = await browser.new_page()
+                await page.route("http://protocol.test/**", lambda route: route.fulfill(body="<!doctype html><body>normal protocol</body>", content_type="text/html"))
+                await page.goto("http://protocol.test/")
+                await page.evaluate("""() => {
+                  class Simulation {
+                    constructor(){this.phase='MENU';this.time=0;this.log=[];this.boss=null;this.player={hp:100,power:200,x:0,y:0,z:0};}
+                    snapshot(){return {phase:this.phase,level:1,simTime:this.time,player:{...this.player},entities:this.boss?[{...this.boss}]:[]};}
+                    command(name,args){if(name==='start'){this.phase='PLAYING';this.time=0;this.log=[];this.boss=null;}else if(name==='selectTarget')this.target=args.id;else if(name!=='move')throw Error('Only normal commands are supported');}
+                    advance(ms){this.time+=ms/1000;if(!this.boss)this.boss={id:'real-boss',kind:'boss',x:1,y:1,z:1,power:150,hp:3000,maxHp:3000,active:true};
+                      if(this.time>=0.4){this.boss.hp=0;this.boss.active=false;this.player.power+=150;this.phase='VICTORY';this.log.push({seq:1,type:'damage',data:{targetId:this.boss.id,amount:3000}},{seq:2,type:'death',data:{entityId:this.boss.id}});}}
+                    events(after){return this.log.filter(event=>event.seq>after);}
+                  }
+                  window.__HARNESS__=new Simulation();
+                }""")
+                trace = await page.evaluate(RUN_NORMAL_ROUTE, {"route": {"id": "normal", "level": 1, "maxSimSeconds": 1, "strategy": {}},
+                    "sourceHash": "a" * 64, "specHash": "b" * 64, "caseId": "GAME-TEST-002"})
+                self.assertEqual(trace["final"]["phase"], "VICTORY")
+                self.assertEqual(len(trace["checkpoints"]), 1)
+                self.assertEqual(trace["events"][-1]["type"], "death")
+                self.assertTrue(trace["process_observations"][0]["entities"][0]["active"])
+                self.assertTrue(evaluate_assertion(trace, {"pointer": "", "op": "normal_level_process",
+                    "expected": {"case_id": "GAME-TEST-002", "level": 1, "bossHp": 3000}}))
+                # Reusing the same production-input runner for the power case
+                # records the actual pre-command power rather than inventing it.
+                await page.evaluate("""() => {const api=window.__HARNESS__,command=api.command;
+                  api.command=function(name,args){command.call(this,name,args);if(name==='start')this.boss={id:'real-boss',kind:'boss',x:1,y:1,z:1,power:150,hp:3000,maxHp:3000,active:true};};
+                }""")
+                trace = await page.evaluate(RUN_NORMAL_ROUTE, {"route": {"id": "normal-power", "level": 1, "maxSimSeconds": 1},
+                    "sourceHash": "a" * 64, "specHash": "b" * 64, "caseId": "GAME-TEST-003"})
+                selected = next(item for item in trace["inputs"] if item["name"] == "selectTarget")
+                self.assertEqual(selected["before"]["playerPower"], 350)
+                self.assertTrue(evaluate_assertion(trace, {"pointer": "", "op": "normal_level_process",
+                    "expected": {"case_id": "GAME-TEST-003", "level": 1, "bossPower": 150}}))
+            finally:
+                await browser.close()
+
     async def test_function_polling_works_under_unrelaxed_production_csp(self):
         from playwright.async_api import async_playwright
         with tempfile.TemporaryDirectory() as folder:

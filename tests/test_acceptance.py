@@ -1,4 +1,5 @@
 import hashlib
+import copy
 import json
 from pathlib import Path
 import tempfile
@@ -85,6 +86,94 @@ class AcceptanceTests(unittest.TestCase):
         self.assertEqual(len(plan["acceptance_mapping"][spec.case_id + "/T14"]), 60)
         self.assertEqual(len(plan["acceptance_mapping"][spec.case_id + "/T16"]), 40)
         self.assertEqual(len(plan["acceptance_mapping"][spec.case_id + "/T18"]), 6)
+
+    def normal_trace(self, case_id="GAME-TEST-001"):
+        route = scenario_plan(case_id)["normal_play_routes"][0]
+        assertion = next(row for row in route["assertions"] if row["op"] == "normal_level_process")
+        expected = assertion["expected"]
+        boss = {"id": "actual-boss", "kind": "boss", "active": True, "hp": expected.get("bossHp", 1),
+                "maxHp": expected.get("bossHp", 1), "power": expected.get("bossPower", 150)}
+        entities = [boss]
+        events = [{"seq": 1, "type": "damage", "data": {"targetId": boss["id"], "amount": boss["hp"]}},
+                  {"seq": 2, "type": "death", "data": {"entityId": boss["id"]}}]
+        inputs = [{"name": "start", "args": {"level": 1}}]
+        soldiers = 1
+        for group, pair in enumerate(expected.get("gates", [])):
+            for side, value in enumerate(pair):
+                gate = {"id": f"gate-{group}-{side}", "kind": "gate", "group": group,
+                        "z": (group + 1) * 40, "operator": value[0], "operand": int(value[1:])}
+                entities.append(gate)
+                if side == 0:
+                    old = soldiers
+                    soldiers = old + gate["operand"] if value[0] == "+" else old * gate["operand"]
+                    events.append({"seq": len(events) + 1, "type": "gate", "data": {"gateId": gate["id"], "oldCount": old, "newCount": soldiers}})
+        if case_id.endswith("003"):
+            inputs.append({"name": "selectTarget", "args": {"id": boss["id"]}, "before": {"playerPower": 200}})
+        initial = {"phase": "PLAYING", "entities": copy.deepcopy(entities), "player": {"hp": 100, "soldiers": 1, "power": 10}}
+        final = {"phase": "VICTORY", "entities": [{**boss, "hp": 0, "active": False}],
+                 "player": {"hp": 100, "soldiers": soldiers, "power": 200 + boss["power"]}}
+        return {"mode": "normal_play", "fixture": None, "inputs": inputs, "initial": initial,
+                "checkpoints": [], "final": final, "events": events}, assertion
+
+    def test_normal_completion_requires_real_boss_damage_and_defeat_process(self):
+        for case_id in ["GAME-TEST-001", "GAME-TEST-002", "GAME-TEST-003"]:
+            with self.subTest(case=case_id):
+                trace, assertion = self.normal_trace(case_id)
+                self.assertTrue(evaluate_assertion(trace, assertion))
+                for defect in ["empty-victory", "still-alive", "no-death", "fixture", "different-boss"]:
+                    bad = copy.deepcopy(trace)
+                    if defect == "empty-victory":
+                        bad["initial"]["entities"] = []
+                    elif defect == "still-alive":
+                        bad["final"]["entities"][0]["active"] = True
+                        bad["final"]["entities"][0]["hp"] = 100
+                    elif defect == "no-death":
+                        bad["events"] = [event for event in bad["events"] if event["type"] != "death"]
+                    elif defect == "fixture":
+                        bad["fixture"] = {"player": {"power": 999}}
+                    else:
+                        bad["events"][1]["data"]["entityId"] = "unrelated-entity"
+                    with self.subTest(defect=defect):
+                        self.assertFalse(evaluate_assertion(bad, assertion))
+
+    def test_normal_completion_rejects_wrong_hp_missing_actual_damage_and_double_gate(self):
+        trace, assertion = self.normal_trace()
+        for defect in ["wrong-hp", "no-damage", "double-gate", "wrong-gate-pair", "wrong-arithmetic"]:
+            bad = copy.deepcopy(trace)
+            if defect == "wrong-hp":
+                bad["initial"]["entities"][0]["maxHp"] = 1
+            elif defect == "no-damage":
+                bad["events"] = [event for event in bad["events"] if event["type"] != "damage"]
+            elif defect == "double-gate":
+                bad["events"].append(copy.deepcopy(bad["events"][-1]))
+            elif defect == "wrong-gate-pair":
+                bad["initial"]["entities"][1]["operand"] = 999
+            else:
+                bad["events"][-1]["data"]["newCount"] += 1
+            with self.subTest(defect=defect):
+                self.assertFalse(evaluate_assertion(bad, assertion))
+
+    def test_power_boss_requires_real_selection_with_strict_prior_power_and_absorption(self):
+        trace, assertion = self.normal_trace("GAME-TEST-003")
+        for defect in ["no-selection", "equal-power", "no-absorption"]:
+            bad = copy.deepcopy(trace)
+            if defect == "no-selection":
+                bad["inputs"].pop()
+            elif defect == "equal-power":
+                bad["inputs"][-1]["before"]["playerPower"] = 150
+            else:
+                bad["final"]["player"]["power"] = 200
+            with self.subTest(defect=defect):
+                self.assertFalse(evaluate_assertion(bad, assertion))
+
+    def test_short_lived_boss_can_be_proved_by_real_subsecond_observations(self):
+        trace, assertion = self.normal_trace()
+        trace["process_observations"] = [copy.deepcopy(trace["initial"])]
+        trace["initial"]["entities"] = []
+        self.assertTrue(evaluate_assertion(trace, assertion))
+        boss = trace["process_observations"][0]["entities"].pop(0)
+        trace["events"].insert(0, {"seq": 0, "type": "spawn", "data": boss})
+        self.assertTrue(evaluate_assertion(trace, assertion))
 
     def test_fixed_configurations_preserve_all_levels_numbers_and_exact_skill_counts(self):
         gate = scenario_plan("GAME-TEST-001")["expected_configuration"]

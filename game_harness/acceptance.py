@@ -551,6 +551,15 @@ def scenario_plan(case_id: str, root: str | Path | None = None) -> dict[str, Any
         route["id"] = case_id + "/scenario/normal-level-" + str(route["level"])
         route["acceptance_ids"] = [case_id + "/" + route["test_id"]] + [case_id + f"/T{number:02}" for number in route.get("acceptance_extra", [])]
         route["kind"] = "gameplay"
+        level = route["level"]
+        process = {"case_id": case_id, "level": level}
+        if case_id == "GAME-TEST-001":
+            process.update(bossHp=GATE_LEVELS[level - 1]["bossHp"], gates=GATE_LEVELS[level - 1]["gates"])
+        elif case_id == "GAME-TEST-002":
+            process["bossHp"] = WUXIA_LEVELS[level - 1]["bossHp"]
+        else:
+            process["bossPower"] = POWER_LEVELS[level - 1]["bossPower"]
+        route["assertions"].append({"pointer": "", "op": "normal_level_process", "expected": process})
     mapping = {test["id"]: [s["id"] for s in scenarios + normal_routes if test["id"] in s["acceptance_ids"]] for test in spec.acceptance_tests}
     return {"version": 1, "case_id": case_id, "spec_sha256": spec.sha256,
             "expected_configuration": configuration, "scenarios": scenarios, "normal_play_routes": normal_routes,
@@ -572,11 +581,127 @@ def _pointer(document: Any, pointer: str) -> Any:
     return value
 
 
+def _normal_level_process(trace: dict[str, Any], expected: dict[str, Any]) -> bool:
+    """A victory phase alone cannot establish a real level completion.
+
+    Require the actual Boss to have been alive, intentionally fought and defeated.
+    Runner levels additionally expose their full prescribed gate groups and real
+    one-per-group arithmetic transitions. Only ordinary input traces qualify.
+    """
+    if trace.get("mode") != "normal_play" or trace.get("fixture") is not None:
+        return False
+    inputs = trace["inputs"]
+    if not inputs or inputs[0].get("name") != "start" or inputs[0].get("args", {}).get("level") != expected["level"]:
+        return False
+    states = [trace["initial"], *trace["checkpoints"], *trace.get("process_observations", []), trace["final"]]
+    if states[0]["phase"] != "PLAYING" or states[-1]["phase"] != "VICTORY":
+        return False
+    alive = [entity for state in states for entity in state["entities"]
+             if (entity.get("kind") == "boss" or entity.get("group") == "boss")
+             and entity.get("active", True) and entity.get("hp", 1) > 0]
+    # A sufficiently strong legitimate build can defeat a newly spawned Boss
+    # inside a single fixed-input interval. A real production spawn event with
+    # its entity values is also an observation; a config entry is not.
+    events = trace["events"]
+    for event in events:
+        data = event.get("data", {})
+        entity = data.get("entity", data)
+        if "spawn" in str(event.get("type", "")).lower() and entity.get("kind") == "boss" and entity.get("hp", 0) > 0:
+            boss = dict(entity)
+            boss.setdefault("id", entity.get("entityId", entity.get("bossId")))
+            if boss["id"] is not None:
+                alive.append(boss)
+    ids = {entity["id"] for entity in alive}
+    if len(ids) != 1:
+        return False
+    boss_id = next(iter(ids))
+    def event_target(event):
+        data = event.get("data", {})
+        for key in ("targetId", "entityId", "bossId", "enemyId", "id", "target"):
+            value = data.get(key)
+            if value is not None:
+                return value.get("id") if isinstance(value, dict) else value
+        return None
+
+    deaths = [event for event in events if event_target(event) == boss_id
+              and any(word in str(event.get("type", "")).lower() for word in ("death", "defeat", "kill"))]
+    final_boss = [entity for entity in states[-1]["entities"] if entity["id"] == boss_id]
+    if not deaths or any(entity.get("active", True) and entity.get("hp", 1) > 0 for entity in final_boss):
+        return False
+    if expected["case_id"] == "GAME-TEST-003":
+        if not all(entity["power"] == expected["bossPower"] for entity in alive):
+            return False
+        selected = [item for item in inputs if item.get("name") == "selectTarget" and item.get("args", {}).get("id") == boss_id]
+        if not selected:
+            return False
+        power = selected[-1]["before"]["playerPower"]
+        return power > expected["bossPower"] and states[-1]["player"]["power"] >= power + expected["bossPower"]
+
+    declared_maximum = [entity.get("maxHp", entity.get("maxHP")) for entity in alive
+                        if "maxHp" in entity or "maxHP" in entity]
+    if any(value != expected["bossHp"] for value in declared_maximum):
+        return False
+    maximum = [entity.get("maxHp", entity.get("maxHP", entity["hp"])) for entity in alive]
+    if not any(value == expected["bossHp"] for value in maximum):
+        raise KeyError("Boss original maxHp (or an undamaged alive snapshot) is needed to verify the prescribed level HP")
+    damage = [event.get("data", {}).get("amount", event.get("data", {}).get("damage")) for event in events
+              if event_target(event) == boss_id and "damage" in str(event.get("type", "")).lower()]
+    if not damage or any(isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0 for value in damage):
+        return False
+    if sum(damage) + 1e-6 < expected["bossHp"]:
+        return False
+    if expected["case_id"] == "GAME-TEST-002":
+        return states[-1]["player"]["hp"] > 0
+    if states[-1]["player"]["soldiers"] <= 0:
+        return False
+
+    normalize = lambda op: {"×": "*", "÷": "/"}.get(op, op)
+    groups = {}
+    gates = {}
+    for state in states:
+        for entity in state["entities"]:
+            if entity.get("kind") != "gate":
+                continue
+            group = str(entity["group"])
+            groups.setdefault(group, {"z": entity["z"], "options": set()})["options"].add((normalize(entity["operator"]), entity["operand"]))
+            gates[entity["id"]] = entity
+    ordered = sorted(groups.values(), key=lambda group: group["z"])
+    prescribed = [{(normalize(value[0]), int(value[1:])) for value in pair} for pair in expected["gates"]]
+    if len(ordered) != len(prescribed) or any(group["options"] != pair for group, pair in zip(ordered, prescribed)):
+        return False
+    triggered = set()
+    transitions = 0
+    for event in events:
+        if "gate" not in str(event.get("type", "")).lower():
+            continue
+        data = event.get("data", {})
+        gate_id = data.get("gateId", data.get("id", data.get("entityId")))
+        gate = gates.get(gate_id)
+        if gate is None:
+            continue
+        group = str(gate["group"])
+        if group in triggered:
+            return False
+        old = data.get("oldCount", data.get("before"))
+        new = data.get("newCount", data.get("result", data.get("after")))
+        if not isinstance(old, int) or isinstance(old, bool) or not isinstance(new, int) or isinstance(new, bool):
+            raise KeyError("Real gate transition event oldCount/newCount")
+        op, operand = normalize(gate["operator"]), gate["operand"]
+        calculated = old + operand if op == "+" else old - operand if op == "-" else old * operand if op == "*" else math.floor(old / operand)
+        if new != max(0, min(200, calculated)):
+            return False
+        triggered.add(group)
+        transitions += 1
+    return transitions > 0
+
+
 def evaluate_assertion(document: Any, assertion: dict[str, Any]) -> bool:
     """Run a fixed, non-evaluating assertion vocabulary against real observations."""
     actual = _pointer(document, assertion["pointer"])
     expected = assertion.get("expected")
     operator = assertion["op"]
+    if operator == "normal_level_process":
+        return _normal_level_process(actual, expected)
     if operator == "case1_configuration":
         upgrades = actual.get("permanentUpgrades", actual.get("upgrades"))
         if upgrades is None:
