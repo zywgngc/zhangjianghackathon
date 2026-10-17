@@ -13,6 +13,7 @@ import { RunStore } from './store.ts';
 const assets: Record<string, [string, string]> = {
   '/': ['index.html', 'text/html; charset=utf-8'],
   '/app.mjs': ['app.mjs', 'text/javascript; charset=utf-8'],
+  '/ui-zh.mjs': ['ui-zh.mjs', 'text/javascript; charset=utf-8'],
   '/webmcp.mjs': ['webmcp.mjs', 'text/javascript; charset=utf-8'],
   '/request-schema.mjs': ['request-schema.mjs', 'text/javascript; charset=utf-8'],
   '/style.css': ['style.css', 'text/css; charset=utf-8'],

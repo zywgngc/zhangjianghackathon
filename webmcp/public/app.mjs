@@ -1,4 +1,5 @@
 import { registerResearchTools } from './webmcp.mjs';
+import { label, sourceText, errorMessage, handoffReasons } from './ui-zh.mjs';
 const $ = (id) => document.getElementById(id);
 let current = null;
 let busy = false;
@@ -22,16 +23,20 @@ async function api(path, method = 'GET', body) {
     body: body ? JSON.stringify(body) : undefined,
   });
   const data = await response.json();
-  if (!response.ok)
-    throw new Error(
-      data.error
-        ? `${data.error.code}: ${data.error.message}`
-        : String(data.detail ?? `Request failed: ${response.status}`),
+  if (!response.ok) {
+    const failure = new Error(
+      data.error?.message ?? JSON.stringify(data.detail ?? response.status),
     );
+    failure.code = data.error?.code;
+    failure.status = response.status;
+    throw failure;
+  }
   return data;
 }
 function error(err) {
-  $('error').textContent = err.message;
+  $('error').textContent = errorMessage(err);
+  $('error-original').textContent = [err.code, err.message].filter(Boolean).join(': ');
+  $('error-details').hidden = false;
 }
 function renderQuestions(run) {
   const latest = new Map();
@@ -49,7 +54,7 @@ function renderQuestions(run) {
     const result = job.result;
     const form = document.createElement('form');
     const title = document.createElement('h3');
-    title.textContent = 'Material portal clarification';
+    title.textContent = '素材门户需要补充信息';
     form.append(title);
     const fields = [];
     for (const q of result.questions) {
@@ -61,8 +66,8 @@ function renderQuestions(run) {
         field.append(
           new Option(
             q.required
-              ? 'Choose an answer'
-              : `Use default: ${q.options.find((o) => o.optionId === q.defaultOptionId)?.label}`,
+              ? '请选择一个答案'
+              : `使用默认值：${q.options.find((o) => o.optionId === q.defaultOptionId)?.label}`,
             '',
           ),
           ...q.options.map((o) => new Option(o.label, o.optionId)),
@@ -78,7 +83,7 @@ function renderQuestions(run) {
       fields.push({ q, field });
     }
     const button = document.createElement('button');
-    button.textContent = 'Submit answers';
+    button.textContent = '提交回答';
     button.disabled = run.mainUsed >= 3 || run.materialUsed >= 3 || run.status === 'cancelled';
     form.append(button);
     form.onsubmit = async (event) => {
@@ -113,7 +118,7 @@ function renderQuestions(run) {
             round: r.mainUsed + 1,
             inReplyToRequestId: r.lastMainRequestId,
             followUp: {
-              message: 'Answer the pending material portal clarification using these selections.',
+              message: '请使用这些选择回答待处理的素材门户问题。',
               clarificationId: result.clarificationId,
               answers,
             },
@@ -133,22 +138,29 @@ async function list() {
   const selected = $('runs').value;
   const runs = await api('/api/runs');
   $('runs').replaceChildren(
-    new Option('Select a run', ''),
-    ...runs.map((r) => new Option(`${r.caseId} · ${r.status} · ${r.id.slice(0, 8)}`, r.id)),
+    new Option('选择一个任务', ''),
+    ...runs.map(
+      (r) => new Option(`${label(r.caseId)} · ${label(r.status)} · ${r.id.slice(0, 8)}`, r.id),
+    ),
   );
   $('runs').value = selected;
 }
 function render(run) {
-  if (current?.id !== run.id || current?.revision !== run.revision)
+  if (current?.id !== run.id || current?.revision !== run.revision) {
     $('handoff-status').textContent = '';
+    $('handoff-blockers').replaceChildren();
+  }
   current = run;
   $('status').textContent =
-    `${run.input.caseId} · ${run.status} · ${run.stage} · revision ${run.revision}`;
+    `${label(run.input.caseId)} · ${label(run.status)} · ${label(run.stage)} · 第 ${run.revision} 版`;
+  const option = [...$('runs').options].find((o) => o.value === run.id);
+  if (option)
+    option.textContent = `${label(run.input.caseId)} · ${label(run.status)} · ${run.id.slice(0, 8)}`;
   $('counters').replaceChildren(
     ...[
-      `Main follow-ups: ${run.mainUsed}/3`,
-      `Material follow-ups: ${run.materialUsed}/3`,
-      `Portal attempts: ${run.portalAttempts}/${run.maxPortalAttempts}`,
+      `开发者追问：${run.mainUsed}/3`,
+      `素材门户追问：${run.materialUsed}/3`,
+      `门户请求次数：${run.portalAttempts}/${run.maxPortalAttempts}`,
     ].map((text) => {
       const span = document.createElement('span');
       span.textContent = text;
@@ -158,13 +170,18 @@ function render(run) {
   $('decisions').replaceChildren(
     ...run.decisions.map((d) => {
       const li = document.createElement('li');
-      li.textContent = `${d.id}: ${d.value} · ${d.source}${d.locked ? ' · locked' : ''}`;
+      li.textContent = `${label(d.id)}：${label(d.value)} · ${label(d.source)}${d.locked ? ' · 已锁定' : ''}`;
       return li;
     }),
   );
   const last = run.blueprints.at(-1);
   const blueprint = last?.projectRevision === run.revision ? last : null;
   $('send').disabled = run.mainUsed >= 3 || ['cancelled', 'failed'].includes(run.status);
+  $('cancel').disabled = run.status === 'cancelled';
+  $('follow-hint').textContent =
+    run.mainUsed >= 3
+      ? '本任务的 3 次开发者追问已用完，已有蓝图仍可查看和导出。'
+      : `还可追问 ${3 - run.mainUsed} 次；素材门户的追问额度独立计算，首轮请求不计入。`;
   $('export').disabled = !blueprint;
   $('handoff').disabled = !blueprint;
   $('state').textContent = JSON.stringify(run, null, 2);
@@ -174,11 +191,11 @@ function render(run) {
     ...mechanics.map((m) => {
       const card = document.createElement('article');
       const title = document.createElement('h3');
-      title.textContent = m.title;
+      title.textContent = sourceText(m.title);
       const body = document.createElement('p');
-      body.textContent = m.behavior.join(' ');
+      body.textContent = m.behavior.map(sourceText).join(' ');
       const detail = document.createElement('p');
-      detail.textContent = `${m.checks.length} acceptance checks · ${blueprint?.candidates.filter((c) => c.mechanicId === m.id).length ?? 0} discovered alternatives · behavior unverified`;
+      detail.textContent = `${m.checks.length} 项验收要求 · ${blueprint?.candidates.filter((c) => c.mechanicId === m.id).length ?? 0} 个候选方案 · 行为尚未验证`;
       card.append(title, body, detail);
       return card;
     }),
@@ -186,13 +203,22 @@ function render(run) {
 }
 async function refresh() {
   const id = $('runs').value;
-  if (id) render(await api(`/api/runs/${encodeURIComponent(id)}`));
+  if (id) return render(await api(`/api/runs/${encodeURIComponent(id)}`));
+  current = null;
+  questionKey = '';
+  $('status').textContent = '请选择历史任务，或开始新的研究。';
+  $('state').textContent = '尚未选择任务。';
+  $('handoff-status').textContent = '';
+  for (const name of ['counters', 'decisions', 'mechanics', 'clarifications', 'handoff-blockers'])
+    $(name).replaceChildren();
+  for (const name of ['send', 'export', 'cancel', 'handoff']) $(name).disabled = true;
 }
 $('start').addEventListener('submit', async (event) => {
   event.preventDefault();
   if (busy) return;
   busy = true;
   $('error').textContent = '';
+  $('error-details').hidden = true;
   try {
     const input = {
       requestId: crypto.randomUUID(),
@@ -290,8 +316,15 @@ $('handoff').onclick = async () => {
       blueprintVersion: run.blueprints.at(-1).version,
     });
     $('handoff-status').textContent = result.eligible
-      ? 'Compatible with the single-file Builder. The pinned reference can be supplied as research in POST /api/runs; this check does not start generation.'
-      : `Single-file Builder handoff blocked: ${result.blockers.join('; ')}. Full-project blueprint handoff is not connected yet. No generation was started.`;
+      ? '已满足单文件小游戏的交接条件，可将此版本的蓝图交给生成端。本次检查未启动游戏生成。'
+      : '暂不满足生成交接条件。完整项目的蓝图接收尚未接入；本次检查未启动游戏生成。';
+    $('handoff-blockers').replaceChildren(
+      ...handoffReasons(result.blockers).map((reason) => {
+        const li = document.createElement('li');
+        li.textContent = reason;
+        return li;
+      }),
+    );
   } catch (e) {
     error(e);
   }
@@ -300,7 +333,8 @@ try {
   const cases = await api('/api/cases');
   $('case').replaceChildren(
     ...cases.map(
-      (c) => new Option(`${c.title} · ${c.engine} · ${c.checks.length} checks`, c.caseId),
+      (c) =>
+        new Option(`${c.title} · ${label(c.engine)} · ${c.checks.length} 项验收要求`, c.caseId),
     ),
   );
   await list();
@@ -311,13 +345,12 @@ try {
   }
   const registration = await registerResearchTools(document, api, await api('/api/contract'));
   $('webmcp').textContent = registration.supported
-    ? 'Browser WebMCP tools registered.'
-    : 'Native WebMCP is unavailable in this browser. The studio uses the same API directly.';
+    ? '浏览器 WebMCP 工具已就绪，可由助手直接发起研究、追问和读取蓝图。'
+    : '此浏览器暂不支持原生 WebMCP；仍可使用页面按钮完成相同操作。';
   addEventListener('pagehide', () => registration.dispose(), { once: true });
 } catch (e) {
   error(e);
-  $('webmcp').textContent =
-    'Browser tool registration could not complete; the API and studio controls remain available.';
+  $('webmcp').textContent = '浏览器工具初始化未完成，请检查服务连接或访问设置。';
 }
 setInterval(() => {
   if (current && !busy) {

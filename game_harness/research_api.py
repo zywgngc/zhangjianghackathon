@@ -86,7 +86,7 @@ def install_research_routes(app, research, auth):
 
     @app.get("/research-assets/{name}")
     async def research_asset(name: str):
-        if name not in {"app.mjs", "webmcp.mjs", "request-schema.mjs", "style.css"} or not (assets / name).is_file():
+        if name not in {"app.mjs", "webmcp.mjs", "request-schema.mjs", "ui-zh.mjs", "style.css"} or not (assets / name).is_file():
             raise HTTPException(404, "研究工作台资源不存在，请从完整仓库运行")
         media = "text/css" if name.endswith(".css") else "text/javascript"
         return FileResponse(assets / name, media_type=media, headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})

@@ -72,6 +72,7 @@ def test_harness_proxy_uses_backend_credentials_and_preserves_commands(settings)
         assert 'data-api-base="/api/research"' in page.text
         assert settings.research_token not in page.text
         assert client.get("/research-assets/request-schema.mjs").status_code == 200
+        assert client.get("/research-assets/ui-zh.mjs").status_code == 200
         assert client.get("/research-assets/secret.txt").status_code == 404
 
 
