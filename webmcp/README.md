@@ -1,6 +1,8 @@
 # WebMCP research architecture
 
-**Status:** proposed design and integration contract, version 0.2. This package defines our MAS and the boundary to the external material portal. It does not implement the portal or a running MAS.
+**Status:** contract v0.2 plus a runnable reference-case research service. The durable orchestrator, three deterministic role components, mock portal, HTTP API, studio, and browser adapter are implemented. Live portal integration, model-backed planning, source verification, and game generation remain pending.
+
+**Run it:** see [runtime.md](runtime.md) for setup, API routes, demonstration results, and the portal integration hook. From this directory: `pnpm install --frozen-lockfile`, `pnpm check`, `pnpm test`, then `pnpm start`.
 
 **Start here: [Recipient handoff — current state, ownership, worked example, and next steps](handoff.md).** It explains what has been delivered, what still needs implementation, and what information we need from the portal owner.
 
@@ -22,6 +24,11 @@ The external MCP portal is owned by another teammate. Our `MaterialPortalPort` i
 
 | File | Purpose |
 | --- | --- |
+| [runtime.md](runtime.md) | Setup, current implementation scope, HTTP API, and live portal adapter integration |
+| [src](src) | Durable orchestrator/store, role components, portal adapters, server, and demo |
+| [test](test) | Executable contract, runtime, concurrency, API, and browser-adapter tests |
+| [benchmarks](benchmarks) | 225 acceptance requirements extracted from the pinned `tests` branch |
+| [public](public) | Local studio and feature-detected browser WebMCP registration |
 | [handoff.md](handoff.md) | Recipient overview, implementation status, main-application I/O, state semantics, and integration milestones |
 | [discussion-policy.md](discussion-policy.md) | Three-round limits, defaults, refinements, clarification, exhaustion, and v0.2 migration |
 | [discussion.ts](discussion.ts) | Shared discussion types and the main-application follow-up request |
@@ -33,4 +40,4 @@ The external MCP portal is owned by another teammate. Our `MaterialPortalPort` i
 | [architecture.html](architecture.html) | Standalone diagrams and contract summary; download and open locally to print |
 | [diagrams](diagrams) | SVG exports and editable DOT sources |
 
-Start implementation with a mock adapter using the fixtures, then connect the teammate's real portal behind the same interface. Fixture candidates must never count as researched or verified sources.
+The included mock workflow is executable now. Connect the teammate's real portal behind the same interface next. Fixture candidates never count as researched or verified sources, and current blueprints remain explicitly partial.

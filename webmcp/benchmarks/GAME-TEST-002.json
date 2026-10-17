@@ -1,0 +1,452 @@
+{
+  "caseId": "GAME-TEST-002",
+  "title": "武林幸存者",
+  "engine": "phaser",
+  "source": {
+    "commit": "81fc5366aa417754ccdba07d5d3dc08daa8f6a02",
+    "path": "case2:Wuxia_Survivors/002武林幸存者.txt",
+    "url": "https://github.com/zywgngc/zhangjianghackathon/blob/81fc5366aa417754ccdba07d5d3dc08daa8f6a02/case2%3AWuxia_Survivors/002%E6%AD%A6%E6%9E%97%E5%B9%B8%E5%AD%98%E8%80%85.txt"
+  },
+  "checks": [
+    {
+      "id": "GAME-TEST-002/T01",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "The game starts normally."
+    },
+    {
+      "id": "GAME-TEST-002/T02",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "The player moves correctly using the virtual joystick."
+    },
+    {
+      "id": "GAME-TEST-002/T03",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Desktop keyboard controls work."
+    },
+    {
+      "id": "GAME-TEST-002/T04",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "All equipped martial arts attack automatically."
+    },
+    {
+      "id": "GAME-TEST-002/T05",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "The player starts with 御剑术 Lv.1."
+    },
+    {
+      "id": "GAME-TEST-002/T06",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Enemies spawn according to level configuration."
+    },
+    {
+      "id": "GAME-TEST-002/T07",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Enemies correctly pursue the player."
+    },
+    {
+      "id": "GAME-TEST-002/T08",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Defeated enemies drop experience."
+    },
+    {
+      "id": "GAME-TEST-002/T09",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Experience gems can be collected."
+    },
+    {
+      "id": "GAME-TEST-002/T10",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Experience requirements follow the specified formula."
+    },
+    {
+      "id": "GAME-TEST-002/T11",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Every level-up presents up to three unique upgrade choices."
+    },
+    {
+      "id": "GAME-TEST-002/T12",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Free upgrades occur at 5 and 15 seconds."
+    },
+    {
+      "id": "GAME-TEST-002/T13",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "The 15-second upgrade guarantees a new active skill option when required."
+    },
+    {
+      "id": "GAME-TEST-002/T14",
+      "category": "SKILL TESTS",
+      "requirement": "All 12 active martial arts are implemented and functional."
+    },
+    {
+      "id": "GAME-TEST-002/T15",
+      "category": "SKILL TESTS",
+      "requirement": "Every active skill supports all five levels."
+    },
+    {
+      "id": "GAME-TEST-002/T16",
+      "category": "SKILL TESTS",
+      "requirement": "All eight passive cultivation techniques are implemented."
+    },
+    {
+      "id": "GAME-TEST-002/T17",
+      "category": "SKILL TESTS",
+      "requirement": "All passive techniques support all five levels."
+    },
+    {
+      "id": "GAME-TEST-002/T18",
+      "category": "SKILL TESTS",
+      "requirement": "All six ultimate martial arts are implemented."
+    },
+    {
+      "id": "GAME-TEST-002/T19",
+      "category": "SKILL TESTS",
+      "requirement": "Evolution requirements are checked correctly."
+    },
+    {
+      "id": "GAME-TEST-002/T20",
+      "category": "SKILL TESTS",
+      "requirement": "Evolved skills replace the correct base skills."
+    },
+    {
+      "id": "GAME-TEST-002/T21",
+      "category": "SKILL TESTS",
+      "requirement": "The ice-fire evolution consumes two base skills."
+    },
+    {
+      "id": "GAME-TEST-002/T22",
+      "category": "SKILL TESTS",
+      "requirement": "Evolution preserves required passive techniques."
+    },
+    {
+      "id": "GAME-TEST-002/T23",
+      "category": "SKILL TESTS",
+      "requirement": "Ultimate skills produce real gameplay damage."
+    },
+    {
+      "id": "GAME-TEST-002/T24",
+      "category": "SKILL TESTS",
+      "requirement": "Active skill slots never exceed six."
+    },
+    {
+      "id": "GAME-TEST-002/T25",
+      "category": "SKILL TESTS",
+      "requirement": "Passive skill slots never exceed six."
+    },
+    {
+      "id": "GAME-TEST-002/T26",
+      "category": "SKILL TESTS",
+      "requirement": "All skill cooldowns work independently."
+    },
+    {
+      "id": "GAME-TEST-002/T27",
+      "category": "SKILL TESTS",
+      "requirement": "Damage modifiers are calculated correctly."
+    },
+    {
+      "id": "GAME-TEST-002/T28",
+      "category": "SKILL TESTS",
+      "requirement": "Slow, freeze, burn, poison, stun, and knockback function."
+    },
+    {
+      "id": "GAME-TEST-002/T29",
+      "category": "SKILL TESTS",
+      "requirement": "Status effects respect Boss resistance rules."
+    },
+    {
+      "id": "GAME-TEST-002/T30",
+      "category": "SKILL TESTS",
+      "requirement": "Repeated status effects do not generate unlimited stacks."
+    },
+    {
+      "id": "GAME-TEST-002/T31",
+      "category": "COMBAT TESTS",
+      "requirement": "Enemy contact damages the player."
+    },
+    {
+      "id": "GAME-TEST-002/T32",
+      "category": "COMBAT TESTS",
+      "requirement": "Player invulnerability lasts 0.6 seconds after damage."
+    },
+    {
+      "id": "GAME-TEST-002/T33",
+      "category": "COMBAT TESTS",
+      "requirement": "Player HP reaching zero causes defeat."
+    },
+    {
+      "id": "GAME-TEST-002/T34",
+      "category": "COMBAT TESTS",
+      "requirement": "Enemy HP reaching zero causes enemy death."
+    },
+    {
+      "id": "GAME-TEST-002/T35",
+      "category": "COMBAT TESTS",
+      "requirement": "Healing items restore HP correctly."
+    },
+    {
+      "id": "GAME-TEST-002/T36",
+      "category": "COMBAT TESTS",
+      "requirement": "Healing never exceeds maximum HP."
+    },
+    {
+      "id": "GAME-TEST-002/T37",
+      "category": "COMBAT TESTS",
+      "requirement": "Full-screen experience collection works."
+    },
+    {
+      "id": "GAME-TEST-002/T38",
+      "category": "COMBAT TESTS",
+      "requirement": "Elite enemies spawn correctly."
+    },
+    {
+      "id": "GAME-TEST-002/T39",
+      "category": "COMBAT TESTS",
+      "requirement": "Bosses spawn at the scheduled time."
+    },
+    {
+      "id": "GAME-TEST-002/T40",
+      "category": "COMBAT TESTS",
+      "requirement": "Bosses execute their special attacks."
+    },
+    {
+      "id": "GAME-TEST-002/T41",
+      "category": "COMBAT TESTS",
+      "requirement": "Boss attacks have visible warnings."
+    },
+    {
+      "id": "GAME-TEST-002/T42",
+      "category": "COMBAT TESTS",
+      "requirement": "Boss HP reaching zero causes victory."
+    },
+    {
+      "id": "GAME-TEST-002/T43",
+      "category": "COMBAT TESTS",
+      "requirement": "Surviving without defeating the Boss does not cause victory."
+    },
+    {
+      "id": "GAME-TEST-002/T44",
+      "category": "LEVEL TESTS",
+      "requirement": "Level 1 can be completed."
+    },
+    {
+      "id": "GAME-TEST-002/T45",
+      "category": "LEVEL TESTS",
+      "requirement": "Level 2 can be completed."
+    },
+    {
+      "id": "GAME-TEST-002/T46",
+      "category": "LEVEL TESTS",
+      "requirement": "Level 3 can be completed."
+    },
+    {
+      "id": "GAME-TEST-002/T47",
+      "category": "LEVEL TESTS",
+      "requirement": "Completing a level unlocks the next level."
+    },
+    {
+      "id": "GAME-TEST-002/T48",
+      "category": "LEVEL TESTS",
+      "requirement": "Completed levels remain replayable."
+    },
+    {
+      "id": "GAME-TEST-002/T49",
+      "category": "LEVEL TESTS",
+      "requirement": "Restarting resets temporary run state."
+    },
+    {
+      "id": "GAME-TEST-002/T50",
+      "category": "FAST PROGRESSION TESTS",
+      "requirement": "The player can obtain a second active skill within 30 seconds."
+    },
+    {
+      "id": "GAME-TEST-002/T51",
+      "category": "FAST PROGRESSION TESTS",
+      "requirement": "The first minute provides noticeable combat power growth."
+    },
+    {
+      "id": "GAME-TEST-002/T52",
+      "category": "FAST PROGRESSION TESTS",
+      "requirement": "A valid evolution route can produce an ultimate skill within 180 seconds."
+    },
+    {
+      "id": "GAME-TEST-002/T53",
+      "category": "FAST PROGRESSION TESTS",
+      "requirement": "Evolution does not occur without satisfying its requirements."
+    },
+    {
+      "id": "GAME-TEST-002/T54",
+      "category": "FAST PROGRESSION TESTS",
+      "requirement": "The game remains playable during high-density enemy waves."
+    },
+    {
+      "id": "GAME-TEST-002/T55",
+      "category": "ECONOMY TESTS",
+      "requirement": "Gold drops follow the specified rules."
+    },
+    {
+      "id": "GAME-TEST-002/T56",
+      "category": "ECONOMY TESTS",
+      "requirement": "Level rewards are calculated correctly."
+    },
+    {
+      "id": "GAME-TEST-002/T57",
+      "category": "ECONOMY TESTS",
+      "requirement": "All six permanent upgrades work."
+    },
+    {
+      "id": "GAME-TEST-002/T58",
+      "category": "ECONOMY TESTS",
+      "requirement": "Upgrade prices follow the specified formula."
+    },
+    {
+      "id": "GAME-TEST-002/T59",
+      "category": "ECONOMY TESTS",
+      "requirement": "Permanent upgrades persist after refreshing the page."
+    },
+    {
+      "id": "GAME-TEST-002/T60",
+      "category": "ECONOMY TESTS",
+      "requirement": "Temporary upgrades reset when starting a new run."
+    },
+    {
+      "id": "GAME-TEST-002/T61",
+      "category": "UI TESTS",
+      "requirement": "Main menu works."
+    },
+    {
+      "id": "GAME-TEST-002/T62",
+      "category": "UI TESTS",
+      "requirement": "Pause and resume work."
+    },
+    {
+      "id": "GAME-TEST-002/T63",
+      "category": "UI TESTS",
+      "requirement": "Upgrade cards display correct Chinese descriptions."
+    },
+    {
+      "id": "GAME-TEST-002/T64",
+      "category": "UI TESTS",
+      "requirement": "Ultimate evolution cards have distinct visual feedback."
+    },
+    {
+      "id": "GAME-TEST-002/T65",
+      "category": "UI TESTS",
+      "requirement": "Victory screen works."
+    },
+    {
+      "id": "GAME-TEST-002/T66",
+      "category": "UI TESTS",
+      "requirement": "Defeat screen works."
+    },
+    {
+      "id": "GAME-TEST-002/T67",
+      "category": "UI TESTS",
+      "requirement": "Permanent upgrade screen works."
+    },
+    {
+      "id": "GAME-TEST-002/T68",
+      "category": "UI TESTS",
+      "requirement": "Audio settings work."
+    },
+    {
+      "id": "GAME-TEST-002/T69",
+      "category": "COMPATIBILITY TESTS",
+      "requirement": "Portrait layout works."
+    },
+    {
+      "id": "GAME-TEST-002/T70",
+      "category": "COMPATIBILITY TESTS",
+      "requirement": "Landscape layout works."
+    },
+    {
+      "id": "GAME-TEST-002/T71",
+      "category": "COMPATIBILITY TESTS",
+      "requirement": "Mobile touch controls work."
+    },
+    {
+      "id": "GAME-TEST-002/T72",
+      "category": "COMPATIBILITY TESTS",
+      "requirement": "Desktop controls work."
+    },
+    {
+      "id": "GAME-TEST-002/T73",
+      "category": "COMPATIBILITY TESTS",
+      "requirement": "Orientation changes preserve game state."
+    },
+    {
+      "id": "GAME-TEST-002/T74",
+      "category": "COMPATIBILITY TESTS",
+      "requirement": "The game does not require runtime third-party APIs."
+    },
+    {
+      "id": "GAME-TEST-002/T75",
+      "category": "PERFORMANCE TESTS",
+      "requirement": "The game remains functional with 200 normal enemies."
+    },
+    {
+      "id": "GAME-TEST-002/T76",
+      "category": "PERFORMANCE TESTS",
+      "requirement": "Projectile objects do not accumulate indefinitely."
+    },
+    {
+      "id": "GAME-TEST-002/T77",
+      "category": "PERFORMANCE TESTS",
+      "requirement": "Repeated restarts do not create duplicate update loops."
+    },
+    {
+      "id": "GAME-TEST-002/T78",
+      "category": "PERFORMANCE TESTS",
+      "requirement": "Game resources are cleaned up correctly."
+    },
+    {
+      "id": "GAME-TEST-002/T79",
+      "category": "PERFORMANCE TESTS",
+      "requirement": "Long gameplay sessions do not cause uncontrolled memory growth."
+    },
+    {
+      "id": "GAME-TEST-002/T80",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "The game retains the classic survivors-style core gameplay loop."
+    },
+    {
+      "id": "GAME-TEST-002/T81",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "Attacks are automatic."
+    },
+    {
+      "id": "GAME-TEST-002/T82",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "Enemies approach continuously."
+    },
+    {
+      "id": "GAME-TEST-002/T83",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "Experience collection drives leveling."
+    },
+    {
+      "id": "GAME-TEST-002/T84",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "Leveling uses three-choice upgrades."
+    },
+    {
+      "id": "GAME-TEST-002/T85",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "Multiple martial arts can attack simultaneously."
+    },
+    {
+      "id": "GAME-TEST-002/T86",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "Ultimate evolutions produce substantially stronger attacks."
+    },
+    {
+      "id": "GAME-TEST-002/T87",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "The game uses a coherent Chinese Wuxia visual theme."
+    },
+    {
+      "id": "GAME-TEST-002/T88",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "The game provides the required accelerated progression experience."
+    }
+  ]
+}

@@ -2,7 +2,9 @@
 
 **WebMCP work:** [Research architecture, diagrams, and proposed material portal I/O contract](webmcp/README.md).
 
-**Receiving the WebMCP work?** Read the [current-state handoff](webmcp/handoff.md) for delivered artifacts, ownership, interface expectations, and next steps. The research runtime and live portal integration are not implemented in this package yet.
+**First runnable build:** [Start the research service and studio](webmcp/runtime.md). Includes durable runs, bounded discussions, three reference-case profiles, and a synthetic portal adapter. Live source retrieval and verification remain pending.
+
+**Receiving the WebMCP work?** Read the [current-state handoff](webmcp/handoff.md) for delivered artifacts, ownership, interface expectations, and next steps.
 
 **v0.2 discussion proposal:** [Three follow-ups on each boundary](webmcp/discussion-policy.md), with separate run-wide main/MAS and MAS/material-portal budgets, correlated clarification, and editable defaults.
 

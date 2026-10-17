@@ -1,0 +1,427 @@
+{
+  "caseId": "GAME-TEST-003",
+  "title": "战力吞噬者",
+  "engine": "babylon",
+  "source": {
+    "commit": "81fc5366aa417754ccdba07d5d3dc08daa8f6a02",
+    "path": "case3:Power_Hunter/003百炼英雄.txt",
+    "url": "https://github.com/zywgngc/zhangjianghackathon/blob/81fc5366aa417754ccdba07d5d3dc08daa8f6a02/case3%3APower_Hunter/003%E7%99%BE%E7%82%BC%E8%8B%B1%E9%9B%84.txt"
+  },
+  "checks": [
+    {
+      "id": "GAME-TEST-003/T01",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "The game starts normally."
+    },
+    {
+      "id": "GAME-TEST-003/T02",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "The hero displays its combat power."
+    },
+    {
+      "id": "GAME-TEST-003/T03",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Every enemy displays its combat power."
+    },
+    {
+      "id": "GAME-TEST-003/T04",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Clicking a valid enemy selects it."
+    },
+    {
+      "id": "GAME-TEST-003/T05",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Clicking an invalid enemy shows a warning."
+    },
+    {
+      "id": "GAME-TEST-003/T06",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "The hero moves automatically toward a valid selected enemy."
+    },
+    {
+      "id": "GAME-TEST-003/T07",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "The hero stops within attack range."
+    },
+    {
+      "id": "GAME-TEST-003/T08",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "A successful attack plays an animation."
+    },
+    {
+      "id": "GAME-TEST-003/T09",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Defeating an enemy increases player power."
+    },
+    {
+      "id": "GAME-TEST-003/T10",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Defeated enemies are removed correctly."
+    },
+    {
+      "id": "GAME-TEST-003/T11",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Clicking a weapon starts automatic movement."
+    },
+    {
+      "id": "GAME-TEST-003/T12",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Weapon pickup increases player power."
+    },
+    {
+      "id": "GAME-TEST-003/T13",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Collected weapons cannot be collected again."
+    },
+    {
+      "id": "GAME-TEST-003/T14",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "Clicking empty ground moves the hero."
+    },
+    {
+      "id": "GAME-TEST-003/T15",
+      "category": "GAMEPLAY TESTS",
+      "requirement": "The hero does not automatically attack without target selection."
+    },
+    {
+      "id": "GAME-TEST-003/T16",
+      "category": "NUMERICAL TESTS",
+      "requirement": "Player power 10 defeats enemy power 3. Expected result: 13."
+    },
+    {
+      "id": "GAME-TEST-003/T17",
+      "category": "NUMERICAL TESTS",
+      "requirement": "Player power 10 cannot defeat enemy power 10."
+    },
+    {
+      "id": "GAME-TEST-003/T18",
+      "category": "NUMERICAL TESTS",
+      "requirement": "Player power 10 cannot defeat enemy power 15."
+    },
+    {
+      "id": "GAME-TEST-003/T19",
+      "category": "NUMERICAL TESTS",
+      "requirement": "Player power 13 collecting +20 becomes power 33."
+    },
+    {
+      "id": "GAME-TEST-003/T20",
+      "category": "NUMERICAL TESTS",
+      "requirement": "Enemy power is absorbed at 100%."
+    },
+    {
+      "id": "GAME-TEST-003/T21",
+      "category": "NUMERICAL TESTS",
+      "requirement": "Power values remain integers."
+    },
+    {
+      "id": "GAME-TEST-003/T22",
+      "category": "NUMERICAL TESTS",
+      "requirement": "Invalid interactions do not change power."
+    },
+    {
+      "id": "GAME-TEST-003/T23",
+      "category": "NUMERICAL TESTS",
+      "requirement": "Combat calculations are deterministic."
+    },
+    {
+      "id": "GAME-TEST-003/T24",
+      "category": "NUMERICAL TESTS",
+      "requirement": "Power labels update immediately after a completed interaction."
+    },
+    {
+      "id": "GAME-TEST-003/T25",
+      "category": "NUMERICAL TESTS",
+      "requirement": "Enemy label colors update after player power changes."
+    },
+    {
+      "id": "GAME-TEST-003/T26",
+      "category": "NAVIGATION TESTS",
+      "requirement": "The hero moves around obstacles."
+    },
+    {
+      "id": "GAME-TEST-003/T27",
+      "category": "NAVIGATION TESTS",
+      "requirement": "The hero does not pass through walls."
+    },
+    {
+      "id": "GAME-TEST-003/T28",
+      "category": "NAVIGATION TESTS",
+      "requirement": "The hero reaches valid interaction positions."
+    },
+    {
+      "id": "GAME-TEST-003/T29",
+      "category": "NAVIGATION TESTS",
+      "requirement": "Changing targets updates navigation."
+    },
+    {
+      "id": "GAME-TEST-003/T30",
+      "category": "NAVIGATION TESTS",
+      "requirement": "Unreachable targets produce a warning."
+    },
+    {
+      "id": "GAME-TEST-003/T31",
+      "category": "NAVIGATION TESTS",
+      "requirement": "The hero does not teleport."
+    },
+    {
+      "id": "GAME-TEST-003/T32",
+      "category": "COMBAT TESTS",
+      "requirement": "The attack animation faces the target."
+    },
+    {
+      "id": "GAME-TEST-003/T33",
+      "category": "COMBAT TESTS",
+      "requirement": "Combat resolves only within attack range."
+    },
+    {
+      "id": "GAME-TEST-003/T34",
+      "category": "COMBAT TESTS",
+      "requirement": "Combat validation uses strict inequality."
+    },
+    {
+      "id": "GAME-TEST-003/T35",
+      "category": "COMBAT TESTS",
+      "requirement": "Enemy defeat animation plays correctly."
+    },
+    {
+      "id": "GAME-TEST-003/T36",
+      "category": "COMBAT TESTS",
+      "requirement": "Boss defeat triggers victory."
+    },
+    {
+      "id": "GAME-TEST-003/T37",
+      "category": "COMBAT TESTS",
+      "requirement": "Invalid Boss selection does not incorrectly trigger victory or defeat."
+    },
+    {
+      "id": "GAME-TEST-003/T38",
+      "category": "LEVEL TESTS",
+      "requirement": "Level 1 can be completed."
+    },
+    {
+      "id": "GAME-TEST-003/T39",
+      "category": "LEVEL TESTS",
+      "requirement": "Level 2 can be completed."
+    },
+    {
+      "id": "GAME-TEST-003/T40",
+      "category": "LEVEL TESTS",
+      "requirement": "Level 3 can be completed."
+    },
+    {
+      "id": "GAME-TEST-003/T41",
+      "category": "LEVEL TESTS",
+      "requirement": "Level 1 uses the required enemy power values."
+    },
+    {
+      "id": "GAME-TEST-003/T42",
+      "category": "LEVEL TESTS",
+      "requirement": "Level 2 uses the required enemy power values."
+    },
+    {
+      "id": "GAME-TEST-003/T43",
+      "category": "LEVEL TESTS",
+      "requirement": "Level 3 uses the required enemy power values."
+    },
+    {
+      "id": "GAME-TEST-003/T44",
+      "category": "LEVEL TESTS",
+      "requirement": "Weapon bonuses match configuration."
+    },
+    {
+      "id": "GAME-TEST-003/T45",
+      "category": "LEVEL TESTS",
+      "requirement": "Level 1 Boss power equals 150."
+    },
+    {
+      "id": "GAME-TEST-003/T46",
+      "category": "LEVEL TESTS",
+      "requirement": "Level 2 Boss power equals 500."
+    },
+    {
+      "id": "GAME-TEST-003/T47",
+      "category": "LEVEL TESTS",
+      "requirement": "Level 3 Boss power equals 1500."
+    },
+    {
+      "id": "GAME-TEST-003/T48",
+      "category": "LEVEL TESTS",
+      "requirement": "Every level has at least one valid solution."
+    },
+    {
+      "id": "GAME-TEST-003/T49",
+      "category": "LEVEL TESTS",
+      "requirement": "Completing a level unlocks the next level."
+    },
+    {
+      "id": "GAME-TEST-003/T50",
+      "category": "LEVEL TESTS",
+      "requirement": "Completed levels remain replayable."
+    },
+    {
+      "id": "GAME-TEST-003/T51",
+      "category": "LEVEL TESTS",
+      "requirement": "Restarting restores original level power values."
+    },
+    {
+      "id": "GAME-TEST-003/T52",
+      "category": "PERSISTENCE TESTS",
+      "requirement": "Unlocked levels persist after refresh."
+    },
+    {
+      "id": "GAME-TEST-003/T53",
+      "category": "PERSISTENCE TESTS",
+      "requirement": "Completed levels persist after refresh."
+    },
+    {
+      "id": "GAME-TEST-003/T54",
+      "category": "PERSISTENCE TESTS",
+      "requirement": "Audio settings persist after refresh."
+    },
+    {
+      "id": "GAME-TEST-003/T55",
+      "category": "PERSISTENCE TESTS",
+      "requirement": "Restarting does not remove unlocked progress."
+    },
+    {
+      "id": "GAME-TEST-003/T56",
+      "category": "UI TESTS",
+      "requirement": "Main menu works."
+    },
+    {
+      "id": "GAME-TEST-003/T57",
+      "category": "UI TESTS",
+      "requirement": "Level selection works."
+    },
+    {
+      "id": "GAME-TEST-003/T58",
+      "category": "UI TESTS",
+      "requirement": "Pause and resume work."
+    },
+    {
+      "id": "GAME-TEST-003/T59",
+      "category": "UI TESTS",
+      "requirement": "Victory screen works."
+    },
+    {
+      "id": "GAME-TEST-003/T60",
+      "category": "UI TESTS",
+      "requirement": "Deadlock screen works when appropriate."
+    },
+    {
+      "id": "GAME-TEST-003/T61",
+      "category": "UI TESTS",
+      "requirement": "Settings screen works."
+    },
+    {
+      "id": "GAME-TEST-003/T62",
+      "category": "UI TESTS",
+      "requirement": "All user-facing text is in Chinese."
+    },
+    {
+      "id": "GAME-TEST-003/T63",
+      "category": "COMPATIBILITY TESTS",
+      "requirement": "Portrait layout works."
+    },
+    {
+      "id": "GAME-TEST-003/T64",
+      "category": "COMPATIBILITY TESTS",
+      "requirement": "Landscape layout works."
+    },
+    {
+      "id": "GAME-TEST-003/T65",
+      "category": "COMPATIBILITY TESTS",
+      "requirement": "Mobile tapping selects correct targets."
+    },
+    {
+      "id": "GAME-TEST-003/T66",
+      "category": "COMPATIBILITY TESTS",
+      "requirement": "Desktop clicking selects correct targets."
+    },
+    {
+      "id": "GAME-TEST-003/T67",
+      "category": "COMPATIBILITY TESTS",
+      "requirement": "Orientation changes preserve game state."
+    },
+    {
+      "id": "GAME-TEST-003/T68",
+      "category": "COMPATIBILITY TESTS",
+      "requirement": "The game does not require runtime third-party APIs."
+    },
+    {
+      "id": "GAME-TEST-003/T69",
+      "category": "PERFORMANCE TESTS",
+      "requirement": "Movement remains smooth on mobile."
+    },
+    {
+      "id": "GAME-TEST-003/T70",
+      "category": "PERFORMANCE TESTS",
+      "requirement": "Power labels remain readable."
+    },
+    {
+      "id": "GAME-TEST-003/T71",
+      "category": "PERFORMANCE TESTS",
+      "requirement": "Repeated target changes do not cause navigation errors."
+    },
+    {
+      "id": "GAME-TEST-003/T72",
+      "category": "PERFORMANCE TESTS",
+      "requirement": "Repeated restarts do not create duplicate update loops."
+    },
+    {
+      "id": "GAME-TEST-003/T73",
+      "category": "PERFORMANCE TESTS",
+      "requirement": "Scene resources are cleaned up correctly."
+    },
+    {
+      "id": "GAME-TEST-003/T74",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "Combat power is displayed above characters."
+    },
+    {
+      "id": "GAME-TEST-003/T75",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "Only weaker enemies can be defeated."
+    },
+    {
+      "id": "GAME-TEST-003/T76",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "Defeated enemy power is added to the player's power."
+    },
+    {
+      "id": "GAME-TEST-003/T77",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "Weapons increase player power."
+    },
+    {
+      "id": "GAME-TEST-003/T78",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "The hero moves after target selection."
+    },
+    {
+      "id": "GAME-TEST-003/T79",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "Combat is resolved automatically after approaching the target."
+    },
+    {
+      "id": "GAME-TEST-003/T80",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "The game uses an open-field layout."
+    },
+    {
+      "id": "GAME-TEST-003/T81",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "The game does not use fixed tower floors."
+    },
+    {
+      "id": "GAME-TEST-003/T82",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "The final Boss requires sufficient power."
+    },
+    {
+      "id": "GAME-TEST-003/T83",
+      "category": "PROTOTYPE FIDELITY TESTS",
+      "requirement": "The game retains numerical power-growth puzzle gameplay."
+    }
+  ]
+}

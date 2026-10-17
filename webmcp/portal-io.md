@@ -2,7 +2,7 @@
 
 **Version 0.2 — proposal for the portal owner.** Tool names, transport, authentication, image resolution, and service limits still need integration agreement. The examples are synthetic fixtures and do not claim real source discoveries.
 
-See the [recipient handoff](handoff.md) for current implementation status, the upstream main-application boundary, and the integration information needed from each team. The behavior below is a proposed contract, not a claim that an adapter or service is running.
+See the [recipient handoff](handoff.md) for current implementation status and the [runtime guide](runtime.md) for the implemented mock adapter, injected-function adapter, and service. The external teammate-owned service is not connected yet; its actual MCP mapping still needs agreement.
 
 ## Ownership
 

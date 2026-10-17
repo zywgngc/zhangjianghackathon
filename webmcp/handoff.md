@@ -1,10 +1,10 @@
 # WebMCP handoff: current state and integration responsibilities
 
-**Snapshot: October 16, 2026. Branch: `Webmcp`. Contract proposal: v0.2.**
+**Status: first executable reference slice. Branch: `Webmcp`. Contract: v0.2.**
 
-This branch delivers an architecture proposal, diagrams, a typed material-search interface, a JSON Schema, and synthetic examples. **There is no executable research MAS, live portal adapter, browser tool registration, or generated game in this package yet.** The next milestone is to agree on the portal interface and build one complete research workflow.
+This branch now delivers a runnable local research service alongside the architecture, contracts, and examples. It includes a SQLite orchestrator, deterministic Researcher/Planner/Reviewer components, a mock portal, an HTTP API, a studio, and a browser WebMCP adapter. **Live portal retrieval, model-backed general planning, source verification, and playable-game generation remain pending.** Read [runtime.md](runtime.md) to run it and integrate the next adapter.
 
-**Latest design change:** main may send up to three follow-ups to our MAS, and the MAS may send up to three follow-ups to the material portal, using independent run-wide counters. Initial requests do not count. The [discussion protocol](discussion-policy.md) defines clarification, defaults, correlation, and stopping behavior; its enforcement still needs implementation.
+**Latest design change:** main may send up to three follow-ups to our MAS, and the MAS may send up to three follow-ups to the material portal, using independent run-wide counters. Initial requests do not count. The [discussion protocol](discussion-policy.md) defines clarification, defaults, correlation, and stopping behavior; its counters, correlation, and stopping rules are enforced by the local runtime.
 
 `Webmcp` was created from `prompting` with the project owner's approval because `main` did not exist at branch creation. “Main application” below means the upstream game-generator product, not a Git branch. This document is a status snapshot; it must be updated when implementation or integration lands.
 
@@ -28,17 +28,17 @@ The output is a plan backed by traceable sources and explicit validation evidenc
 
 | Area | Delivered on this branch | Still required |
 | --- | --- | --- |
-| Architecture | Workflow, ownership, agent responsibilities, and two diagram exports | Executable orchestration and structured agent output schemas |
-| Developer choices | Default precedence, provenance, locks, and revision rules documented | Decision storage, preference controls, and update handling |
-| Material portal boundary | `MaterialPortalPort`, shared discussion types, JSON Schema, eight fixtures | Agreement with the portal owner; mock and live client adapters |
-| Follow-up discussion | Main follow-up request type, portal clarification/result types, and separate three-round budget rules | Durable counter reservation, command handling, question resolution, and exhaustion behavior |
+| Architecture | Workflow, diagrams, and executable deterministic role components | Model-backed general-purpose agents and wider game support |
+| Developer choices | Persisted defaults/provenance, benchmark locks, structured choices, and revision handling | Interpretation of arbitrary preference changes and reuse of unaffected research |
+| Material portal boundary | Types/schema, eight fixtures, mock adapter, injected-function adapter, and runtime validation | Agreement with portal owner and actual MCP/client mapping |
+| Follow-up discussion | Atomic durable reservations, correlation, default/required question handling, and exhaustion behavior | Provider-native session mapping and production authorization |
 | External MCP material portal | Boundary and expected behavior documented | Teammate-owned implementation; its availability has not been verified here |
-| Browser WebMCP | Proposed application tool list and adapter boundary | Tool registration, feature detection, authenticated command integration |
+| Browser WebMCP | Feature detection, tool registration, local authenticated API, and simulated adapter tests | Native browser/agent interoperability verification |
 | Source research and review | Evidence levels and composition rules documented | Real searches, source inspection, pinned revisions, and verification workers |
-| Durable execution | Proposed revision, retry, cancellation, and recovery behavior | Persistent project/run records, queue, checkpointing, and worker recovery |
-| Builder handoff | Blueprint contents and readiness principles documented | Blueprint schema, producer, and downstream consumer agreement |
+| Durable execution | SQLite run/job history, leases, bounded retries, cancellation, and safe restart recovery | Postgres/distributed workers and provider asynchronous-job reconciliation |
+| Builder handoff | Versioned partial blueprints with candidates, gaps, and all 225 unexecuted benchmark checks | Verified source combinations and downstream Builder/QA integration |
 
-The `.ts` file contains declarations only. The JSON examples contain fictional candidates and placeholder image references. Opening the HTML displays architecture diagrams; it does not run the workflow. There is no install/start command for this component yet.
+The top-level contract `.ts` files contain declarations; [src](src) contains the executable runtime. The example JSON and default portal use synthetic materials. `architecture.html` remains a static diagram export; `pnpm start` serves the working research studio. Setup, commands, and limitations are in [runtime.md](runtime.md).
 
 ## 3. Ownership and the three interfaces
 
@@ -54,7 +54,7 @@ Our team owns research logic, project/research state handling, defaulted decisio
 
 ### Main application input and output — proposed, partially typed
 
-The upstream boundary needs the following information. These are logical fields for the first API design. The [shared discussion types](discussion.ts) now define `MainFollowUpRequest`; the complete start/status/blueprint API remains to be designed. `material-portal.ts` models the downstream material-search boundary.
+The table below describes the broader upstream design. The implemented reference slice takes a `caseId`, optional brief/images/preferences, and execution limits; it derives fixed gameplay and engine constraints from the benchmark. [model.ts](src/model.ts) defines start/run/acknowledgement types, [discussion.ts](discussion.ts) defines `MainFollowUpRequest`, and [runtime.md](runtime.md) lists the HTTP routes. Arbitrary game descriptions are not parsed by the deterministic Planner.
 
 | Input group | Required meaning |
 | --- | --- |
@@ -85,14 +85,14 @@ Read [portal-io.md](portal-io.md) for semantics, [material-portal.ts](material-p
 | Research archetypes before deciding which developer questions matter | Archetype similarity scoring and ranking |
 | Offer multiple alternatives where useful; explain shortfalls | Initial budget of three archetypes and up to three inspected candidates per mechanic |
 | Every optional design question has an editable default | Exact UI layout, question prioritization, and saved-preference storage |
-| Respect explicit choices and locks | Persistent state schema and conflict-resolution API |
+| Respect explicit choices and locks | General preference interpretation beyond the implemented benchmark locks and revision checks |
 | Partition at mechanic/core-algorithm level | First mechanic library and output schemas |
 | Preserve the external portal as a teammate-owned boundary | MCP tools, transport/authentication, image resolution, and service limits |
 | Fit the selected web-game architecture | First engine/version and later engine adapter coverage |
 | Preserve evidence, alternatives, and gaps | Scoring weights and explicit blueprint readiness policy |
-| Allow at most three follow-ups on each boundary, excluding initial requests | Durable ledger implementation and actual provider session mapping; this proposal uses run-wide counters |
+| Allow at most three follow-ups on each boundary, excluding initial requests | Provider session mapping; the local runtime already enforces separate run-wide counters |
 
-The broader plan routes interface-heavy games to HTML/React, 2D games to Phaser, and 3D games to Babylon.js. Those routes describe intended support. This branch does not implement any engine adapter. A Phaser tower-defense workflow is the proposed first integration example, not a restriction on the eventual product.
+The broader plan routes interface-heavy games to HTML/React, 2D games to Phaser, and 3D games to Babylon.js. The runnable slice uses the tests branch: Babylon.js squad runner, Phaser survivors, and Babylon.js power puzzle. It plans engine-compatible research but does not implement game rendering/engine adapters. The tower-defense walkthrough below remains an illustrative future input, not a currently supported benchmark.
 
 ## 5. Worked example: a developer answers zero optional questions
 
@@ -118,7 +118,7 @@ Zero optional answers must be a supported path. Missing authentication, contradi
 
 ## 6. What “state” means at each level
 
-Portal results and discussion envelopes are represented in the included contract. Full run, decision, candidate-review, and blueprint state models remain proposed semantics and still need schemas.
+Portal results and discussion envelopes are represented in the included contract. The local runtime defines run, decision, candidate-review, and blueprint types in [model.ts](src/model.ts) and persists them in SQLite. The table describes the broader target semantics; the reference implementation currently ends with a `partial` blueprint and only `discovered` source evidence. Production schemas for additional evidence and readiness transitions remain future work.
 
 | Level | Proposed state / value | Meaning |
 | --- | --- | --- |
@@ -172,19 +172,19 @@ Unknown metadata is acceptable if reported explicitly. If source-file retrieval 
 | D. Demonstrate the research slice | Our team | One engine and archetype family, four to six mechanics, zero optional answers, multiple alternatives where available, and an honest readiness result |
 | E. Integrate the builder | Our team + builder owner | Builder consumes a versioned blueprint and reports integration/test outcomes against its mechanic checks |
 
-Milestone B can proceed while portal details are being finalized. It validates our workflow, not the portal or the quality of discovered code. Milestone D requires real source evidence and a declared readiness policy; candidate shortfalls must be visible rather than filled with fixtures.
+Milestone B is implemented for the three reference cases and can run while the portal details in A are finalized. It validates our workflow, not live retrieval or source quality. C–E remain pending. Milestone D requires real source evidence and a declared readiness policy; candidate shortfalls must be visible rather than filled with fixtures.
 
 For the first live slice, acceptance should cover automatic defaults, one preference change and dependency invalidation, a portal error or timeout, cancellation/recovery behavior, incompatible candidate rejection, and a blueprint whose claimed evidence can be traced to sources and checks. Also demonstrate three-round limits on both boundaries, idempotent retries, concurrent last-slot contention, and partial output at exhaustion. Broad genre coverage and all three engine routes follow this slice.
 
 ## 9. Verification of the current package
 
-The original package received diagram inspection, local-link checks, JSON parsing and targeted payload/constraint checks, and Git whitespace checks. Its branch upload was verified. For v0.2, both TypeScript contract files passed a strict TypeScript 5.9.3 check. Ajv 8.20.0 with formats validated all eight fixtures against the draft 2020-12 schema, rejected 19 deliberately invalid payloads, and accepted three additional boundary cases. Example request/result and clarification correlation were also checked.
+The executable test suite covers contract fixtures, runtime budgets, defaults and locks, idempotency, stale results, clarification, cancellation, timeouts, restart recovery, cross-worker contention, local HTTP authorization/origin checks, and simulated browser-tool registration. The demo exports partial blueprints for all three reference cases with 225 acceptance requirements preserved. See [runtime.md](runtime.md) for commands and scope.
 
-Those checks validate contract artifacts and example exchanges. They do not establish durable counter enforcement, concurrent slot reservation, retry/recovery behavior, a live portal connection, or an end-to-end research run. No browser WebMCP integration, real-source discovery, candidate behavior verification, or game build has been demonstrated by this package.
+Game acceptance checks have not been executed. Live source discovery, source behavior verification, and generated-game integration remain unverified. Manual Codex in-app browser checks registered all six WebMCP tools and successfully used the start, state-read, and blueprint-read tools against the mock workflow, including image-reference and preference forwarding. Other browser/agent combinations and the remaining tools still need interoperability checks. Schema and runtime tests are not substitutes for those outcomes.
 
 ## 10. Reading order
 
-1. This handoff for scope, current state, and responsibilities.
+1. [Runtime guide](runtime.md) to run the build, then this handoff for scope and responsibilities.
 2. [Architecture](architecture.md) for workflow and agent behavior; [standalone HTML](architecture.html) for the diagrams.
 3. [Portal I/O proposal](portal-io.md), then [types](material-portal.ts), [schema](material-portal.schema.json), and [examples](examples/README.md) for integration review.
 4. [Discussion protocol](discussion-policy.md) for the v0.2 follow-up limits and clarification exchange.
