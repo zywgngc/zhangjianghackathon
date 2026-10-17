@@ -80,3 +80,38 @@ async def test_actual_provider_usage_over_budget_stops_delivery(settings, store,
         assert store.get(rid)["tokens"] == 100001
     finally:
         await agent.close()
+
+
+@pytest.mark.parametrize("wrapper", ["Based on the review:\n\n{}", "```json\n{}\n```", "{}"])
+async def test_complete_json_with_optional_preamble_needs_no_extra_call(settings, store, request_data, contracts, wrapper):
+    rid = store.create(request_data)["id"]
+    store.claim()
+    agent = AgentClient(settings, store)
+    calls = []
+    async def complete(*args, **kwargs):
+        calls.append(args)
+        return wrapper.format(json.dumps(contracts["brief"], ensure_ascii=False))
+    agent.complete = complete
+    try:
+        result = await agent.structured(rid, "brief", "rewrite", "改写需求", request_data, Brief)
+        assert result.title == "接星星"
+        assert len(calls) == 1
+    finally:
+        await agent.close()
+
+
+@pytest.mark.parametrize("suffix", ['\n{"another_answer":true}', '\ntrailing explanation', ''])
+async def test_ambiguous_or_incomplete_preamble_output_is_rejected(settings, store, request_data, contracts, suffix):
+    rid = store.create(request_data)["id"]
+    store.claim()
+    agent = AgentClient(settings, store)
+    payload = json.dumps(contracts["brief"], ensure_ascii=False)
+    content = "Here is JSON:\n" + (payload + suffix if suffix else payload[:-1])
+    async def complete(*args, **kwargs):
+        return content
+    agent.complete = complete
+    try:
+        with pytest.raises(RuntimeError, match="结构化输出"):
+            await agent.structured(rid, "brief", "rewrite", "改写需求", request_data, Brief)
+    finally:
+        await agent.close()

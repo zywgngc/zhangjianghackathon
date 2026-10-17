@@ -152,6 +152,19 @@ class AgentClient:
                 blocks = re.findall(r"```(?:json)?\s*\n?(.*?)```", content, flags=re.DOTALL)
                 if len(blocks) == 1:
                     clean = blocks[0].strip()
+                elif not blocks and not clean.startswith("{"):
+                    # Some compatible providers prepend prose even when JSON is
+                    # requested. Accept one complete final object, never a partial
+                    # object or one of several competing answers.
+                    start = clean.find("{")
+                    if start >= 0:
+                        try:
+                            _, end = json.JSONDecoder().raw_decode(clean, start)
+                        except ValueError:
+                            pass
+                        else:
+                            if not clean[end:].strip():
+                                clean = clean[start:end]
                 return schema.model_validate_json(clean)
             except ValidationError as exc:
                 if attempt:
