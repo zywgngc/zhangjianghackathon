@@ -133,6 +133,32 @@ async def test_no_legitimate_earned_currency_never_becomes_persistence_pass(stor
             await browser.close()
 
 
+@pytest.mark.parametrize("label,works", [("重新挑战", True), ("继续冒险", False)])
+async def test_specified_defeat_retry_label_requires_a_real_restart(store, settings, label, works):
+    """The case2 spec's exact retry wording is a real control, not a forced state."""
+    validator, rid, spec, evidence = setup_probe(store, "GAME-TEST-002")
+    async with async_playwright() as playwright:
+        browser = await playwright.chromium.launch(chromium_sandbox=settings.browser_sandbox)
+        try:
+            page = await page_for(browser, GAME.replace("BROKEN", "false").replace('data-action="restart">重新开始', 'data-action="restart">' + label))
+            await page.locator('[data-action="start"]').click()
+            await page.evaluate("() => window.__HARNESS__.advance(1000)")
+            await page.locator('[data-action="menu"]').click()
+            await page.locator('[data-action="upgrades"]').click()
+            await page.locator('[data-action="purchase"]').click()
+            await page.locator('[data-action="menu"]').click()
+            await page.locator('[data-action="start"]').click()
+            await page.evaluate("() => window.__HARNESS__.advance(1000)")
+            assert (await page.evaluate("() => window.__HARNESS__.snapshot()"))["phase"] == "DEFEAT"
+            result = await capture_project_ui_scene(validator, page, rid, spec, evidence, 0, "defeat")
+            assert any(check["requirement_id"].endswith("/T66") and passed(check) for check in evidence["checks"]) is works
+            assert bool(result["errors"]) is (not works)
+            if works:
+                assert (await page.evaluate("() => window.__HARNESS__.snapshot()"))["phase"] == "PLAYING"
+        finally:
+            await browser.close()
+
+
 @pytest.mark.parametrize("hidden", [False, True])
 async def test_choices_require_real_visible_chinese_cards_not_snapshot_claims(store, settings, hidden):
     validator, rid, spec, evidence = setup_probe(store, "GAME-TEST-002")

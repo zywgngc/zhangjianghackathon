@@ -371,7 +371,7 @@ class _Probe:
             raise AssertionError("The production simulation has not reached DEFEAT")
         await self.page.wait_for_timeout(50)
         text = await self.text()
-        retry = self.root.get_by_role("button", name=re.compile("重试|重新开始|再来|重开"))
+        retry = self.root.get_by_role("button", name=re.compile("重试|重新开始|重新挑战|再来|重开"))
         if not re.search("失败|战败|挑战结束|落败", text) or not await retry.count():
             raise AssertionError("Production DEFEAT state has no visible defeat explanation and retry control")
         shot = await self.screenshot("defeat")
