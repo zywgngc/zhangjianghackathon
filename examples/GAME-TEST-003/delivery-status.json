@@ -1,0 +1,2622 @@
+{
+  "version": 1,
+  "delivery_kind": "candidate",
+  "accepted": false,
+  "source_sha256": "542342494725538c6ca80c8e5c00299fbb505f3efafe3751ac105c137c544f2a",
+  "engine": "babylon",
+  "case_id": "GAME-TEST-003",
+  "build_current": true,
+  "validation_report_current": true,
+  "reported_validation_passed": false,
+  "recomputed_acceptance": {
+    "version": 1,
+    "case_id": "GAME-TEST-003",
+    "spec_sha256": "f220b6be3a0a7682fdd420ba8d64145208bd1e72d09f36a8a553df7a8fc9e8a0",
+    "project_sha256": "542342494725538c6ca80c8e5c00299fbb505f3efafe3751ac105c137c544f2a",
+    "source_sha256": "542342494725538c6ca80c8e5c00299fbb505f3efafe3751ac105c137c544f2a",
+    "status": "incomplete",
+    "complete": false,
+    "counts": {
+      "passed": 82,
+      "failed": 0,
+      "not_run": 0,
+      "manual_required": 1,
+      "visual_required": 0
+    },
+    "tests": [
+      {
+        "id": "GAME-TEST-003/T01",
+        "test_id": "T01",
+        "text": "The game starts normally.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 29815,
+          "end": 29845,
+          "line_start": 2242,
+          "line_end": 2243,
+          "sha256": "8d5459c6924a41f4da757e8946389df459da537d23636d0a878a29106090c1a5"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-0.json",
+            "sha256": "4f830fe99a9d2d0e49935f10968545260315be2740021063715d83ce8aa28d68"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T02",
+        "test_id": "T02",
+        "text": "The hero displays its combat power.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 29847,
+          "end": 29887,
+          "line_start": 2245,
+          "line_end": 2246,
+          "sha256": "50d24f0c46fb967a68446757f62d77bac1e2b2d7e5e660060cc93f0f40331073"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-ui-power-label-2-1.json",
+            "sha256": "49eb302e5f37deb07b52c975575075b64b27c2ebc677e7d2a37dfb436a2bd2dc"
+          },
+          {
+            "path": "project-r4-ui-power-label-2-5.json",
+            "sha256": "c5693ab062f6066fc9daeab4e76e7edec41af285651ab254fb17e5a7079098cb"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-1.input.json",
+            "sha256": "583f7eeab8e6b759d84534f83fd8a67242fb9e9062be8b65581370911d95f681"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-1.model.json",
+            "sha256": "69b7df6e242f7df14673fdf655d166d68f450749809f65913956563935d3e029"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-1.review.json",
+            "sha256": "a529a5fa60f48c2dfffc12059f37358ccb94eb5f0c5c022bbbdf9b9f78584641"
+          },
+          {
+            "path": "project-r4-desktop.png",
+            "sha256": "309d424467a48dfa2df9943de2e091567c2c6d95e6269e9810a1058d6c54e90c"
+          },
+          {
+            "path": "project-r4-portrait.png",
+            "sha256": "820d1fbdd6be28d2c1ce95e4a222c1d2032c61dd10b876247048fdcb8ceb5af2"
+          },
+          {
+            "path": "project-r4-landscape.png",
+            "sha256": "ab0a162a87d35ec54f948ef4759676bed215ed42b9cc43028f2d8481efdb19e5"
+          },
+          {
+            "path": "project-r4-ui-power_change_before-1.png",
+            "sha256": "a15d794b20f569653fb1eae1cfaa42190cea8608a2a5b3b1018c1b1947dd335e"
+          },
+          {
+            "path": "project-r4-ui-power_change_after-1.png",
+            "sha256": "dd0ac0158b5a2b5189306119e4577acaadefe86c34ee8977fb3c1210cdc670cd"
+          },
+          {
+            "path": "project-r4-ui-power_change_before-2.png",
+            "sha256": "8da4b55fdb0b45b6f90e4c3d6dcb5e6a7fed750a61140b7941a139b21d595ced"
+          },
+          {
+            "path": "project-r4-ui-power_change_after-2.png",
+            "sha256": "dedd0cb8f20202f4189f415b250f8a948c3a0ce577c6b6d0523d5c9d4cdadcbf"
+          },
+          {
+            "path": "project-r4-ui-settings-1.png",
+            "sha256": "fe7b2ddb7878fa5d5d4d43d2a5310f573e0f52ee34338b2e80debb552a121ed5"
+          },
+          {
+            "path": "project-r4-ui-deadlock-1.png",
+            "sha256": "b7ff44a4d41466d8863568d3d6e47ca585b745c2270d3e231788f70001053ef9"
+          },
+          {
+            "path": "project-r4-desktop-gameplay.png",
+            "sha256": "6264aac104e866be8de37d11b59d99abbb61552a493ee616649be38f395c907f"
+          },
+          {
+            "path": "project-r4-portrait-gameplay.png",
+            "sha256": "02edcb69b1a3fd5067387693f27d747c1c152c655062a5870e28a054c2accd13"
+          },
+          {
+            "path": "project-r4-landscape-gameplay.png",
+            "sha256": "fb896708109a0fffdeb9fe37ec5ed85c85b5adb6d79bc871ec1e577a589fa5d1"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T03",
+        "test_id": "T03",
+        "text": "Every enemy displays its combat power.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 29889,
+          "end": 29932,
+          "line_start": 2248,
+          "line_end": 2249,
+          "sha256": "0a97d951eacf4b3d2132c1dbf12b634ab016b46983cac26ff834cbeae06f1a9d"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-ui-power-label-3-2.json",
+            "sha256": "45e1c26caa16b2e74a337409b6f04218aecda01f698d0edc1d1ff06b4c264765"
+          },
+          {
+            "path": "project-r4-normal-label-level-1.json",
+            "sha256": "788148b592ead76696c72fce52f1fd858c664f362acd7e60ca4d345296fa3b46"
+          },
+          {
+            "path": "project-r4-ui-power-label-3-6.json",
+            "sha256": "e82ab459d9bcf472848b8d5d8918c2f6714aaad1575fbd535f37dae7fb3607ad"
+          },
+          {
+            "path": "project-r4-normal-label-level-2.json",
+            "sha256": "75528bc40611b7ff6a8578cb9abedf0a5188dbb411ac6ba69fdf758f1002bece"
+          },
+          {
+            "path": "project-r4-normal-label-level-3.json",
+            "sha256": "c6a086a490f147fc5b5f33be66d56a6ba4d258fb271e605f2a15da22c8ca6e64"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-1.input.json",
+            "sha256": "583f7eeab8e6b759d84534f83fd8a67242fb9e9062be8b65581370911d95f681"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-1.model.json",
+            "sha256": "69b7df6e242f7df14673fdf655d166d68f450749809f65913956563935d3e029"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-1.review.json",
+            "sha256": "a529a5fa60f48c2dfffc12059f37358ccb94eb5f0c5c022bbbdf9b9f78584641"
+          },
+          {
+            "path": "project-r4-desktop.png",
+            "sha256": "309d424467a48dfa2df9943de2e091567c2c6d95e6269e9810a1058d6c54e90c"
+          },
+          {
+            "path": "project-r4-portrait.png",
+            "sha256": "820d1fbdd6be28d2c1ce95e4a222c1d2032c61dd10b876247048fdcb8ceb5af2"
+          },
+          {
+            "path": "project-r4-landscape.png",
+            "sha256": "ab0a162a87d35ec54f948ef4759676bed215ed42b9cc43028f2d8481efdb19e5"
+          },
+          {
+            "path": "project-r4-ui-power_change_before-1.png",
+            "sha256": "a15d794b20f569653fb1eae1cfaa42190cea8608a2a5b3b1018c1b1947dd335e"
+          },
+          {
+            "path": "project-r4-ui-power_change_after-1.png",
+            "sha256": "dd0ac0158b5a2b5189306119e4577acaadefe86c34ee8977fb3c1210cdc670cd"
+          },
+          {
+            "path": "project-r4-ui-power_change_before-2.png",
+            "sha256": "8da4b55fdb0b45b6f90e4c3d6dcb5e6a7fed750a61140b7941a139b21d595ced"
+          },
+          {
+            "path": "project-r4-ui-power_change_after-2.png",
+            "sha256": "dedd0cb8f20202f4189f415b250f8a948c3a0ce577c6b6d0523d5c9d4cdadcbf"
+          },
+          {
+            "path": "project-r4-ui-settings-1.png",
+            "sha256": "fe7b2ddb7878fa5d5d4d43d2a5310f573e0f52ee34338b2e80debb552a121ed5"
+          },
+          {
+            "path": "project-r4-ui-deadlock-1.png",
+            "sha256": "b7ff44a4d41466d8863568d3d6e47ca585b745c2270d3e231788f70001053ef9"
+          },
+          {
+            "path": "project-r4-desktop-gameplay.png",
+            "sha256": "6264aac104e866be8de37d11b59d99abbb61552a493ee616649be38f395c907f"
+          },
+          {
+            "path": "project-r4-portrait-gameplay.png",
+            "sha256": "02edcb69b1a3fd5067387693f27d747c1c152c655062a5870e28a054c2accd13"
+          },
+          {
+            "path": "project-r4-landscape-gameplay.png",
+            "sha256": "fb896708109a0fffdeb9fe37ec5ed85c85b5adb6d79bc871ec1e577a589fa5d1"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T04",
+        "test_id": "T04",
+        "text": "Clicking a valid enemy selects it.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 29934,
+          "end": 29973,
+          "line_start": 2251,
+          "line_end": 2252,
+          "sha256": "2431b8a0332fc0c159c851c38526d7ab227563f4b79bfa7e8d509c6c40677c88"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-7.json",
+            "sha256": "924af666322d82e80dbff4e5df6dfefa8366906427c4df987894e871f4240a80"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T05",
+        "test_id": "T05",
+        "text": "Clicking an invalid enemy shows a warning.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 29975,
+          "end": 30022,
+          "line_start": 2254,
+          "line_end": 2255,
+          "sha256": "757648d1a066d5868e37ec70a8dccf6f41cb1f3f19bd635ff61d325d77e76665"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-3.json",
+            "sha256": "d640fc9b45cb97600b698b1643b9f129db11974cad1069ab50b3009453306551"
+          },
+          {
+            "path": "project-r4-scenario-4.json",
+            "sha256": "1cb5dca103e18b855b74213ae7bcf61354279d1586742c52bfbbee3a673df1c6"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T06",
+        "test_id": "T06",
+        "text": "The hero moves automatically toward\na valid selected enemy.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 30024,
+          "end": 30088,
+          "line_start": 2257,
+          "line_end": 2259,
+          "sha256": "9f42699adfd60f6604227e873bce2874bd6a0425dd516be5d0225e4df56b8fb9"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-7.json",
+            "sha256": "924af666322d82e80dbff4e5df6dfefa8366906427c4df987894e871f4240a80"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T07",
+        "test_id": "T07",
+        "text": "The hero stops within attack range.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 30090,
+          "end": 30130,
+          "line_start": 2261,
+          "line_end": 2262,
+          "sha256": "4d2eed1729db15390038a61d08aed5acfeaf0c2a98e0f5414812ef87bce249ae"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-7.json",
+            "sha256": "924af666322d82e80dbff4e5df6dfefa8366906427c4df987894e871f4240a80"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T08",
+        "test_id": "T08",
+        "text": "A successful attack plays an animation.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 30132,
+          "end": 30176,
+          "line_start": 2264,
+          "line_end": 2265,
+          "sha256": "38fc07db591ccad00562b165b73b8566d8fca1afdaba48f0545a6743b19fb134"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-8.json",
+            "sha256": "6c45d25d05e7814a6a181c1c2668b0256db8dd1b056d945314284c870eb6dacc"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T09",
+        "test_id": "T09",
+        "text": "Defeating an enemy increases player power.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 30178,
+          "end": 30225,
+          "line_start": 2267,
+          "line_end": 2268,
+          "sha256": "7d481517ac5593d5b916d648daa13a1177225d20b1a3552a86305de10ad6ac07"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-2.json",
+            "sha256": "29a3bb09f998358785c3a590f20f70999cd97c9da4755579fd752d16851cb550"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T10",
+        "test_id": "T10",
+        "text": "Defeated enemies are removed correctly.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 30227,
+          "end": 30271,
+          "line_start": 2270,
+          "line_end": 2271,
+          "sha256": "75bc04df9e4a7a1a28ec6f03ff530dfdc7575d9c85a68db53eea273d988dc788"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-2.json",
+            "sha256": "29a3bb09f998358785c3a590f20f70999cd97c9da4755579fd752d16851cb550"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T11",
+        "test_id": "T11",
+        "text": "Clicking a weapon starts automatic movement.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 30273,
+          "end": 30322,
+          "line_start": 2273,
+          "line_end": 2274,
+          "sha256": "da42f6306257b51eedbbf6559e05ca6fc8d5290bd0e4a934bf40a9de0fd0b81b"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-5.json",
+            "sha256": "427815ab42ff8f626547325bd4c9f6f325e28942082429901e4555940fa63ccc"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T12",
+        "test_id": "T12",
+        "text": "Weapon pickup increases player power.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 30324,
+          "end": 30366,
+          "line_start": 2276,
+          "line_end": 2277,
+          "sha256": "e8b98b5ff752e5e4050dc816b870a6bf1ff4f4c791a1ec010fe0907ff7434009"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-5.json",
+            "sha256": "427815ab42ff8f626547325bd4c9f6f325e28942082429901e4555940fa63ccc"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T13",
+        "test_id": "T13",
+        "text": "Collected weapons cannot be collected again.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 30368,
+          "end": 30417,
+          "line_start": 2279,
+          "line_end": 2280,
+          "sha256": "b85e6a9045cf40fe608c644b55696165f814010c46940b63e4be64b2210131a4"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-5.json",
+            "sha256": "427815ab42ff8f626547325bd4c9f6f325e28942082429901e4555940fa63ccc"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T14",
+        "test_id": "T14",
+        "text": "Clicking empty ground moves the hero.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 30419,
+          "end": 30461,
+          "line_start": 2282,
+          "line_end": 2283,
+          "sha256": "d9e1b6a29afa6fba48e95da169cfe2127c48764cd86aaa68f145142ce148d4a7"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-9.json",
+            "sha256": "93327f9089d97161703e7b75769bde0181b66a032b7f1480fdfd043beb9d1ef7"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T15",
+        "test_id": "T15",
+        "text": "The hero does not automatically attack\nwithout target selection.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 30463,
+          "end": 30532,
+          "line_start": 2285,
+          "line_end": 2287,
+          "sha256": "9877cd49c038768380d6cb0e5fe699eba243b647d9ed7f07606cb300fcb3432b"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-6.json",
+            "sha256": "2f4e48dccd25a43f9cb2f9892318a6774e2afe914e70edffdffc79230f87ec97"
+          },
+          {
+            "path": "project-r4-scenario-9.json",
+            "sha256": "93327f9089d97161703e7b75769bde0181b66a032b7f1480fdfd043beb9d1ef7"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T16",
+        "test_id": "T16",
+        "text": "Player power 10 defeats enemy power 3.\n\nExpected result:\n13.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 30551,
+          "end": 30616,
+          "line_start": 2291,
+          "line_end": 2295,
+          "sha256": "195372ab7190901213db5b2fec136aa422c7ac58f7dc882f14cd665be3b3497a"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-2.json",
+            "sha256": "29a3bb09f998358785c3a590f20f70999cd97c9da4755579fd752d16851cb550"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T17",
+        "test_id": "T17",
+        "text": "Player power 10 cannot defeat\nenemy power 10.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 30618,
+          "end": 30668,
+          "line_start": 2297,
+          "line_end": 2299,
+          "sha256": "70b292cd0e5253089767ce65505f6701528038051ad59d86f6da4159d213e03e"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-3.json",
+            "sha256": "d640fc9b45cb97600b698b1643b9f129db11974cad1069ab50b3009453306551"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T18",
+        "test_id": "T18",
+        "text": "Player power 10 cannot defeat\nenemy power 15.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 30670,
+          "end": 30720,
+          "line_start": 2301,
+          "line_end": 2303,
+          "sha256": "8b55e0878e830ae5454316c07daea7e77b9d5923fd97bcdc8255358cac056d3c"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-4.json",
+            "sha256": "1cb5dca103e18b855b74213ae7bcf61354279d1586742c52bfbbee3a673df1c6"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T19",
+        "test_id": "T19",
+        "text": "Player power 13 collecting +20\nbecomes power 33.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 30722,
+          "end": 30775,
+          "line_start": 2305,
+          "line_end": 2307,
+          "sha256": "aba5724fc3cdd26d9eea98578ed4f7e8481547fd877c532fc91ef5d8718ff25e"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-5.json",
+            "sha256": "427815ab42ff8f626547325bd4c9f6f325e28942082429901e4555940fa63ccc"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T20",
+        "test_id": "T20",
+        "text": "Enemy power is absorbed at 100%.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 30777,
+          "end": 30814,
+          "line_start": 2309,
+          "line_end": 2310,
+          "sha256": "5933fdf2b328100e2917bcd17943b255feb134ba96235cff6986c45ab4fffea1"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-2.json",
+            "sha256": "29a3bb09f998358785c3a590f20f70999cd97c9da4755579fd752d16851cb550"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T21",
+        "test_id": "T21",
+        "text": "Power values remain integers.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 30816,
+          "end": 30850,
+          "line_start": 2312,
+          "line_end": 2313,
+          "sha256": "c7235bf554cf1b6752412ff2439b203318da05fe0e0c6126fec2a2aa3417e785"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-2.json",
+            "sha256": "29a3bb09f998358785c3a590f20f70999cd97c9da4755579fd752d16851cb550"
+          },
+          {
+            "path": "project-r4-scenario-3.json",
+            "sha256": "d640fc9b45cb97600b698b1643b9f129db11974cad1069ab50b3009453306551"
+          },
+          {
+            "path": "project-r4-scenario-4.json",
+            "sha256": "1cb5dca103e18b855b74213ae7bcf61354279d1586742c52bfbbee3a673df1c6"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T22",
+        "test_id": "T22",
+        "text": "Invalid interactions do not change power.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 30852,
+          "end": 30898,
+          "line_start": 2315,
+          "line_end": 2316,
+          "sha256": "80dccce714790bd597b97c6000d4a23485519ea89cf051709af05a586b3a43c4"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-3.json",
+            "sha256": "d640fc9b45cb97600b698b1643b9f129db11974cad1069ab50b3009453306551"
+          },
+          {
+            "path": "project-r4-scenario-4.json",
+            "sha256": "1cb5dca103e18b855b74213ae7bcf61354279d1586742c52bfbbee3a673df1c6"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T23",
+        "test_id": "T23",
+        "text": "Combat calculations are deterministic.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 30900,
+          "end": 30943,
+          "line_start": 2318,
+          "line_end": 2319,
+          "sha256": "60fed8cae48b238708af880b68cbb704509b9de80413328b9c0d9b7d2fc64839"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-2.json",
+            "sha256": "29a3bb09f998358785c3a590f20f70999cd97c9da4755579fd752d16851cb550"
+          },
+          {
+            "path": "project-r4-scenario-3.json",
+            "sha256": "d640fc9b45cb97600b698b1643b9f129db11974cad1069ab50b3009453306551"
+          },
+          {
+            "path": "project-r4-scenario-4.json",
+            "sha256": "1cb5dca103e18b855b74213ae7bcf61354279d1586742c52bfbbee3a673df1c6"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T24",
+        "test_id": "T24",
+        "text": "Power labels update immediately\nafter a completed interaction.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 30945,
+          "end": 31012,
+          "line_start": 2321,
+          "line_end": 2323,
+          "sha256": "e7ea9a0a998a514f0d7abda50859c2e6315ba08168ba8b9733f190c5ae59a430"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-ui-power-hud-update-3.json",
+            "sha256": "88c4a7ce8cc9480f481e6ea7316a5338d94fc9ec650670528697cdb5ef0a7ca6"
+          },
+          {
+            "path": "project-r4-ui-power-hud-update-7.json",
+            "sha256": "cb41861ed446658c9075b4f957dbbdbd68fe7172923ca505446cf764d61f9624"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T25",
+        "test_id": "T25",
+        "text": "Enemy label colors update after\nplayer power changes.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31014,
+          "end": 31072,
+          "line_start": 2325,
+          "line_end": 2327,
+          "sha256": "2abe16f697d5155f6e5767cb1c5a74c49cde364856856cde90b9c020d90fa487"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-ui-power-color-threshold-4.json",
+            "sha256": "f7f4101fb16813f52a42b5471207cfae9cfca578a321a2f32532ffb7d7a705a0"
+          },
+          {
+            "path": "project-r4-ui-power-color-threshold-8.json",
+            "sha256": "a5d21dc3323420a162a3c53b65953b7ff4ba89acceab54a7fe468b88daa9d8ba"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-1.input.json",
+            "sha256": "583f7eeab8e6b759d84534f83fd8a67242fb9e9062be8b65581370911d95f681"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-1.model.json",
+            "sha256": "69b7df6e242f7df14673fdf655d166d68f450749809f65913956563935d3e029"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-1.review.json",
+            "sha256": "a529a5fa60f48c2dfffc12059f37358ccb94eb5f0c5c022bbbdf9b9f78584641"
+          },
+          {
+            "path": "project-r4-desktop.png",
+            "sha256": "309d424467a48dfa2df9943de2e091567c2c6d95e6269e9810a1058d6c54e90c"
+          },
+          {
+            "path": "project-r4-portrait.png",
+            "sha256": "820d1fbdd6be28d2c1ce95e4a222c1d2032c61dd10b876247048fdcb8ceb5af2"
+          },
+          {
+            "path": "project-r4-landscape.png",
+            "sha256": "ab0a162a87d35ec54f948ef4759676bed215ed42b9cc43028f2d8481efdb19e5"
+          },
+          {
+            "path": "project-r4-ui-power_change_before-1.png",
+            "sha256": "a15d794b20f569653fb1eae1cfaa42190cea8608a2a5b3b1018c1b1947dd335e"
+          },
+          {
+            "path": "project-r4-ui-power_change_after-1.png",
+            "sha256": "dd0ac0158b5a2b5189306119e4577acaadefe86c34ee8977fb3c1210cdc670cd"
+          },
+          {
+            "path": "project-r4-ui-power_change_before-2.png",
+            "sha256": "8da4b55fdb0b45b6f90e4c3d6dcb5e6a7fed750a61140b7941a139b21d595ced"
+          },
+          {
+            "path": "project-r4-ui-power_change_after-2.png",
+            "sha256": "dedd0cb8f20202f4189f415b250f8a948c3a0ce577c6b6d0523d5c9d4cdadcbf"
+          },
+          {
+            "path": "project-r4-ui-settings-1.png",
+            "sha256": "fe7b2ddb7878fa5d5d4d43d2a5310f573e0f52ee34338b2e80debb552a121ed5"
+          },
+          {
+            "path": "project-r4-ui-deadlock-1.png",
+            "sha256": "b7ff44a4d41466d8863568d3d6e47ca585b745c2270d3e231788f70001053ef9"
+          },
+          {
+            "path": "project-r4-desktop-gameplay.png",
+            "sha256": "6264aac104e866be8de37d11b59d99abbb61552a493ee616649be38f395c907f"
+          },
+          {
+            "path": "project-r4-portrait-gameplay.png",
+            "sha256": "02edcb69b1a3fd5067387693f27d747c1c152c655062a5870e28a054c2accd13"
+          },
+          {
+            "path": "project-r4-landscape-gameplay.png",
+            "sha256": "fb896708109a0fffdeb9fe37ec5ed85c85b5adb6d79bc871ec1e577a589fa5d1"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T26",
+        "test_id": "T26",
+        "text": "The hero moves around obstacles.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31092,
+          "end": 31129,
+          "line_start": 2331,
+          "line_end": 2332,
+          "sha256": "58024198a8c85bbb42976d80ca155c1da7f8f3b96da83e952eb1c60cd3507e01"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-7.json",
+            "sha256": "924af666322d82e80dbff4e5df6dfefa8366906427c4df987894e871f4240a80"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T27",
+        "test_id": "T27",
+        "text": "The hero does not pass through walls.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31131,
+          "end": 31173,
+          "line_start": 2334,
+          "line_end": 2335,
+          "sha256": "9771f124684be5c4583d1a89d56ffb6c74fa5e7d24495fe55909833108e5dcfa"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-7.json",
+            "sha256": "924af666322d82e80dbff4e5df6dfefa8366906427c4df987894e871f4240a80"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T28",
+        "test_id": "T28",
+        "text": "The hero reaches valid interaction positions.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31175,
+          "end": 31225,
+          "line_start": 2337,
+          "line_end": 2338,
+          "sha256": "bac8a1a67d68a624948b2e6711c832f447464ff549ab8791913196b9045786a8"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-7.json",
+            "sha256": "924af666322d82e80dbff4e5df6dfefa8366906427c4df987894e871f4240a80"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T29",
+        "test_id": "T29",
+        "text": "Changing targets updates navigation.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31227,
+          "end": 31268,
+          "line_start": 2340,
+          "line_end": 2341,
+          "sha256": "fdce7dbdff63b9ebdf2ddc19b5489671d461c92303711a447dfee1af27fbd034"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-10.json",
+            "sha256": "16bc1bb9775ec73da0691710e8de2b5aa5fc1813167c2f28f7a00490e072e5e7"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T30",
+        "test_id": "T30",
+        "text": "Unreachable targets produce a warning.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31270,
+          "end": 31313,
+          "line_start": 2343,
+          "line_end": 2344,
+          "sha256": "5bdb231f5ca422e7ef4c482dece33a14618a68096ab0661f1cbca73ec559bf46"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-11.json",
+            "sha256": "f72829ae7ded1d74f890eb9ae7d8fc38823a8902a16a3ee41b1be3016cdc1a70"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T31",
+        "test_id": "T31",
+        "text": "The hero does not teleport.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31315,
+          "end": 31347,
+          "line_start": 2346,
+          "line_end": 2347,
+          "sha256": "5065e9bb37d843d111b1696508408fe591d26e6548a9fa45483f8fe1a64f9c01"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-7.json",
+            "sha256": "924af666322d82e80dbff4e5df6dfefa8366906427c4df987894e871f4240a80"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T32",
+        "test_id": "T32",
+        "text": "The attack animation faces the target.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31363,
+          "end": 31406,
+          "line_start": 2351,
+          "line_end": 2352,
+          "sha256": "2fd359402dd0927e460e095b22c770c599b0c032f9fe38b88887883664eee29f"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-8.json",
+            "sha256": "6c45d25d05e7814a6a181c1c2668b0256db8dd1b056d945314284c870eb6dacc"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T33",
+        "test_id": "T33",
+        "text": "Combat resolves only within attack range.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31408,
+          "end": 31454,
+          "line_start": 2354,
+          "line_end": 2355,
+          "sha256": "3067fb44dc03ae60819a1502b9707db599bc18bda199f896ff1da29138e682e1"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-7.json",
+            "sha256": "924af666322d82e80dbff4e5df6dfefa8366906427c4df987894e871f4240a80"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T34",
+        "test_id": "T34",
+        "text": "Combat validation uses strict inequality.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31456,
+          "end": 31502,
+          "line_start": 2357,
+          "line_end": 2358,
+          "sha256": "e44d810a07cc64fd0254bc8e9978d35ea1c85f2f9f2b375393cadc86731cae78"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-2.json",
+            "sha256": "29a3bb09f998358785c3a590f20f70999cd97c9da4755579fd752d16851cb550"
+          },
+          {
+            "path": "project-r4-scenario-3.json",
+            "sha256": "d640fc9b45cb97600b698b1643b9f129db11974cad1069ab50b3009453306551"
+          },
+          {
+            "path": "project-r4-scenario-4.json",
+            "sha256": "1cb5dca103e18b855b74213ae7bcf61354279d1586742c52bfbbee3a673df1c6"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T35",
+        "test_id": "T35",
+        "text": "Enemy defeat animation plays correctly.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31504,
+          "end": 31548,
+          "line_start": 2360,
+          "line_end": 2361,
+          "sha256": "043d1554d311e714f66fd474d38e72bdc32a9d1112a58f7a21f3fa94b433584b"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-8.json",
+            "sha256": "6c45d25d05e7814a6a181c1c2668b0256db8dd1b056d945314284c870eb6dacc"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T36",
+        "test_id": "T36",
+        "text": "Boss defeat triggers victory.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31550,
+          "end": 31584,
+          "line_start": 2363,
+          "line_end": 2364,
+          "sha256": "96206322b2abd36cf95913ad4d30ec94186dbcb0c27bf74f4b83376fc59ec3e9"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-12.json",
+            "sha256": "e0b2c4d9eeb647d41130f95bbfa07154c37e9a78f532de6e73f714c8c2096393"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T37",
+        "test_id": "T37",
+        "text": "Invalid Boss selection does not\nincorrectly trigger victory or defeat.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31586,
+          "end": 31661,
+          "line_start": 2366,
+          "line_end": 2368,
+          "sha256": "15e2d2704dbe4ea1ab9db6ad53ee9159dcad11794f6456693e1155c44541d6e6"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-13.json",
+            "sha256": "95ffa36ad19a6504a7a8aeebf47fd4a1bb76bb2a1c0e2e6976d90830ca239d6c"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T38",
+        "test_id": "T38",
+        "text": "Level 1 can be completed.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31676,
+          "end": 31706,
+          "line_start": 2372,
+          "line_end": 2373,
+          "sha256": "5f175e4856297d96b7ab287dfc285c8a4566ca129d9ed7807b0488407e8fd3c5"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-normal-level-1.json",
+            "sha256": "788148b592ead76696c72fce52f1fd858c664f362acd7e60ca4d345296fa3b46"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T39",
+        "test_id": "T39",
+        "text": "Level 2 can be completed.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31708,
+          "end": 31738,
+          "line_start": 2375,
+          "line_end": 2376,
+          "sha256": "472c0226ddb9c3f2b15458ad1355b5f7aaac17300e4428dc101baa8041007de5"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-normal-level-2.json",
+            "sha256": "75528bc40611b7ff6a8578cb9abedf0a5188dbb411ac6ba69fdf758f1002bece"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T40",
+        "test_id": "T40",
+        "text": "Level 3 can be completed.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31740,
+          "end": 31770,
+          "line_start": 2378,
+          "line_end": 2379,
+          "sha256": "8a6be3088ff5e202a3bd3b799f804e24a4ae4eeb61d0112110dec11cd73cf901"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-normal-level-3.json",
+            "sha256": "c6a086a490f147fc5b5f33be66d56a6ba4d258fb271e605f2a15da22c8ca6e64"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T41",
+        "test_id": "T41",
+        "text": "Level 1 uses the required enemy power values.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31772,
+          "end": 31822,
+          "line_start": 2381,
+          "line_end": 2382,
+          "sha256": "3c2a10dfdd4677faecd2f2a2eb139de12c7c7378aaccd8c20a7eb72110cab444"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-normal-level-1.json",
+            "sha256": "788148b592ead76696c72fce52f1fd858c664f362acd7e60ca4d345296fa3b46"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T42",
+        "test_id": "T42",
+        "text": "Level 2 uses the required enemy power values.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31824,
+          "end": 31874,
+          "line_start": 2384,
+          "line_end": 2385,
+          "sha256": "a4864e6b7a990aa4d2690e89070fc8a2ed60f4cca6439065c9c763c761642265"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-normal-level-2.json",
+            "sha256": "75528bc40611b7ff6a8578cb9abedf0a5188dbb411ac6ba69fdf758f1002bece"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T43",
+        "test_id": "T43",
+        "text": "Level 3 uses the required enemy power values.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31876,
+          "end": 31926,
+          "line_start": 2387,
+          "line_end": 2388,
+          "sha256": "0b273c12f0f682fdf7b9e9030721e0f941168b6e45921397b769bd0cc6d82df4"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-normal-level-3.json",
+            "sha256": "c6a086a490f147fc5b5f33be66d56a6ba4d258fb271e605f2a15da22c8ca6e64"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T44",
+        "test_id": "T44",
+        "text": "Weapon bonuses match configuration.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31928,
+          "end": 31968,
+          "line_start": 2390,
+          "line_end": 2391,
+          "sha256": "99ebe8d90e213f7d5ca21c49ee5f21b79a12785f8d2efc1f9f38ce87b7a8c08c"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-5.json",
+            "sha256": "427815ab42ff8f626547325bd4c9f6f325e28942082429901e4555940fa63ccc"
+          },
+          {
+            "path": "project-r4-normal-level-1.json",
+            "sha256": "788148b592ead76696c72fce52f1fd858c664f362acd7e60ca4d345296fa3b46"
+          },
+          {
+            "path": "project-r4-normal-level-2.json",
+            "sha256": "75528bc40611b7ff6a8578cb9abedf0a5188dbb411ac6ba69fdf758f1002bece"
+          },
+          {
+            "path": "project-r4-normal-level-3.json",
+            "sha256": "c6a086a490f147fc5b5f33be66d56a6ba4d258fb271e605f2a15da22c8ca6e64"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T45",
+        "test_id": "T45",
+        "text": "Level 1 Boss power equals 150.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 31970,
+          "end": 32005,
+          "line_start": 2393,
+          "line_end": 2394,
+          "sha256": "0ea9f6f6842c70f1b0a482a9d11b832234a4ae8758e4890383fbda61e2fba035"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-normal-level-1.json",
+            "sha256": "788148b592ead76696c72fce52f1fd858c664f362acd7e60ca4d345296fa3b46"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T46",
+        "test_id": "T46",
+        "text": "Level 2 Boss power equals 500.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32007,
+          "end": 32042,
+          "line_start": 2396,
+          "line_end": 2397,
+          "sha256": "d35bee0019a3ecbc948a7463fec99053f2b94d67aab8584c1c6817b1130d16e8"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-normal-level-2.json",
+            "sha256": "75528bc40611b7ff6a8578cb9abedf0a5188dbb411ac6ba69fdf758f1002bece"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T47",
+        "test_id": "T47",
+        "text": "Level 3 Boss power equals 1500.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32044,
+          "end": 32080,
+          "line_start": 2399,
+          "line_end": 2400,
+          "sha256": "2fc1b535762797163709ff394e0fa3b75325eeae2341d49b8bb67ef20a3218aa"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-normal-level-3.json",
+            "sha256": "c6a086a490f147fc5b5f33be66d56a6ba4d258fb271e605f2a15da22c8ca6e64"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T48",
+        "test_id": "T48",
+        "text": "Every level has at least one valid solution.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32082,
+          "end": 32131,
+          "line_start": 2402,
+          "line_end": 2403,
+          "sha256": "3febfd5ad2eb1331e19b57f6b12d6a09cb3390537b79404f295c490817998a04"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-normal-level-1.json",
+            "sha256": "788148b592ead76696c72fce52f1fd858c664f362acd7e60ca4d345296fa3b46"
+          },
+          {
+            "path": "project-r4-normal-level-2.json",
+            "sha256": "75528bc40611b7ff6a8578cb9abedf0a5188dbb411ac6ba69fdf758f1002bece"
+          },
+          {
+            "path": "project-r4-normal-level-3.json",
+            "sha256": "c6a086a490f147fc5b5f33be66d56a6ba4d258fb271e605f2a15da22c8ca6e64"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T49",
+        "test_id": "T49",
+        "text": "Completing a level unlocks the next level.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32133,
+          "end": 32180,
+          "line_start": 2405,
+          "line_end": 2406,
+          "sha256": "0371deaa1225bc3a8d1aac22de5ebbabe7353b140c886ca2478565b7dace9db1"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-normal-level-1.json",
+            "sha256": "788148b592ead76696c72fce52f1fd858c664f362acd7e60ca4d345296fa3b46"
+          },
+          {
+            "path": "project-r4-normal-level-2.json",
+            "sha256": "75528bc40611b7ff6a8578cb9abedf0a5188dbb411ac6ba69fdf758f1002bece"
+          },
+          {
+            "path": "project-r4-normal-level-3.json",
+            "sha256": "c6a086a490f147fc5b5f33be66d56a6ba4d258fb271e605f2a15da22c8ca6e64"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T50",
+        "test_id": "T50",
+        "text": "Completed levels remain replayable.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32182,
+          "end": 32222,
+          "line_start": 2408,
+          "line_end": 2409,
+          "sha256": "8340e3fae9b23a6a38a402cef55c59c96cc3c14a620e92ea06b36ed7fdcb85a8"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-completed-level-replay.json",
+            "sha256": "f79c852f074a92eab91135216eae9f54b0787732c2e629c2e2ff0322652f220e"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T51",
+        "test_id": "T51",
+        "text": "Restarting restores original level power values.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32224,
+          "end": 32277,
+          "line_start": 2411,
+          "line_end": 2412,
+          "sha256": "2f18979cd07b13ee1df49536b786ffc5b24855bf6abcf686637b1459a8139a21"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-15.json",
+            "sha256": "7c96e8bc74097ba8c3bfc16d6e26c45723388d9db0298f6a6b2a7f1e85bd427c"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T52",
+        "test_id": "T52",
+        "text": "Unlocked levels persist after refresh.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32298,
+          "end": 32341,
+          "line_start": 2416,
+          "line_end": 2417,
+          "sha256": "a48b90466db6858dd3a6db03baeee5d01cbfe165f6a8d3087db2a1feaad7993a"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-persistence-level-1.json",
+            "sha256": "69244f2092690fcf125a55d7433f4fa3cdf441f3efcfb1dd95542073e5f5fe7c"
+          },
+          {
+            "path": "project-r4-persistence-level-2.json",
+            "sha256": "ea77a878854f20a31dbefc559e344bac6c03536f1b22ccbcaef6384b05d8332a"
+          },
+          {
+            "path": "project-r4-persistence-level-3.json",
+            "sha256": "b0ffffd6c2081d59485846e0aa8fda805c056d9fd38b7473bbae5bb3151b5106"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T53",
+        "test_id": "T53",
+        "text": "Completed levels persist after refresh.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32343,
+          "end": 32387,
+          "line_start": 2419,
+          "line_end": 2420,
+          "sha256": "92c6c684b19d3935023e6fdca44939d35289fbe816fac7ce6b9a5c1eb758512c"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-persistence-level-1.json",
+            "sha256": "69244f2092690fcf125a55d7433f4fa3cdf441f3efcfb1dd95542073e5f5fe7c"
+          },
+          {
+            "path": "project-r4-persistence-level-2.json",
+            "sha256": "ea77a878854f20a31dbefc559e344bac6c03536f1b22ccbcaef6384b05d8332a"
+          },
+          {
+            "path": "project-r4-persistence-level-3.json",
+            "sha256": "b0ffffd6c2081d59485846e0aa8fda805c056d9fd38b7473bbae5bb3151b5106"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T54",
+        "test_id": "T54",
+        "text": "Audio settings persist after refresh.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32389,
+          "end": 32431,
+          "line_start": 2422,
+          "line_end": 2423,
+          "sha256": "fccb580000abcbe02b8c92fa2608688109148042631e247a55a0b05369d5295d"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-desktop-audio-persistence.json",
+            "sha256": "0b2b9e867acf58045ce8e1daf5ac9ab1706ce708f92ad871067b5915e9b1cae7"
+          },
+          {
+            "path": "project-r4-portrait-audio-persistence.json",
+            "sha256": "0270ebf6d09e30f744293024ce6aa161192bcd454976a9048aab50428de03436"
+          },
+          {
+            "path": "project-r4-landscape-audio-persistence.json",
+            "sha256": "094141117b2ad1a25415ed1a86414c35b39a119d15f1f2a8d437e79ab7cb5bcb"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T55",
+        "test_id": "T55",
+        "text": "Restarting does not remove unlocked progress.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32433,
+          "end": 32483,
+          "line_start": 2425,
+          "line_end": 2426,
+          "sha256": "76ca685383594af229355b7f1a27bfda67eb682dfc7c17bc643f3a7ab7b302c1"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-15.json",
+            "sha256": "7c96e8bc74097ba8c3bfc16d6e26c45723388d9db0298f6a6b2a7f1e85bd427c"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T56",
+        "test_id": "T56",
+        "text": "Main menu works.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32495,
+          "end": 32516,
+          "line_start": 2430,
+          "line_end": 2431,
+          "sha256": "722bdb66c5b6974bb4768862721ef942877e29966ffe54fa2dcb09157b1b2ecd"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-desktop-main-menu.json",
+            "sha256": "30186b3aa1447bbd65f392bd873af1dcf841d306cc1d351674672a90bc18699a"
+          },
+          {
+            "path": "project-r4-portrait-main-menu.json",
+            "sha256": "30186b3aa1447bbd65f392bd873af1dcf841d306cc1d351674672a90bc18699a"
+          },
+          {
+            "path": "project-r4-landscape-main-menu.json",
+            "sha256": "30186b3aa1447bbd65f392bd873af1dcf841d306cc1d351674672a90bc18699a"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T57",
+        "test_id": "T57",
+        "text": "Level selection works.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32518,
+          "end": 32545,
+          "line_start": 2433,
+          "line_end": 2434,
+          "sha256": "e4637e75263d27d09d11a0fa16a2ccc7d39e97ad569764e2b83691a2eea2271e"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-ui-level-select-9.json",
+            "sha256": "51b6115f3e1a49255e037fa5ad34357589f7bbd4e9277788ea35e69cdd5a133b"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T58",
+        "test_id": "T58",
+        "text": "Pause and resume work.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32547,
+          "end": 32574,
+          "line_start": 2436,
+          "line_end": 2437,
+          "sha256": "59cec15d56009c2aaf27b4e5a5eca5617a25ddc0419e5e8c55edeebf4bc784f0"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-1.json",
+            "sha256": "1bcd72e255067a3305795676c127c5c1663eb09a97c997929ad671ff07b59a3e"
+          },
+          {
+            "path": "project-r4-desktop-pause.json",
+            "sha256": "d6a111a3cacfe68fa650965005004c9d33f7f6cb383f4584ef1da83cb735838c"
+          },
+          {
+            "path": "project-r4-desktop-resume.json",
+            "sha256": "117ed4b0d4cd43ef305b4d67440362f047261b7f5cbb224d80dc6c7c1812edb1"
+          },
+          {
+            "path": "project-r4-portrait-pause.json",
+            "sha256": "d1aca1569a9ecd930a09ce86df8cdd7753c0e08ed499ce5021a77cae2a71e20c"
+          },
+          {
+            "path": "project-r4-portrait-resume.json",
+            "sha256": "47ea3dccd3a1156d10fe36b5c483029e97c1ca6fef3a3c72d00b5dba7f4e7d70"
+          },
+          {
+            "path": "project-r4-landscape-pause.json",
+            "sha256": "d1aca1569a9ecd930a09ce86df8cdd7753c0e08ed499ce5021a77cae2a71e20c"
+          },
+          {
+            "path": "project-r4-landscape-resume.json",
+            "sha256": "47ea3dccd3a1156d10fe36b5c483029e97c1ca6fef3a3c72d00b5dba7f4e7d70"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T59",
+        "test_id": "T59",
+        "text": "Victory screen works.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32576,
+          "end": 32602,
+          "line_start": 2439,
+          "line_end": 2440,
+          "sha256": "bbd3628c03cf5baf612f04a03875331c26d4277ea30151af820ec3b29e1b61ae"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-victory-ui-level-1.json",
+            "sha256": "d22a9e0336b0f2ded255506c44459ae7c6a84506da87384fd9f5257855351e21"
+          },
+          {
+            "path": "project-r4-victory-ui-level-2.json",
+            "sha256": "7cc46ef76e61dd41ee7f5ff69ac10d1ab73867f693180fc742080bab914b3473"
+          },
+          {
+            "path": "project-r4-victory-ui-level-3.json",
+            "sha256": "4050cb4daad90dea74d213084c4abe66a68399e23e604941a91a7433e6f0a558"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T60",
+        "test_id": "T60",
+        "text": "Deadlock screen works when appropriate.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32604,
+          "end": 32648,
+          "line_start": 2442,
+          "line_end": 2443,
+          "sha256": "88b5384af84137319ba5e712dfc2f6a740f06a96461fe06279b0c2ee215c54ae"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-ui-deadlock-ui-11.json",
+            "sha256": "3099a82f646f8e2159287ff0a7eef2941b32a9a96c0b7054c7a30e7e59b15ca6"
+          },
+          {
+            "path": "project-r4-ui-isolated-deadlock-noninterference-12.json",
+            "sha256": "0902aae2575ecef67563e70d44bc77d6d12e5a91a7086fe62102abcdd1d5a4e0"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T61",
+        "test_id": "T61",
+        "text": "Settings screen works.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32650,
+          "end": 32677,
+          "line_start": 2445,
+          "line_end": 2446,
+          "sha256": "a7d122db94158dda6910deba1f08e27b4a4a1a6a0ff19bcd3c99a3a051acdae9"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-ui-settings-10.json",
+            "sha256": "759fb1873d066764d5e9e44dae8599f814d7ffe8a300ec374d277091ddfb533a"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T62",
+        "test_id": "T62",
+        "text": "All user-facing text is in Chinese.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32679,
+          "end": 32719,
+          "line_start": 2448,
+          "line_end": 2449,
+          "sha256": "b12f512b5322f1d45b3c70d14d8bf3842e390454835b08fe792f6d37badd1303"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-desktop-chinese-ui.json",
+            "sha256": "b78aec657dfe409365461c4c6e99b85100399e6da6fa41eb4a1e1aabb4c5b1ad"
+          },
+          {
+            "path": "project-r4-portrait-chinese-ui.json",
+            "sha256": "b78aec657dfe409365461c4c6e99b85100399e6da6fa41eb4a1e1aabb4c5b1ad"
+          },
+          {
+            "path": "project-r4-landscape-chinese-ui.json",
+            "sha256": "b78aec657dfe409365461c4c6e99b85100399e6da6fa41eb4a1e1aabb4c5b1ad"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T63",
+        "test_id": "T63",
+        "text": "Portrait layout works.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32742,
+          "end": 32769,
+          "line_start": 2453,
+          "line_end": 2454,
+          "sha256": "be76b898a46770d8917098c528aba03cc4fc69c5b3713b76cf1ed47f0b4dcac3"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-portrait-layout.json",
+            "sha256": "c07531be1aa7df73f3da821ff0ca0f92752910bf952f48b6f1dfe74d8edbf105"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-2.input.json",
+            "sha256": "e8154329e966870460a375d400f5f6acda6cb0abc1f19933488e769773ce6ed3"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-2.model.json",
+            "sha256": "374e0a6f4be60f57f2576590a7cfbcf54421480b807c54ca979f126beaff7824"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-2.review.json",
+            "sha256": "e83b48e0db5d0cb31a080673552e08933c89da3f3523f80a0f845b4b2a305777"
+          },
+          {
+            "path": "project-r4-desktop.png",
+            "sha256": "309d424467a48dfa2df9943de2e091567c2c6d95e6269e9810a1058d6c54e90c"
+          },
+          {
+            "path": "project-r4-portrait.png",
+            "sha256": "820d1fbdd6be28d2c1ce95e4a222c1d2032c61dd10b876247048fdcb8ceb5af2"
+          },
+          {
+            "path": "project-r4-landscape.png",
+            "sha256": "ab0a162a87d35ec54f948ef4759676bed215ed42b9cc43028f2d8481efdb19e5"
+          },
+          {
+            "path": "project-r4-ui-power_change_before-1.png",
+            "sha256": "a15d794b20f569653fb1eae1cfaa42190cea8608a2a5b3b1018c1b1947dd335e"
+          },
+          {
+            "path": "project-r4-ui-power_change_after-1.png",
+            "sha256": "dd0ac0158b5a2b5189306119e4577acaadefe86c34ee8977fb3c1210cdc670cd"
+          },
+          {
+            "path": "project-r4-ui-power_change_before-2.png",
+            "sha256": "8da4b55fdb0b45b6f90e4c3d6dcb5e6a7fed750a61140b7941a139b21d595ced"
+          },
+          {
+            "path": "project-r4-ui-power_change_after-2.png",
+            "sha256": "dedd0cb8f20202f4189f415b250f8a948c3a0ce577c6b6d0523d5c9d4cdadcbf"
+          },
+          {
+            "path": "project-r4-ui-settings-1.png",
+            "sha256": "fe7b2ddb7878fa5d5d4d43d2a5310f573e0f52ee34338b2e80debb552a121ed5"
+          },
+          {
+            "path": "project-r4-ui-deadlock-1.png",
+            "sha256": "b7ff44a4d41466d8863568d3d6e47ca585b745c2270d3e231788f70001053ef9"
+          },
+          {
+            "path": "project-r4-desktop-gameplay.png",
+            "sha256": "6264aac104e866be8de37d11b59d99abbb61552a493ee616649be38f395c907f"
+          },
+          {
+            "path": "project-r4-portrait-gameplay.png",
+            "sha256": "02edcb69b1a3fd5067387693f27d747c1c152c655062a5870e28a054c2accd13"
+          },
+          {
+            "path": "project-r4-landscape-gameplay.png",
+            "sha256": "fb896708109a0fffdeb9fe37ec5ed85c85b5adb6d79bc871ec1e577a589fa5d1"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T64",
+        "test_id": "T64",
+        "text": "Landscape layout works.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32771,
+          "end": 32799,
+          "line_start": 2456,
+          "line_end": 2457,
+          "sha256": "fb4cc825652e317309b5d9bb6555f772bce10b44bf412a1a06ca7d13aa24c67b"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-landscape-layout.json",
+            "sha256": "49fbadd4f8c8f095130fea48d8f3315fdbb3814f934ff83f1e9ce3dcc3d44539"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-2.input.json",
+            "sha256": "e8154329e966870460a375d400f5f6acda6cb0abc1f19933488e769773ce6ed3"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-2.model.json",
+            "sha256": "374e0a6f4be60f57f2576590a7cfbcf54421480b807c54ca979f126beaff7824"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-2.review.json",
+            "sha256": "e83b48e0db5d0cb31a080673552e08933c89da3f3523f80a0f845b4b2a305777"
+          },
+          {
+            "path": "project-r4-desktop.png",
+            "sha256": "309d424467a48dfa2df9943de2e091567c2c6d95e6269e9810a1058d6c54e90c"
+          },
+          {
+            "path": "project-r4-portrait.png",
+            "sha256": "820d1fbdd6be28d2c1ce95e4a222c1d2032c61dd10b876247048fdcb8ceb5af2"
+          },
+          {
+            "path": "project-r4-landscape.png",
+            "sha256": "ab0a162a87d35ec54f948ef4759676bed215ed42b9cc43028f2d8481efdb19e5"
+          },
+          {
+            "path": "project-r4-ui-power_change_before-1.png",
+            "sha256": "a15d794b20f569653fb1eae1cfaa42190cea8608a2a5b3b1018c1b1947dd335e"
+          },
+          {
+            "path": "project-r4-ui-power_change_after-1.png",
+            "sha256": "dd0ac0158b5a2b5189306119e4577acaadefe86c34ee8977fb3c1210cdc670cd"
+          },
+          {
+            "path": "project-r4-ui-power_change_before-2.png",
+            "sha256": "8da4b55fdb0b45b6f90e4c3d6dcb5e6a7fed750a61140b7941a139b21d595ced"
+          },
+          {
+            "path": "project-r4-ui-power_change_after-2.png",
+            "sha256": "dedd0cb8f20202f4189f415b250f8a948c3a0ce577c6b6d0523d5c9d4cdadcbf"
+          },
+          {
+            "path": "project-r4-ui-settings-1.png",
+            "sha256": "fe7b2ddb7878fa5d5d4d43d2a5310f573e0f52ee34338b2e80debb552a121ed5"
+          },
+          {
+            "path": "project-r4-ui-deadlock-1.png",
+            "sha256": "b7ff44a4d41466d8863568d3d6e47ca585b745c2270d3e231788f70001053ef9"
+          },
+          {
+            "path": "project-r4-desktop-gameplay.png",
+            "sha256": "6264aac104e866be8de37d11b59d99abbb61552a493ee616649be38f395c907f"
+          },
+          {
+            "path": "project-r4-portrait-gameplay.png",
+            "sha256": "02edcb69b1a3fd5067387693f27d747c1c152c655062a5870e28a054c2accd13"
+          },
+          {
+            "path": "project-r4-landscape-gameplay.png",
+            "sha256": "fb896708109a0fffdeb9fe37ec5ed85c85b5adb6d79bc871ec1e577a589fa5d1"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T65",
+        "test_id": "T65",
+        "text": "Mobile tapping selects correct targets.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32801,
+          "end": 32845,
+          "line_start": 2459,
+          "line_end": 2460,
+          "sha256": "4426fa843a13564b2c860a13b9c9db4ac0ca038db15c05cd192c3e02a9592259"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-portrait-picking.json",
+            "sha256": "cee36fabde378e57bf3f78efb424abe38656cfa558084d8f088a59e51f8f3781"
+          },
+          {
+            "path": "project-r4-landscape-picking.json",
+            "sha256": "08fc2e92ab9fe2b4a580821089358d324a616abdccf5674ba72f83879c13a771"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T66",
+        "test_id": "T66",
+        "text": "Desktop clicking selects correct targets.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32847,
+          "end": 32893,
+          "line_start": 2462,
+          "line_end": 2463,
+          "sha256": "dad38c1e4c65e04cacfae07a7eda476843798f37bfc1e9e12b0cac17369330ab"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-desktop-picking.json",
+            "sha256": "cc10d535272e990cf06f069da063e93c99c44e8553410a9f65a096920e6cf07c"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T67",
+        "test_id": "T67",
+        "text": "Orientation changes preserve game state.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32895,
+          "end": 32940,
+          "line_start": 2465,
+          "line_end": 2466,
+          "sha256": "473520cc1375ebed87a44cf6fe4c3e5f32d3d271c43aef6f2b2310d11f98791c"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-desktop-orientation.json",
+            "sha256": "31eab11d1e7bea58440c456c2d4369d79e69d6553c8751367b6be109b369fdc4"
+          },
+          {
+            "path": "project-r4-portrait-orientation.json",
+            "sha256": "bb61f6b8da2dbb496803268c261c409e6f3c43b99ea04a985d1ecdfe1b6ff063"
+          },
+          {
+            "path": "project-r4-landscape-orientation.json",
+            "sha256": "d6e25e76ab2ea7703288d18c7a8829d5d143d354541035acb84bbd8ec1b87715"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T68",
+        "test_id": "T68",
+        "text": "The game does not require\nruntime third-party APIs.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 32942,
+          "end": 32998,
+          "line_start": 2468,
+          "line_end": 2470,
+          "sha256": "40439257eef353102849944918bdc4c0626742449958949351f1a95ab143fb80"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-desktop-local-only.json",
+            "sha256": "6c1081e749baf5d9b36a4f72af0a72f6ccfeaf4f7934a8869d877deb0470ea94"
+          },
+          {
+            "path": "project-r4-portrait-local-only.json",
+            "sha256": "6c1081e749baf5d9b36a4f72af0a72f6ccfeaf4f7934a8869d877deb0470ea94"
+          },
+          {
+            "path": "project-r4-landscape-local-only.json",
+            "sha256": "6c1081e749baf5d9b36a4f72af0a72f6ccfeaf4f7934a8869d877deb0470ea94"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T69",
+        "test_id": "T69",
+        "text": "Movement remains smooth on mobile.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 33019,
+          "end": 33058,
+          "line_start": 2474,
+          "line_end": 2475,
+          "sha256": "78e7a45be1d2f395e2c1a2ef94db42e19cb9c3b30bec6ce5cd8fecea93dc54ba"
+        },
+        "status": "manual_required",
+        "evidence": [],
+        "errors": [],
+        "manual_instructions": "On a named physical mainstream mobile device, play every level in portrait and landscape; record device/browser versions, frame-time capture and observed defects. Screenshots or desktop emulation do not establish real-device smoothness."
+      },
+      {
+        "id": "GAME-TEST-003/T70",
+        "test_id": "T70",
+        "text": "Power labels remain readable.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 33060,
+          "end": 33094,
+          "line_start": 2477,
+          "line_end": 2478,
+          "sha256": "076fc10bc1fde1100af3a4416d6a5e10eb8641f6b20bd20c7d9d18e313a884f9"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-visual-542342494725-d2c13bf8-2.input.json",
+            "sha256": "e8154329e966870460a375d400f5f6acda6cb0abc1f19933488e769773ce6ed3"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-2.model.json",
+            "sha256": "374e0a6f4be60f57f2576590a7cfbcf54421480b807c54ca979f126beaff7824"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-2.review.json",
+            "sha256": "e83b48e0db5d0cb31a080673552e08933c89da3f3523f80a0f845b4b2a305777"
+          },
+          {
+            "path": "project-r4-desktop.png",
+            "sha256": "309d424467a48dfa2df9943de2e091567c2c6d95e6269e9810a1058d6c54e90c"
+          },
+          {
+            "path": "project-r4-portrait.png",
+            "sha256": "820d1fbdd6be28d2c1ce95e4a222c1d2032c61dd10b876247048fdcb8ceb5af2"
+          },
+          {
+            "path": "project-r4-landscape.png",
+            "sha256": "ab0a162a87d35ec54f948ef4759676bed215ed42b9cc43028f2d8481efdb19e5"
+          },
+          {
+            "path": "project-r4-ui-power_change_before-1.png",
+            "sha256": "a15d794b20f569653fb1eae1cfaa42190cea8608a2a5b3b1018c1b1947dd335e"
+          },
+          {
+            "path": "project-r4-ui-power_change_after-1.png",
+            "sha256": "dd0ac0158b5a2b5189306119e4577acaadefe86c34ee8977fb3c1210cdc670cd"
+          },
+          {
+            "path": "project-r4-ui-power_change_before-2.png",
+            "sha256": "8da4b55fdb0b45b6f90e4c3d6dcb5e6a7fed750a61140b7941a139b21d595ced"
+          },
+          {
+            "path": "project-r4-ui-power_change_after-2.png",
+            "sha256": "dedd0cb8f20202f4189f415b250f8a948c3a0ce577c6b6d0523d5c9d4cdadcbf"
+          },
+          {
+            "path": "project-r4-ui-settings-1.png",
+            "sha256": "fe7b2ddb7878fa5d5d4d43d2a5310f573e0f52ee34338b2e80debb552a121ed5"
+          },
+          {
+            "path": "project-r4-ui-deadlock-1.png",
+            "sha256": "b7ff44a4d41466d8863568d3d6e47ca585b745c2270d3e231788f70001053ef9"
+          },
+          {
+            "path": "project-r4-desktop-gameplay.png",
+            "sha256": "6264aac104e866be8de37d11b59d99abbb61552a493ee616649be38f395c907f"
+          },
+          {
+            "path": "project-r4-portrait-gameplay.png",
+            "sha256": "02edcb69b1a3fd5067387693f27d747c1c152c655062a5870e28a054c2accd13"
+          },
+          {
+            "path": "project-r4-landscape-gameplay.png",
+            "sha256": "fb896708109a0fffdeb9fe37ec5ed85c85b5adb6d79bc871ec1e577a589fa5d1"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T71",
+        "test_id": "T71",
+        "text": "Repeated target changes do not\ncause navigation errors.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 33096,
+          "end": 33156,
+          "line_start": 2480,
+          "line_end": 2482,
+          "sha256": "19088af2266da1c8433fa512c683a6a8f9aedfb5fc83c27aba190abe3eebb89f"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-10.json",
+            "sha256": "16bc1bb9775ec73da0691710e8de2b5aa5fc1813167c2f28f7a00490e072e5e7"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T72",
+        "test_id": "T72",
+        "text": "Repeated restarts do not create\nduplicate update loops.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 33158,
+          "end": 33218,
+          "line_start": 2484,
+          "line_end": 2486,
+          "sha256": "5250ab0318eb45fb45981168a2791458477013304ab88f6d7097b3c7292aa389"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-desktop-restart-loop.json",
+            "sha256": "4f4bf8a63c615b52fd6a618365432727c2d84e762a3b9784ff4416a2e9e541ca"
+          },
+          {
+            "path": "project-r4-portrait-restart-loop.json",
+            "sha256": "4f4bf8a63c615b52fd6a618365432727c2d84e762a3b9784ff4416a2e9e541ca"
+          },
+          {
+            "path": "project-r4-landscape-restart-loop.json",
+            "sha256": "4f4bf8a63c615b52fd6a618365432727c2d84e762a3b9784ff4416a2e9e541ca"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T73",
+        "test_id": "T73",
+        "text": "Scene resources are cleaned up correctly.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 33220,
+          "end": 33266,
+          "line_start": 2488,
+          "line_end": 2489,
+          "sha256": "ea224b047cce9331e8ef03e10c1a6f973d069f29d1ebeb1a66a663bd46322166"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-desktop-restart-resource-cleanup.json",
+            "sha256": "537969593cc2cbab31c41a7d252f8382ee8809a1ad41979feb6dba44821252a8"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T74",
+        "test_id": "T74",
+        "text": "Combat power is displayed above characters.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 33294,
+          "end": 33342,
+          "line_start": 2493,
+          "line_end": 2494,
+          "sha256": "b4086dc9b9332e812bfe6c4752201f8080dec1e05c4cd3de79e9a83a47f3cfc4"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-visual-542342494725-d2c13bf8-3.input.json",
+            "sha256": "f97b0bf55c13bdfbdcb5da8a2d35051c2a4850725cb5976600c61a7fc5e8339c"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-3.model.json",
+            "sha256": "a9c3be5f50e2cf251b999780f38fb4771dfa555772a505f8baf8f80a0e40bb87"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-3.review.json",
+            "sha256": "e783d7c07bf1c01d6c3a955d74f615b29dc4b5a9daca9d44637bfa6377f4b86c"
+          },
+          {
+            "path": "project-r4-desktop.png",
+            "sha256": "309d424467a48dfa2df9943de2e091567c2c6d95e6269e9810a1058d6c54e90c"
+          },
+          {
+            "path": "project-r4-portrait.png",
+            "sha256": "820d1fbdd6be28d2c1ce95e4a222c1d2032c61dd10b876247048fdcb8ceb5af2"
+          },
+          {
+            "path": "project-r4-landscape.png",
+            "sha256": "ab0a162a87d35ec54f948ef4759676bed215ed42b9cc43028f2d8481efdb19e5"
+          },
+          {
+            "path": "project-r4-ui-power_change_before-1.png",
+            "sha256": "a15d794b20f569653fb1eae1cfaa42190cea8608a2a5b3b1018c1b1947dd335e"
+          },
+          {
+            "path": "project-r4-ui-power_change_after-1.png",
+            "sha256": "dd0ac0158b5a2b5189306119e4577acaadefe86c34ee8977fb3c1210cdc670cd"
+          },
+          {
+            "path": "project-r4-ui-power_change_before-2.png",
+            "sha256": "8da4b55fdb0b45b6f90e4c3d6dcb5e6a7fed750a61140b7941a139b21d595ced"
+          },
+          {
+            "path": "project-r4-ui-power_change_after-2.png",
+            "sha256": "dedd0cb8f20202f4189f415b250f8a948c3a0ce577c6b6d0523d5c9d4cdadcbf"
+          },
+          {
+            "path": "project-r4-ui-settings-1.png",
+            "sha256": "fe7b2ddb7878fa5d5d4d43d2a5310f573e0f52ee34338b2e80debb552a121ed5"
+          },
+          {
+            "path": "project-r4-ui-deadlock-1.png",
+            "sha256": "b7ff44a4d41466d8863568d3d6e47ca585b745c2270d3e231788f70001053ef9"
+          },
+          {
+            "path": "project-r4-desktop-gameplay.png",
+            "sha256": "6264aac104e866be8de37d11b59d99abbb61552a493ee616649be38f395c907f"
+          },
+          {
+            "path": "project-r4-portrait-gameplay.png",
+            "sha256": "02edcb69b1a3fd5067387693f27d747c1c152c655062a5870e28a054c2accd13"
+          },
+          {
+            "path": "project-r4-landscape-gameplay.png",
+            "sha256": "fb896708109a0fffdeb9fe37ec5ed85c85b5adb6d79bc871ec1e577a589fa5d1"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T75",
+        "test_id": "T75",
+        "text": "Only weaker enemies can be defeated.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 33344,
+          "end": 33385,
+          "line_start": 2496,
+          "line_end": 2497,
+          "sha256": "2da1fed475dd8464042e5d26c54d941f874dff95930bda2d9227a11005238485"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-2.json",
+            "sha256": "29a3bb09f998358785c3a590f20f70999cd97c9da4755579fd752d16851cb550"
+          },
+          {
+            "path": "project-r4-scenario-3.json",
+            "sha256": "d640fc9b45cb97600b698b1643b9f129db11974cad1069ab50b3009453306551"
+          },
+          {
+            "path": "project-r4-scenario-4.json",
+            "sha256": "1cb5dca103e18b855b74213ae7bcf61354279d1586742c52bfbbee3a673df1c6"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T76",
+        "test_id": "T76",
+        "text": "Defeated enemy power is added\nto the player's power.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 33387,
+          "end": 33444,
+          "line_start": 2499,
+          "line_end": 2501,
+          "sha256": "4e389d440f6d167a156d7eae67c826db72fbb56d2d141e2b3b29f878d10a20cb"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-2.json",
+            "sha256": "29a3bb09f998358785c3a590f20f70999cd97c9da4755579fd752d16851cb550"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T77",
+        "test_id": "T77",
+        "text": "Weapons increase player power.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 33446,
+          "end": 33481,
+          "line_start": 2503,
+          "line_end": 2504,
+          "sha256": "15b324fec21b04172886469f9df78b999a682f7be357b9f2b3d71379bfa81835"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-5.json",
+            "sha256": "427815ab42ff8f626547325bd4c9f6f325e28942082429901e4555940fa63ccc"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T78",
+        "test_id": "T78",
+        "text": "The hero moves after target selection.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 33483,
+          "end": 33526,
+          "line_start": 2506,
+          "line_end": 2507,
+          "sha256": "197d358ce7b174b8bb99ffa10c764f33958469b1c2a90b93d37549eb3de6c570"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-6.json",
+            "sha256": "2f4e48dccd25a43f9cb2f9892318a6774e2afe914e70edffdffc79230f87ec97"
+          },
+          {
+            "path": "project-r4-scenario-7.json",
+            "sha256": "924af666322d82e80dbff4e5df6dfefa8366906427c4df987894e871f4240a80"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T79",
+        "test_id": "T79",
+        "text": "Combat is resolved automatically\nafter approaching the target.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 33528,
+          "end": 33595,
+          "line_start": 2509,
+          "line_end": 2511,
+          "sha256": "e9c491d0bee29c4ab2ac51d8b7c61c13c762f0448959c7143ae54fe56d7e2d50"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-7.json",
+            "sha256": "924af666322d82e80dbff4e5df6dfefa8366906427c4df987894e871f4240a80"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T80",
+        "test_id": "T80",
+        "text": "The game uses an open-field layout.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 33597,
+          "end": 33637,
+          "line_start": 2513,
+          "line_end": 2514,
+          "sha256": "8ee4da6df1a74e62a8d7829e312f96973694bddd77efb096a4f802c886a6ed5b"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-9.json",
+            "sha256": "93327f9089d97161703e7b75769bde0181b66a032b7f1480fdfd043beb9d1ef7"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-3.input.json",
+            "sha256": "f97b0bf55c13bdfbdcb5da8a2d35051c2a4850725cb5976600c61a7fc5e8339c"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-3.model.json",
+            "sha256": "a9c3be5f50e2cf251b999780f38fb4771dfa555772a505f8baf8f80a0e40bb87"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-3.review.json",
+            "sha256": "e783d7c07bf1c01d6c3a955d74f615b29dc4b5a9daca9d44637bfa6377f4b86c"
+          },
+          {
+            "path": "project-r4-desktop.png",
+            "sha256": "309d424467a48dfa2df9943de2e091567c2c6d95e6269e9810a1058d6c54e90c"
+          },
+          {
+            "path": "project-r4-portrait.png",
+            "sha256": "820d1fbdd6be28d2c1ce95e4a222c1d2032c61dd10b876247048fdcb8ceb5af2"
+          },
+          {
+            "path": "project-r4-landscape.png",
+            "sha256": "ab0a162a87d35ec54f948ef4759676bed215ed42b9cc43028f2d8481efdb19e5"
+          },
+          {
+            "path": "project-r4-ui-power_change_before-1.png",
+            "sha256": "a15d794b20f569653fb1eae1cfaa42190cea8608a2a5b3b1018c1b1947dd335e"
+          },
+          {
+            "path": "project-r4-ui-power_change_after-1.png",
+            "sha256": "dd0ac0158b5a2b5189306119e4577acaadefe86c34ee8977fb3c1210cdc670cd"
+          },
+          {
+            "path": "project-r4-ui-power_change_before-2.png",
+            "sha256": "8da4b55fdb0b45b6f90e4c3d6dcb5e6a7fed750a61140b7941a139b21d595ced"
+          },
+          {
+            "path": "project-r4-ui-power_change_after-2.png",
+            "sha256": "dedd0cb8f20202f4189f415b250f8a948c3a0ce577c6b6d0523d5c9d4cdadcbf"
+          },
+          {
+            "path": "project-r4-ui-settings-1.png",
+            "sha256": "fe7b2ddb7878fa5d5d4d43d2a5310f573e0f52ee34338b2e80debb552a121ed5"
+          },
+          {
+            "path": "project-r4-ui-deadlock-1.png",
+            "sha256": "b7ff44a4d41466d8863568d3d6e47ca585b745c2270d3e231788f70001053ef9"
+          },
+          {
+            "path": "project-r4-desktop-gameplay.png",
+            "sha256": "6264aac104e866be8de37d11b59d99abbb61552a493ee616649be38f395c907f"
+          },
+          {
+            "path": "project-r4-portrait-gameplay.png",
+            "sha256": "02edcb69b1a3fd5067387693f27d747c1c152c655062a5870e28a054c2accd13"
+          },
+          {
+            "path": "project-r4-landscape-gameplay.png",
+            "sha256": "fb896708109a0fffdeb9fe37ec5ed85c85b5adb6d79bc871ec1e577a589fa5d1"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T81",
+        "test_id": "T81",
+        "text": "The game does not use fixed tower floors.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 33639,
+          "end": 33685,
+          "line_start": 2516,
+          "line_end": 2517,
+          "sha256": "085cdd9590c39444de88984ceb445b6877acf85851f01efd3ed23eb14768adbf"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-9.json",
+            "sha256": "93327f9089d97161703e7b75769bde0181b66a032b7f1480fdfd043beb9d1ef7"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-3.input.json",
+            "sha256": "f97b0bf55c13bdfbdcb5da8a2d35051c2a4850725cb5976600c61a7fc5e8339c"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-3.model.json",
+            "sha256": "a9c3be5f50e2cf251b999780f38fb4771dfa555772a505f8baf8f80a0e40bb87"
+          },
+          {
+            "path": "project-visual-542342494725-d2c13bf8-3.review.json",
+            "sha256": "e783d7c07bf1c01d6c3a955d74f615b29dc4b5a9daca9d44637bfa6377f4b86c"
+          },
+          {
+            "path": "project-r4-desktop.png",
+            "sha256": "309d424467a48dfa2df9943de2e091567c2c6d95e6269e9810a1058d6c54e90c"
+          },
+          {
+            "path": "project-r4-portrait.png",
+            "sha256": "820d1fbdd6be28d2c1ce95e4a222c1d2032c61dd10b876247048fdcb8ceb5af2"
+          },
+          {
+            "path": "project-r4-landscape.png",
+            "sha256": "ab0a162a87d35ec54f948ef4759676bed215ed42b9cc43028f2d8481efdb19e5"
+          },
+          {
+            "path": "project-r4-ui-power_change_before-1.png",
+            "sha256": "a15d794b20f569653fb1eae1cfaa42190cea8608a2a5b3b1018c1b1947dd335e"
+          },
+          {
+            "path": "project-r4-ui-power_change_after-1.png",
+            "sha256": "dd0ac0158b5a2b5189306119e4577acaadefe86c34ee8977fb3c1210cdc670cd"
+          },
+          {
+            "path": "project-r4-ui-power_change_before-2.png",
+            "sha256": "8da4b55fdb0b45b6f90e4c3d6dcb5e6a7fed750a61140b7941a139b21d595ced"
+          },
+          {
+            "path": "project-r4-ui-power_change_after-2.png",
+            "sha256": "dedd0cb8f20202f4189f415b250f8a948c3a0ce577c6b6d0523d5c9d4cdadcbf"
+          },
+          {
+            "path": "project-r4-ui-settings-1.png",
+            "sha256": "fe7b2ddb7878fa5d5d4d43d2a5310f573e0f52ee34338b2e80debb552a121ed5"
+          },
+          {
+            "path": "project-r4-ui-deadlock-1.png",
+            "sha256": "b7ff44a4d41466d8863568d3d6e47ca585b745c2270d3e231788f70001053ef9"
+          },
+          {
+            "path": "project-r4-desktop-gameplay.png",
+            "sha256": "6264aac104e866be8de37d11b59d99abbb61552a493ee616649be38f395c907f"
+          },
+          {
+            "path": "project-r4-portrait-gameplay.png",
+            "sha256": "02edcb69b1a3fd5067387693f27d747c1c152c655062a5870e28a054c2accd13"
+          },
+          {
+            "path": "project-r4-landscape-gameplay.png",
+            "sha256": "fb896708109a0fffdeb9fe37ec5ed85c85b5adb6d79bc871ec1e577a589fa5d1"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T82",
+        "test_id": "T82",
+        "text": "The final Boss requires sufficient power.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 33687,
+          "end": 33733,
+          "line_start": 2519,
+          "line_end": 2520,
+          "sha256": "6cbd81a99751847c5041623e61a4bf2948a9492d6d139365e2fcb29243dd00bc"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-scenario-12.json",
+            "sha256": "e0b2c4d9eeb647d41130f95bbfa07154c37e9a78f532de6e73f714c8c2096393"
+          },
+          {
+            "path": "project-r4-scenario-13.json",
+            "sha256": "95ffa36ad19a6504a7a8aeebf47fd4a1bb76bb2a1c0e2e6976d90830ca239d6c"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      },
+      {
+        "id": "GAME-TEST-003/T83",
+        "test_id": "T83",
+        "text": "The game retains numerical\npower-growth puzzle gameplay.",
+        "source": {
+          "path": "case3-Power_Hunter/003百炼英雄.txt",
+          "start": 33735,
+          "end": 33796,
+          "line_start": 2522,
+          "line_end": 2524,
+          "sha256": "02264c4724e8d67c9c72b68aa72b93dc37d6730fd44dfda78c78c730a24e1a59"
+        },
+        "status": "passed",
+        "evidence": [
+          {
+            "path": "project-r4-normal-level-1.json",
+            "sha256": "788148b592ead76696c72fce52f1fd858c664f362acd7e60ca4d345296fa3b46"
+          },
+          {
+            "path": "project-r4-normal-level-2.json",
+            "sha256": "75528bc40611b7ff6a8578cb9abedf0a5188dbb411ac6ba69fdf758f1002bece"
+          },
+          {
+            "path": "project-r4-normal-level-3.json",
+            "sha256": "c6a086a490f147fc5b5f33be66d56a6ba4d258fb271e605f2a15da22c8ca6e64"
+          }
+        ],
+        "errors": [],
+        "missing_scenarios": []
+      }
+    ],
+    "unexecuted_is_passed": false,
+    "source_requirement_count": 800,
+    "source_constraint_count": 196,
+    "trusted_plan_error": null,
+    "scope": "The complete numbered section-14 acceptance suite; raw section requirements remain in the implementation plan"
+  },
+  "evidence_ledger": "project-evidence-4.json",
+  "counts": {
+    "passed": 82,
+    "failed": 0,
+    "not_run": 0,
+    "manual_required": 1,
+    "visual_required": 0
+  },
+  "adapter_failures": [],
+  "blockers": [
+    "Official acceptance contains failed, not-run, manual or visual pending criteria",
+    "Recorded independent validation did not pass"
+  ],
+  "original_reports_modified": false,
+  "scope": "A verified playable candidate is not full gameplay acceptance; original evidence reports are copied byte-for-byte."
+}

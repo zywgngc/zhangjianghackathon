@@ -3,6 +3,7 @@
 | 游戏 | 正式验收 | 交付 |
 | --- | --- | --- |
 | GAME-TEST-001 数字门枪手 | 54 / 54 通过 | [离线 HTML](GAME-TEST-001/playable.html)、[源码](GAME-TEST-001/project/)、[完整证据包](GAME-TEST-001/delivery.zip) |
+| GAME-TEST-003 百炼英雄 | 82 / 83 通过；T69 待真实手机验证，当前为候选 | [离线 HTML](GAME-TEST-003/playable.html)、[源码](GAME-TEST-003/project/)、[完整证据包](GAME-TEST-003/delivery.zip) |
 
 下载后直接打开 `playable.html`。源码按各游戏的 `package-lock.json` 安装依赖后可重新构建。
 

@@ -1,0 +1,215 @@
+{
+  "case_id": "GAME-TEST-003",
+  "source_sha256": "542342494725538c6ca80c8e5c00299fbb505f3efafe3751ac105c137c544f2a",
+  "accepted": false,
+  "official_acceptance": {
+    "passed": 82,
+    "failed": 0,
+    "not_run": 0,
+    "manual_required": 1,
+    "visual_required": 0
+  },
+  "full_evidence_archive": "delivery.zip",
+  "files": [
+    {
+      "path": "DELIVERY.md",
+      "sha256": "16f1eba93a5ed474b0e779eb44f62611e2727bda62452d38a26991529f48a5eb",
+      "bytes": 777
+    },
+    {
+      "path": "delivery-status.json",
+      "sha256": "9f5d31f47d4f2d6b0fcc59e9d55790f68fe03df65f2ee7ed0ce440865e81e1a1",
+      "bytes": 92585
+    },
+    {
+      "path": "delivery.zip",
+      "sha256": "4bf0863e1ce43254b5708ec397658cafa462215ec80ddb346225131fc92fabe0",
+      "bytes": 10112730
+    },
+    {
+      "path": "licenses/npm/@babylonjs/core/license.md",
+      "sha256": "9362ea9ea17cb221a20cbbd63f404710834cc273d2a9a7b60314fd68ab702cd6",
+      "bytes": 9226
+    },
+    {
+      "path": "licenses/npm/react/LICENSE",
+      "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+      "bytes": 1088
+    },
+    {
+      "path": "licenses/npm/react-dom/LICENSE",
+      "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+      "bytes": 1088
+    },
+    {
+      "path": "licenses/npm/scheduler/LICENSE",
+      "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+      "bytes": 1088
+    },
+    {
+      "path": "playable.html",
+      "sha256": "2af15372f3120a234e8b5d8160b6edaeb41b3551acae67afe8df8be2f9e39f0f",
+      "bytes": 6290805
+    },
+    {
+      "path": "project/index.html",
+      "sha256": "72b14741dc08c0d53b7320fe31feea3f11a2d0c3a7f79a1d0ea08d904305597d",
+      "bytes": 265
+    },
+    {
+      "path": "project/package-lock.json",
+      "sha256": "97813baba1445a310d26618f5fc21a338136528f56577dc1b1ef7c0207af518e",
+      "bytes": 37933
+    },
+    {
+      "path": "project/package.json",
+      "sha256": "1e90a872e28d770b72a409a6acc89cd67a3cda9f206ba1e80a7a94b8e75965a6",
+      "bytes": 490
+    },
+    {
+      "path": "project/src/App.tsx",
+      "sha256": "e665d37886eaa44595179f62e939c90ab770956b737cbe6a93ad47ec225bddb4",
+      "bytes": 590
+    },
+    {
+      "path": "project/src/engine.ts",
+      "sha256": "866d662e457b6fff09015bddc8294243bf29fe6d384de7a93822b71a12a7d643",
+      "bytes": 2314
+    },
+    {
+      "path": "project/src/game/Simulation.ts",
+      "sha256": "421b20088d8a4d19722dc3c38dc934d9538e0c8b354eb485fcee507d67669fe6",
+      "bytes": 11035
+    },
+    {
+      "path": "project/src/game/audio.ts",
+      "sha256": "bd9b953f6049bf3af252418d7f22892d38c82b2d73dbb2f276ea5985b5b97e75",
+      "bytes": 14784
+    },
+    {
+      "path": "project/src/game/boss.ts",
+      "sha256": "863c7e164241f00fbf062e55b635ebaf9e868e957044ea81121795cb179a539e",
+      "bytes": 2318
+    },
+    {
+      "path": "project/src/game/bridge.ts",
+      "sha256": "ed75a7ba33fd38092742e08dce9c3f11d9cafeff71f5abbf87e05e7b29a65762",
+      "bytes": 3640
+    },
+    {
+      "path": "project/src/game/combat.ts",
+      "sha256": "0f148e26839ee2ad9a58871af4df8a72b7c32f7cce70a630f412e36d20553129",
+      "bytes": 7710
+    },
+    {
+      "path": "project/src/game/config.ts",
+      "sha256": "4ad69b69b14065857ccdb93bcd6057143c3f5e1f7988bd1ab8347c7b14306d65",
+      "bytes": 7382
+    },
+    {
+      "path": "project/src/game/enemies.ts",
+      "sha256": "fbb9b4c2bd51ae27bc28721361ed75c2da8934af1ac2e9566dd051971add79b1",
+      "bytes": 2813
+    },
+    {
+      "path": "project/src/game/levels.ts",
+      "sha256": "b71719f72290d9e9e70e47d631e30cbf4e84018f890633a6688b0d37bc7db3f8",
+      "bytes": 7033
+    },
+    {
+      "path": "project/src/game/meshes.ts",
+      "sha256": "e81e6eef87537d6d782e1ef8dabf7821097bcf01f67faf9ff531d861c914f2fc",
+      "bytes": 11510
+    },
+    {
+      "path": "project/src/game/navigation.ts",
+      "sha256": "1eb854f980df45fac527b7147a35cfaa583d1d2d3af67c6f70f3fdb945cf5eb9",
+      "bytes": 21211
+    },
+    {
+      "path": "project/src/game/particles.ts",
+      "sha256": "4acae816eeaeb029d62998a9612c724c00f6f36bb6d23fba9950fad0483036cc",
+      "bytes": 8856
+    },
+    {
+      "path": "project/src/game/prng.ts",
+      "sha256": "66f29ceb8bc6e1c5c1b2714b257dce9c27d04c4452ceafef7664ac4566d24ac1",
+      "bytes": 884
+    },
+    {
+      "path": "project/src/game/renderer.ts",
+      "sha256": "e67cb6a20c6647e03d614121c308ed3c1059276094a4471b3c342df80414f6bb",
+      "bytes": 23894
+    },
+    {
+      "path": "project/src/game/save.ts",
+      "sha256": "f87f297719a697c861e85f441bdd38d9f57c3695e469c87a63104271598978bb",
+      "bytes": 4117
+    },
+    {
+      "path": "project/src/game/types.ts",
+      "sha256": "014954c3ab03f61f6ed94f99fc097f28e0eef02a800b5a9638f3e81661a611ca",
+      "bytes": 6073
+    },
+    {
+      "path": "project/src/game/weapons.ts",
+      "sha256": "6e92bd2dbc0a33d41ed24621c2d1c1fd1d37635bd1914adb50cc011c32de337b",
+      "bytes": 2366
+    },
+    {
+      "path": "project/src/main.tsx",
+      "sha256": "5046ee7b300e071a3224a2bc214d9a5f1c8ec5797b94e8834c32ba9ed5f903f9",
+      "bytes": 224
+    },
+    {
+      "path": "project/src/style.css",
+      "sha256": "5bbf7e987353a093927988585e950b8c2293401c6fb5914d7ed043e351763652",
+      "bytes": 3303
+    },
+    {
+      "path": "project/src/ui/DeadlockScreen.tsx",
+      "sha256": "49754a2c337027373d5ff22df7f08f1e8be64a6a0d88613ba4771c2db5ebd898",
+      "bytes": 1775
+    },
+    {
+      "path": "project/src/ui/HUD.tsx",
+      "sha256": "d944042d2d01432a54234713bc745201031b3da8b041567bc8d8a8cd96bb68d4",
+      "bytes": 6493
+    },
+    {
+      "path": "project/src/ui/LevelSelect.tsx",
+      "sha256": "663f7c5c31d94d7a7c65c4dd1c423d9b7f9a18eb54bc53c5c2ef702739e3e8ab",
+      "bytes": 3312
+    },
+    {
+      "path": "project/src/ui/MainMenu.tsx",
+      "sha256": "fe711256773dd2dd6b24d621197a7aa4223604c393bb2e49c30856f2fd0f7c9e",
+      "bytes": 2456
+    },
+    {
+      "path": "project/src/ui/PauseMenu.tsx",
+      "sha256": "c2979b2a4c5047dae2a6bad59a624b82db8a60862c0f3a3b9eabf7843fcdbcc9",
+      "bytes": 2173
+    },
+    {
+      "path": "project/src/ui/Settings.tsx",
+      "sha256": "0cf39baf32274217e4c1c1a849b059f986f6614ea0047bf6935112e57a64521e",
+      "bytes": 2524
+    },
+    {
+      "path": "project/src/ui/VictoryScreen.tsx",
+      "sha256": "20c9ee17a18469947389dc1d7ba4c2fbd3104a3151a15734630cdbb11d748251",
+      "bytes": 3352
+    },
+    {
+      "path": "project/tsconfig.json",
+      "sha256": "4aa55f962f3d6917cb4e1229011d4e66ee29abd45341c150b654e5238c2ea8a0",
+      "bytes": 502
+    },
+    {
+      "path": "project/vite.config.mjs",
+      "sha256": "9ad5a00d289939da125b69b73a9f988e456be3b3193190b6c49ca722c185376c",
+      "bytes": 468
+    }
+  ]
+}
