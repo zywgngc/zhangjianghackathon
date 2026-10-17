@@ -19,6 +19,13 @@ class RunRequest(Contract):
     research: ResearchReference | None = None
 
 
+class ProjectRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=False)
+    case_id: Literal["GAME-TEST-001", "GAME-TEST-002", "GAME-TEST-003"] | None = None
+    specification: str | None = Field(default=None, min_length=20, max_length=1000000)
+    engine: Literal["auto", "phaser", "babylon"] = "auto"
+
+
 class Brief(Contract):
     title: str = Field(min_length=1, max_length=80)
     rewritten_prompt: str = Field(min_length=20, max_length=6000)

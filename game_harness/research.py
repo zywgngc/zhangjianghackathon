@@ -82,7 +82,7 @@ class ResearchClient:
         if state.get("status") != "completed" or blueprint.get("readiness") != "ready":
             blockers.append("research_not_ready: 当前蓝图为 partial；研究完成不代表可生成。")
         if plan["engine"] != "html":
-            blockers.append("engine_adapter_not_installed:" + plan["engine"])
+            blockers.append("quick_run_handoff_engine_not_supported:" + plan["engine"])
         if requested_engine not in {"auto", "canvas", "dom"}:
             blockers.append("unsupported_builder_engine:" + requested_engine)
         candidates = blueprint.get("candidates", [])
@@ -103,4 +103,4 @@ class ResearchClient:
         digest = hashlib.sha256(json.dumps(blueprint, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
         return {"reference": reference.model_dump(), "projectId": state.get("projectId"),
                 "eligible": not blockers, "blockers": blockers, "sha256": digest, "blueprint": blueprint,
-                "scope": "研究到 Builder 的兼容性检查；不是游戏验收。"}
+                "scope": "研究到单文件 /api/runs 的兼容性检查；完整项目 /api/projects 的蓝图接收适配尚未接入。"}

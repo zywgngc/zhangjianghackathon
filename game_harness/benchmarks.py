@@ -38,12 +38,10 @@ def inventory(root=None):
         if len(names) > 1:
             warnings.append("规格内部存在多个游戏名，保留原文待确认：" + " / ".join(names))
         blockers = []
-        if locked_engine not in {"canvas", "dom"}:
+        if locked_engine not in {"canvas", "dom", "phaser", "babylon"}:
             blockers.append("engine_adapter_not_installed:" + str(locked_engine))
-        if len(text) > 8000:
-            blockers.append("long_spec_input_not_supported")
-        if "TypeScript" in stack or "Vite" in stack:
-            blockers.append("multi_file_typescript_build_not_supported")
+        if len(text) > 1000000:
+            blockers.append("spec_input_exceeds_one_million_characters")
         results.append({"case_id": case_id, "names": names, "specification": str(path.relative_to(root)),
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "characters": len(text),
             "required_stack": stack, "locked_engine": locked_engine,

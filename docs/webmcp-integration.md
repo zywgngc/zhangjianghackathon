@@ -1,6 +1,6 @@
 # Harness 与 WebMCP 联合运行
 
-本次以 `codex/game-harness@470bdfeb` 与 `Webmcp@82862cf` 为集成基线。Python harness 保留生成队列、模型预算、Builder、Chromium、QA 和发布门禁；Node WebMCP runtime 保留研究任务、修订、默认决策、玩法拆分和两套三轮讨论账本。
+本次最终对齐 `codex/game-harness@bb451eb` 与 `Webmcp@82862cf`。Python harness 保留生成队列、模型预算、Builder、Chromium、QA 和发布门禁；Node WebMCP runtime 保留研究任务、修订、默认决策、玩法拆分和两套三轮讨论账本。harness v2 已提供 Phaser/Babylon 多文件项目流水线；本次不改写该实现，研究蓝图的自动接收钩子目前只接入 v1 单文件入口。
 
 **交付范围：WebMCP 是 harness 内的研究组件。** 本次工作放在独立的 `codex/webmcp-harness-integration` 分支，供 harness 负责人审阅；不直接更新 `codex/game-harness` 或部署服务。harness 侧改动限于接入适配、固定版本蓝图传递、工作台入口，以及本机集成验证所需的 Windows/UTF-8 兼容修复。Builder、浏览器测试器、QA 和发布决策继续由 harness 维护；素材门户实现继续属于门户负责人。
 
@@ -36,6 +36,8 @@ Windows 的联合启动命令：
 .venv/Scripts/python.exe scripts/run_integrated.py
 ```
 
+Windows 联合启动用于研究组件与 v1 的接入验证。上游 v2 工程构建/编码使用 POSIX 文件锁和进程管理，完整项目执行仍需其支持的 Linux/macOS 环境；本次没有移植或代替项目运行时。
+
 需要 Node.js `>=24.10 <25`。脚本在 loopback 启动 Python `18080` 与 Node `4174`，生成仅在两个服务内存中共享的 backend token，退出时停止它启动的 Node 子进程。可用 `--port 18081 --research-port 4175` 改端口。已有独立 studio 占用端口时选择另一个 research port。研究运行不调用模型；生成游戏仍需配置 `OPENAI_API_KEY`，浏览器验收需 `.venv/bin/python -m playwright install chromium`。
 
 打开 [harness](http://127.0.0.1:18080)，点击“研究 MAS · 决策与蓝图”，或直接访问 [研究工作台](http://127.0.0.1:18080/research)。`HARNESS_API_TOKEN` 如果已配置，在主工作台“访问设置”中输入；研究工作台复用同一 sessionStorage 口令。浏览器不会接触 backend research token。原有独立 `pnpm start` 入口仍可使用。
@@ -49,13 +51,14 @@ Windows 的联合启动命令：
 | 入口 | 行为 |
 | --- | --- |
 | `/research` | 复用 `webmcp/public` 的研究 studio，API 前缀改为 `/api/research` |
-| `/api/research/config` | 是否已配置、两套讨论上限、当前 Builder 引擎；不暴露 backend token |
+| `/api/research/config` | 是否已配置、两套讨论上限、v1 交接目标与引擎、`project_handoff_supported: false`；不暴露 backend token |
 | `/api/research/cases`, `/contract`, `/runs` | 转发到 Node 的对应 `/api/*` |
 | `/api/research/runs/:id` | 状态、默认来源、问题、候选、账本与历史 |
 | `POST …/follow-ups`, `…/material-follow-ups`, `…/cancel` | 原样转发；修订、requestId、父请求和额度由 Node 校验 |
 | `GET …/blueprint` | 当前修订的蓝图；旧修订返回 `NOT_READY` |
 | `POST …/handoff` | 以 `{runId, projectRevision, blueprintVersion}` 获取单个原子状态快照并检查 Builder 准入；不启动生成 |
-| `POST /api/runs` | 可附相同 `research` 引用；不满足准入返回 409，不入生成队列、不调用模型 |
+| `POST /api/runs` | v1 可附相同 `research` 引用；不满足准入返回 409，不入生成队列、不调用模型 |
+| `POST /api/projects` | 上游 v2 入口保持原有完整规格契约，尚未接收 `research` 引用 |
 
 网关不重试写操作、不截断或重写研究输入、不把 `needs_clarification` 变成虚构答案。重试使用相同 requestId，由 Node 幂等处理。Node 不可用返回明确 503/504；不会替换成另一份 mock 成功结果。三轮限制和取消均继续由原 runtime 执行。
 
@@ -63,13 +66,13 @@ Windows 的联合启动命令：
 
 ## Builder 准入与固定版本
 
-接收端要求：研究 lifecycle 为 `completed`，blueprint 为 `ready`，没有 gaps，当前 Builder 支持目标引擎，并且每个 mechanic 有同修订、非 mock、`behavior_verified` 的候选。当前 Builder 只支持 `html → canvas/dom`；不会把 Phaser/Babylon 锁定改成 Canvas。
+当前 v1 接收钩子要求：研究 lifecycle 为 `completed`，blueprint 为 `ready`，没有 gaps，接收路径支持目标引擎，并且每个 mechanic 有同修订、非 mock、`behavior_verified` 的候选。此钩子只映射 `html → canvas/dom`；Phaser/Babylon 引擎虽然已存在于 v2，但其蓝图接收适配尚未完成，不会把引擎锁改成 Canvas。
 
-**当前三个 benchmark 都产生 partial 蓝图，且引擎为 Phaser/Babylon，因此都只能研究与导出，无法通过此门禁自动生成。** 这并未改变测试规格或完成它们的 225 项游戏验收。准入成功路径的回归测试使用明确标注的未来兼容 provider fixture，不代表当前 Planner 能产出 ready。
+**当前三个研究 benchmark 都产生 partial 蓝图，因此只能研究与导出，不能通过此蓝图交接门禁自动生成。** harness v2 仍可独立接收完整规格；其执行状态不能与研究 readiness 混用。本次没有完成三个游戏的 225 项验收。准入成功路径的回归测试使用明确标注的未来兼容 provider fixture，不代表当前 Planner 能产出 ready。
 
 未来兼容的 ready 引用被接受时，队列可见前先原子保存 `research.blueprint.json` 与 `research.handoff.json`。后者记录引用、项目、准入结果和 SHA256。Runner 在任何模型调用前核验哈希；需求、设计、Builder/Repair 和 QA 接收同一快照，最终 manifest 记录相同引用和哈希。后续研究修订不会静默替换已排队任务的快照。
 
-带研究蓝图的生成只补充本地知识，不再调用旧 `MaterialPortalClient` 创建新的首轮检索。素材门户工作和三轮额度属于研究 MAS。普通的一句话生成仍使用原有 Retriever 路径。
+带研究蓝图的 v1 生成只补充本地知识，不再调用旧 `MaterialPortalClient` 创建新的首轮检索。素材门户工作和三轮额度属于研究 MAS。普通的一句话生成和 v2 项目仍使用各自原有 Retriever 路径。未来将 v2 接入研究时，接收端需要固定同一版本/哈希、将来源传入功能上下文，并避免重复首轮门户查询；这些是待接入项，不是本次已完成能力。
 
 ## 可移植性与验证
 
@@ -85,4 +88,4 @@ pnpm test
 
 Windows 使用 PowerShell 设置同名环境变量后运行 `.venv/Scripts/python.exe -m pytest -q`。浏览器测试需要预先安装 Chromium。集成回归覆盖鉴权边界、输入透传、无隐式写重试、超时/取消、真实 Node 三轮限制、修订和版本关联、partial/mock/引擎门禁、固定快照传递及篡改拒绝。实际素材服务、模型规划和三个完整游戏验收仍未接入。
 
-2026-10-17 本机验证：Windows、Python 3.12、Node 24.19；完整 Python suite **49 passed**（启用两个 opt-in 环境变量），`pnpm check` 通过，Node suite **38 passed**。一次较早的 Chromium actions 冒烟失败，原测试未改逻辑，定向重跑与最终完整重跑均通过，仍需留意时序波动。原生浏览器 WebMCP 在 harness 首页发起研究并读回 partial 状态；`/research` 的交接检查显示阻塞原因，未创建生成任务。没有调用付费模型或执行实际素材搜索。
+2026-10-17 本机验证：Windows、Python 3.12、Node 24.19；对齐 v2 后，接入相关 Python 测试 **50 passed / 1 deselected**，`pnpm check` 通过，Node suite **38 passed**。执行范围为 `test_agents.py`、`test_harness.py`、`test_team_components.py`、`test_browser.py`、`test_workbench.py`、`test_research_integration.py`，启用研究与 Chromium opt-in，并以 `-k 'not project_candidate'` 排除依赖 POSIX 工程运行时的 v2 候选测试。v2 全套工程/构建测试未在本 Windows 主机执行，不把组件检查当作完整 harness 认证。一次较早的 Chromium actions 冒烟失败，定向与最终接入回归均通过，仍需留意时序波动。原生浏览器 WebMCP 在 harness 首页发起研究并读回 partial 状态；`/research` 的交接检查显示阻塞原因，未创建生成任务。没有调用付费模型或执行实际素材搜索。

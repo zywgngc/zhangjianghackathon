@@ -21,9 +21,9 @@ def test_team_case_inventory_preserves_explicit_engine_locks():
     cases = inventory(ROOT)
     assert [c["case_id"] for c in cases] == ["GAME-TEST-001", "GAME-TEST-002", "GAME-TEST-003"]
     assert [c["locked_engine"] for c in cases] == ["babylon", "phaser", "babylon"]
-    assert all(not c["runnable"] and c["execution"] == "not_run" for c in cases)
+    assert all(c["runnable"] and c["execution"] == "not_run" for c in cases)
     assert all(c["has_acceptance_tests"] and c["reference_images"] for c in cases)
-    assert all("long_spec_input_not_supported" in c["blockers"] for c in cases)
+    assert all(c["blockers"] == [] for c in cases)
     assert len(cases[2]["names"]) == 2  # Header and body have different game names.
     assert all(i["width"] > 0 and i["height"] > 0 for c in cases for i in c["reference_images"])
 

@@ -36,6 +36,7 @@ def install_research_routes(app, research, auth):
     @router.get("/config")
     async def config():
         return {"configured": research.configured, "builder_engines": ["canvas", "dom"],
+                "handoff_target": "/api/runs", "project_handoff_supported": False,
                 "discussion_owner": "webmcp", "main_follow_up_limit": 3, "material_follow_up_limit": 3}
 
     @router.get("/cases")

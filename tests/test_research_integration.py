@@ -121,7 +121,7 @@ def test_partial_engine_and_mock_gates_prevent_queueing_or_paid_calls(settings, 
     app = create_app(settings, research_factory=lambda s: ResearchClient(s, httpx.MockTransport(lambda _: httpx.Response(200, json=state))))
     with TestClient(app) as client:
         report = client.post(f"/api/research/runs/{RUN_ID}/handoff", json=reference().model_dump(), headers=headers).json()
-        assert not report["eligible"] and "engine_adapter_not_installed:babylon" in report["blockers"]
+        assert not report["eligible"] and "quick_run_handoff_engine_not_supported:babylon" in report["blockers"]
         assert "synthetic_or_unknown_source_evidence" in report["blockers"]
         result = client.post("/api/runs", json={**request_data, "research": reference().model_dump()}, headers=headers)
         assert result.status_code == 409
@@ -155,6 +155,24 @@ async def test_pinned_handoff_reaches_builder_and_qa_without_a_second_material_s
     store.update(rid, status="running")
     await Harness(settings, store, agents, retriever, Validator(True)).execute(rid)
     assert store.get(rid)["status"] == "failed" and not agents.roles
+
+
+async def test_full_project_entry_retains_harness_ownership(settings):
+    headers = configure(settings)
+    def unexpected_research(_request):
+        pytest.fail("Full-spec projects must not implicitly start or consume research")
+    app = create_app(settings, research_factory=lambda s: ResearchClient(s, httpx.MockTransport(unexpected_research)))
+    # No lifespan/worker: this verifies admission without executing a project or calling a model.
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as api:
+        command = {"case_id": "GAME-TEST-002"}
+        unsupported = await api.post("/api/projects", json={**command, "research": reference().model_dump()}, headers=headers)
+        assert unsupported.status_code == 422
+        assert app.state.store.list() == []
+        created = await api.post("/api/projects", json=command, headers=headers)
+        assert created.status_code == 202
+        saved = app.state.store.request(created.json()["id"])
+        assert saved["mode"] == "project" and saved["engine"] == "phaser"
+        assert len(saved["specification"]) > 8000 and "research" not in saved
 
 
 def test_server_lock_excludes_another_owner_and_releases(tmp_path):

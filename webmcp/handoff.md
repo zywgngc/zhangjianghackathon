@@ -1,6 +1,6 @@
 # WebMCP handoff: current state and integration responsibilities
 
-**Status: first executable reference slice. Branch: `Webmcp`. Contract: v0.2.**
+**Status: executable reference slice plus optional harness adapter. Runtime branch: `Webmcp`; review branch: `codex/webmcp-harness-integration`. Contract: v0.2.**
 
 This branch now delivers a runnable local research service alongside the architecture, contracts, and examples. It includes a SQLite orchestrator, deterministic Researcher/Planner/Reviewer components, a mock portal, an HTTP API, a studio, and a browser WebMCP adapter. **Live portal retrieval, model-backed general planning, source verification, and playable-game generation remain pending.** Read [runtime.md](runtime.md) to run it and integrate the next adapter.
 
@@ -33,10 +33,10 @@ The output is a plan backed by traceable sources and explicit validation evidenc
 | Material portal boundary | Types/schema, eight fixtures, mock adapter, injected-function adapter, and runtime validation | Agreement with portal owner and actual MCP/client mapping |
 | Follow-up discussion | Atomic durable reservations, correlation, default/required question handling, and exhaustion behavior | Provider-native session mapping and production authorization |
 | External MCP material portal | Boundary and expected behavior documented | Teammate-owned implementation; its availability has not been verified here |
-| Browser WebMCP | Feature detection, tool registration, local authenticated API, and simulated adapter tests | Native browser/agent interoperability verification |
+| Browser WebMCP | Feature detection, six shared tools, authenticated gateway, and native browser start/state verification | Wider browser/agent compatibility |
 | Source research and review | Evidence levels and composition rules documented | Real searches, source inspection, pinned revisions, and verification workers |
 | Durable execution | SQLite run/job history, leases, bounded retries, cancellation, and safe restart recovery | Postgres/distributed workers and provider asynchronous-job reconciliation |
-| Builder handoff | Versioned partial blueprints; harness adapter with revision/evidence/engine admission and pinned-context hooks | Verified source combinations and a real compatible ready blueprint for Builder/QA |
+| Builder handoff | Versioned partial blueprints; v1 `/api/runs` adapter with revision/evidence/engine admission and pinned-context hooks | Verified source combinations, a compatible ready blueprint, and v2 `/api/projects` receiver integration |
 
 The top-level contract `.ts` files contain declarations; [src](src) contains the executable runtime. The example JSON and default portal use synthetic materials. `architecture.html` remains a static diagram export; `pnpm start` serves the working research studio. Setup, commands, and limitations are in [runtime.md](runtime.md).
 

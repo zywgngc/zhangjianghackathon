@@ -1,0 +1,519 @@
+import asyncio
+import hashlib
+import json
+from pathlib import Path
+
+import httpx
+import pytest
+from openai import AsyncOpenAI
+
+from game_harness.agents import AgentClient
+from game_harness.coding_agent import CodingAction, CodingAgent
+
+
+class Workspace:
+    """A controlled execution boundary; integration builds test the real runtime."""
+    def __init__(self, root):
+        self.root = root
+        root.mkdir(parents=True, exist_ok=True)
+        self.builds, self.writes = 0, 0
+        self.fail_builds = 0
+        self.crash_after_write = False
+
+    def resolve(self, relative, writable=False):
+        path = self.root / relative
+        if not relative or path.is_absolute() and not path.is_relative_to(self.root):
+            raise ValueError("unsafe path")
+        if not path.resolve().is_relative_to(self.root.resolve()):
+            raise ValueError("path traversal")
+        if relative != "index.html" and not relative.startswith(("src/", "public/")):
+            raise ValueError("protected project configuration")
+        return path
+
+    def read_file(self, relative):
+        return self.resolve(relative).read_text()
+
+    def write_file(self, relative, content):
+        path = self.resolve(relative, writable=True)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content)
+        self.writes += 1
+        if self.crash_after_write:
+            self.crash_after_write = False
+            raise asyncio.CancelledError("crash after mutation before checkpoint")
+
+    def apply_patch(self, relative, old, new, expected_sha256=None):
+        text = self.read_file(relative)
+        assert hashlib.sha256(text.encode()).hexdigest() == expected_sha256
+        assert text.count(old) == 1
+        self.write_file(relative, text.replace(old, new, 1))
+
+    def delete_file(self, relative, expected_sha256=None):
+        path = self.resolve(relative, writable=True)
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == expected_sha256
+        path.unlink()
+
+    def list_files(self):
+        return [item["path"] for item in self.snapshot()["files"]]
+
+    def snapshot(self):
+        files = [{"path": str(p.relative_to(self.root)), "sha256": hashlib.sha256(p.read_bytes()).hexdigest(),
+                  "bytes": p.stat().st_size}
+                 for p in sorted(self.root.rglob("*")) if p.is_file() and not p.name.startswith(".")]
+        return {"files": files, "sha256": hashlib.sha256(json.dumps(files, sort_keys=True).encode()).hexdigest()}
+
+    async def build(self, install=True, timeout=180):
+        self.builds += 1
+        if self.builds <= self.fail_builds:
+            return {"passed": False, "errors": ["TS2322: number is not assignable to string"]}
+        return {"passed": True, "stages": ["typecheck", "vite build"], "errors": [],
+                "entrypoint": "index.html", "artifact_manifest": [{"path": "index.html", "sha256": "a" * 64}]}
+
+
+class ScriptedClient:
+    def __init__(self, actions):
+        self.actions = iter(actions)
+        self.inputs = []
+
+    async def structured(self, rid, stage, role, instruction, data, schema, **kwargs):
+        self.inputs.append({"stage": stage, "role": role, "data": data, **kwargs})
+        return schema.model_validate(next(self.actions))
+
+
+def run_id(store, request_data):
+    rid = store.create(request_data)["id"]
+    store.claim()
+    return rid
+
+
+async def test_gateway_actions_use_real_structured_client_and_do_not_claim_acceptance(settings, store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    proposals = iter([
+        {"tool": "write_file", "path": "src/types.ts", "content": "export type Phase = 'ready' | 'running';"},
+        {"tool": "build"},
+        {"tool": "finish", "summary": "新增共享状态类型，主机已构建。"},
+    ])
+    captured = []
+
+    def response(request):
+        payload = json.loads(request.content)
+        captured.append(payload)
+        return httpx.Response(200, json={"id": "coding", "object": "chat.completion", "created": 0,
+            "model": "qwen3.8-max", "choices": [{"index": 0, "message": {"role": "assistant",
+            "content": json.dumps(next(proposals), ensure_ascii=False)}, "finish_reason": "stop"}],
+            "usage": {"prompt_tokens": 70, "completion_tokens": 30, "total_tokens": 100}})
+
+    client = AgentClient(settings, store)
+    await client.client.close()
+    client.client = AsyncOpenAI(api_key="test", base_url="https://mock.invalid/v1", max_retries=0,
+        http_client=httpx.AsyncClient(transport=httpx.MockTransport(response)))
+    workspace = Workspace(tmp_path / "game")
+    try:
+        result = await CodingAgent(client, store, workspace).run_feature(rid,
+            {"id": "shared-types", "owned_paths": ["src/types.ts"], "objective": "定义游戏状态"}, {},
+            role="design", owner="architecture-agent")
+    finally:
+        await client.close()
+    assert result["status"] == "implemented"
+    assert result["stop_reason"] == "implemented"
+    assert result["acceptance"]["status"] == "not_run"
+    assert result["changed_files"] == ["src/types.ts"]
+    assert result["owner"] == "architecture-agent"
+    assert workspace.builds == 1
+    assert len(captured) == 3
+    assert all(p["model"] == "qwen3.8-max" and p["max_tokens"] == 16000 for p in captured)
+    assert store.get(rid)["calls"] == 3
+
+
+async def test_exact_patch_and_build_error_are_fed_back_without_losing_source(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    workspace.write_file("src/combat.ts", "const hp = 2;\nconst damage = 2;\n")
+    workspace.fail_builds = 1
+    client = ScriptedClient([
+        {"tool": "apply_patch", "path": "src/combat.ts", "old": "2", "new": "3"},
+        {"tool": "apply_patch", "path": "src/combat.ts", "old": "const hp = 2;", "new": "const hp = 3;"},
+        {"tool": "finish", "summary": "完成生命调整。"},
+        {"tool": "apply_patch", "path": "src/combat.ts", "old": "const damage = 2;", "new": "const damage = 1;"},
+        {"tool": "finish", "summary": "已修复构建并实现战斗规则。"},
+    ])
+    result = await CodingAgent(client, store, workspace).run_feature(rid,
+        {"id": "combat", "owned_paths": ["src/combat.ts"]}, {"review_feedback": "保留既有战斗规则"})
+    assert result["status"] == "implemented"
+    assert workspace.read_file("src/combat.ts") == "const hp = 3;\nconst damage = 1;\n"
+    first_feedback = client.inputs[1]["data"]["recent_observations"][-1]["result"]
+    assert first_feedback["ok"] is False
+    assert "exactly once" in first_feedback["error"]
+    build_feedback = client.inputs[3]["data"]["recent_observations"][-1]["result"]
+    assert build_feedback["accepted"] is False
+    assert "TS2322" in json.dumps(build_feedback)
+
+
+async def test_pending_file_mutation_replays_idempotently_after_crash(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    workspace.crash_after_write = True
+    feature = {"id": "movement", "owned_paths": ["src/movement.ts"]}
+    agent = CodingAgent(ScriptedClient([
+        {"tool": "write_file", "path": "src/movement.ts", "content": "export const speed = 120;"}
+    ]), store, workspace)
+    with pytest.raises(asyncio.CancelledError):
+        await agent.run_feature(rid, feature, {})
+    checkpoint = store.read_json(rid, agent._prefix(feature["id"]) + ".checkpoint.json")
+    assert checkpoint["pending"]["prepared"]["after_sha256"]
+    client = ScriptedClient([{"tool": "finish", "summary": "恢复已落盘的移动模块并构建。"}])
+    result = await CodingAgent(client, store, workspace).run_feature(rid, feature, {})
+    assert result["status"] == "implemented"
+    assert result["steps"] == 2
+    assert workspace.writes == 1
+    assert result["changed_files"] == ["src/movement.ts"]
+    observation = store.read_json(rid, agent._prefix(feature["id"]) + ".step-0001.result.json")
+    assert observation["recovered_already_applied"] is True
+
+
+async def test_recovery_refuses_to_overwrite_a_concurrent_edit(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    workspace.crash_after_write = True
+    feature = {"id": "movement"}
+    agent = CodingAgent(ScriptedClient([
+        {"tool": "write_file", "path": "src/movement.ts", "content": "export const speed = 120;"}
+    ]), store, workspace)
+    with pytest.raises(asyncio.CancelledError):
+        await agent.run_feature(rid, feature, {})
+    workspace.write_file("src/movement.ts", "export const speed = 240;")
+    client = ScriptedClient([{"tool": "blocked", "summary": "其他作者修改了待恢复文件，需要集成。"}])
+    result = await CodingAgent(client, store, workspace).run_feature(rid, feature, {})
+    assert result["status"] == "blocked"
+    assert workspace.read_file("src/movement.ts") == "export const speed = 240;"
+    assert "workspace drift" in client.inputs[0]["data"]["recent_observations"][-1]["result"]["error"]
+
+
+async def test_context_is_bounded_and_long_spec_remains_fully_retrievable(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    text = "机制定义及正式验收。" * 20_000 + "末尾硬性要求：不得降级 Babylon。"
+    context = {"project_summary": "指定 Babylon 引擎", "spec_excerpts": text, "interfaces": {"tick": "fixed dt"}}
+    client = ScriptedClient([
+        {"tool": "read_context", "section": "spec_excerpts", "offset": len(text) - 22, "limit": 256},
+        {"tool": "blocked", "summary": "已读取完整存档末段，等待上游接口。"},
+    ])
+    agent = CodingAgent(client, store, Workspace(tmp_path / "game"), context_chars=28_000)
+    result = await agent.run_feature(rid, {"id": "long-spec"}, context)
+    assert result["status"] == "blocked"
+    assert all(len(json.dumps(call["data"], ensure_ascii=False, separators=(",", ":"))) < 28_000
+               for call in client.inputs)
+    assert "不得降级 Babylon" not in json.dumps(client.inputs[0]["data"], ensure_ascii=False)
+    assert "不得降级 Babylon" in json.dumps(client.inputs[1]["data"], ensure_ascii=False)
+    assert store.read_json(rid, agent._prefix("long-spec") + ".context.json")["spec_excerpts"] == text
+
+
+async def test_file_ownership_protected_configs_and_read_before_replace(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    workspace.write_file("src/owner.ts", "existing implementation")
+    client = ScriptedClient([
+        {"tool": "write_file", "path": "src/other.ts", "content": "overwrite another owner"},
+        {"tool": "write_file", "path": "package.json", "content": "disable typecheck"},
+        {"tool": "write_file", "path": "src/owner.ts", "content": "discard existing code"},
+        {"tool": "blocked", "summary": "需先读取当前实现。"},
+    ])
+    result = await CodingAgent(client, store, workspace).run_feature(rid,
+        {"id": "owned", "owned_paths": ["src/owner.ts"]}, {})
+    assert result["status"] == "blocked"
+    assert workspace.read_file("src/owner.ts") == "existing implementation"
+    assert not (workspace.root / "src/other.ts").exists()
+    assert not (workspace.root / "package.json").exists()
+    errors = [call["data"]["recent_observations"][-1]["result"]["error"] for call in client.inputs[1:]]
+    assert "owned by another" in errors[0]
+    assert "protected" in errors[1]
+    assert "read the entire" in errors[2]
+
+
+async def test_failed_host_acceptance_cannot_be_overridden_by_model_finish(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    client = ScriptedClient([
+        {"tool": "finish", "summary": "我认为所有技能已经通过。"},
+        {"tool": "blocked", "summary": "独立验收发现技能缺失。"},
+    ])
+
+    async def verifier(feature, workspace, build):
+        return {"passed": False, "checks": [{"id": "T-31", "passed": False, "reason": "missing active skills"}]}
+
+    result = await CodingAgent(client, store, Workspace(tmp_path / "game"), verifier=verifier).run_feature(
+        rid, {"id": "skills"}, {})
+    assert result["status"] == "blocked"
+    observation = client.inputs[1]["data"]["recent_observations"][-1]["result"]
+    assert observation["accepted"] is False
+    assert observation["acceptance"]["checks"][0]["id"] == "T-31"
+
+
+async def test_session_limit_can_resume_with_explicit_larger_budget_and_cached_result(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    feature = {"id": "progress"}
+    first = ScriptedClient([{"tool": "note", "summary": "明确接口，仍有实现工作。", "memory": "下一步实现状态类型。"}])
+    result = await CodingAgent(first, store, workspace, max_steps=1).run_feature(rid, feature, {})
+    assert result["status"] == "needs_work"
+    assert result["stop_reason"] == "action_limit"
+    second = ScriptedClient([
+        {"tool": "write_file", "path": "src/state.ts", "content": "export const phase = 'ready';"},
+        {"tool": "finish", "summary": "状态已实现并构建。"},
+    ])
+    agent = CodingAgent(second, store, workspace, max_steps=3)
+    result = await agent.run_feature(rid, feature, {})
+    assert result["status"] == "implemented" and result["steps"] == 3
+    assert second.inputs[0]["data"]["memory"] == "下一步实现状态类型。"
+    assert await agent.run_feature(rid, feature, {}) == result
+    assert len(second.inputs) == 2
+
+
+async def test_workspace_has_one_live_coding_owner(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    entered, release = asyncio.Event(), asyncio.Event()
+
+    class WaitingClient:
+        async def structured(self, *args, **kwargs):
+            entered.set()
+            await release.wait()
+            return CodingAction(tool="blocked", summary="完成锁隔离检查。")
+
+    task = asyncio.create_task(CodingAgent(WaitingClient(), store, workspace).run_feature(rid, {"id": "one"}, {}))
+    await entered.wait()
+    try:
+        other = ScriptedClient([])
+        with pytest.raises(RuntimeError, match="coding owner"):
+            await CodingAgent(other, store, workspace).run_feature(rid, {"id": "two"}, {})
+        assert not other.inputs
+    finally:
+        release.set()
+        await task
+
+
+async def test_incomplete_provider_response_never_mutates_workspace(settings, store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+
+    def respond(request):
+        return httpx.Response(200, json={"id": "truncated", "object": "chat.completion", "created": 0,
+            "model": settings.model, "choices": [{"index": 0, "message": {"role": "assistant",
+            "content": '{"tool":"write_file","path":"src/engine.ts","content":"partial'}, "finish_reason": "length"}],
+            "usage": {"prompt_tokens": 100, "completion_tokens": 100, "total_tokens": 200}})
+
+    client = AgentClient(settings, store)
+    await client.client.close()
+    client.client = AsyncOpenAI(api_key="test", base_url="https://mock.invalid/v1", max_retries=0,
+        http_client=httpx.AsyncClient(transport=httpx.MockTransport(respond)))
+    workspace = Workspace(tmp_path / "game")
+    try:
+        with pytest.raises(RuntimeError, match="被截断"):
+            await CodingAgent(client, store, workspace).run_feature(rid, {"id": "truncation"}, {})
+    finally:
+        await client.close()
+    assert workspace.writes == 0
+    assert workspace.builds == 0
+
+
+async def test_delete_is_scoped_and_requires_a_current_file_digest(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    workspace.write_file("src/obsolete.ts", "export const obsolete = true;")
+    digest = hashlib.sha256(workspace.read_file("src/obsolete.ts").encode()).hexdigest()
+    client = ScriptedClient([
+        {"tool": "delete_file", "path": "src/obsolete.ts"},
+        {"tool": "delete_file", "path": "src/obsolete.ts", "expected_sha256": digest},
+        {"tool": "finish", "summary": "删除错误的旧模块并重新构建。"},
+    ])
+    result = await CodingAgent(client, store, workspace).run_feature(rid,
+        {"id": "cleanup", "owned_paths": ["src/obsolete.ts"]}, {})
+    assert result["status"] == "implemented"
+    assert not (workspace.root / "src/obsolete.ts").exists()
+    assert "requires a current full read" in client.inputs[1]["data"]["recent_observations"][-1]["result"]["error"]
+
+
+async def test_project_aliases_expose_review_and_complete_source_archive(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    source = "不可丢失的长规格。" * 10_000 + "最终门槛：八种被动技能。"
+    store.write(rid, "specification.txt", source)
+    client = ScriptedClient([
+        {"tool": "read_context", "section": "__specification__", "offset": len(source) - 15, "limit": 256},
+        {"tool": "blocked", "summary": "保留完整原文，并根据审查修复。"},
+    ])
+    agent = CodingAgent(client, store, Workspace(tmp_path / "game"), context_chars=60_000)
+    await agent.run_feature(rid, {"id": "repair"}, {"source_archive": "specification.txt",
+        "production_contract": "真实生产 Simulation 和测试实例使用同一代码。",
+        "validation_report": {"passed": False, "defects": ["W12未实现"]},
+        "acceptance": [{"id": "T88", "text": "全部原始技能可用。"}]})
+    packet = client.inputs[0]["data"]
+    assert packet["context"]["validation_report"]["defects"] == ["W12未实现"]
+    assert "production_contract" in packet["context"] and "acceptance" in packet["context"]
+    assert packet["context_sections"]["__specification__"]["immutable_source"] is True
+    assert "八种被动技能" in client.inputs[1]["data"]["recent_observations"][-1]["result"]["content"]
+
+
+async def test_reference_images_are_seen_once_and_retained_by_digest_on_resume(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    image = Path(__file__).parent / "fixtures" / "vision-probe.png"
+    client = ScriptedClient([
+        {"tool": "write_file", "path": "src/scene.ts", "content": "export const theme = 'military';"},
+        {"tool": "finish", "summary": "场景模块按参考图实现并构建。"},
+    ])
+    workspace = Workspace(tmp_path / "game")
+    feature = {"id": "visual"}
+    agent = CodingAgent(client, store, workspace, images=[image])
+    result = await agent.run_feature(rid, feature, {})
+    assert result["status"] == "implemented"
+    assert client.inputs[0]["images"] == [image]
+    assert "images" not in client.inputs[1]
+    expected = hashlib.sha256(image.read_bytes()).hexdigest()
+    assert client.inputs[1]["data"]["reference_images"] == [{"name": image.name, "sha256": expected}]
+    assert await agent.run_feature(rid, feature, {}) == result
+    assert len(client.inputs) == 2
+
+
+async def test_complete_source_read_preserves_crlf_offsets_and_digest(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    source = "第一行\r\n第二行：必须保留精确数值47。\r\n"
+    store.write(rid, "specification.txt", source)
+    client = ScriptedClient([
+        {"tool": "read_context", "section": "__specification__"},
+        {"tool": "blocked", "summary": "原文边界已核实。"},
+    ])
+    await CodingAgent(client, store, Workspace(tmp_path / "game")).run_feature(
+        rid, {"id": "crlf-spec"}, {"source_archive": "specification.txt"})
+    observed = client.inputs[1]["data"]["recent_observations"][-1]["result"]
+    assert observed["content"] == source
+    assert observed["sha256"] == hashlib.sha256(source.encode()).hexdigest()
+
+
+@pytest.mark.parametrize("limit", [8_000, 60_000])
+async def test_serialized_context_budget_handles_nested_code_escapes_quotes_and_cjk(store, request_data, tmp_path, limit):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    code = ('const line = "中文\\\\路径\\n\\\"引号\\\"";\n' * 3_000)
+    workspace.write_file("src/escaped.ts", code)
+    client = ScriptedClient([
+        {"tool": "read_file", "path": "src/escaped.ts", "limit": 16_000},
+        {"tool": "read_context", "section": "spec_excerpts", "limit": 16_000},
+        {"tool": "blocked", "summary": "已验证序列化上下文压缩，完整原始代码和规格仍可分页。"},
+    ])
+    context = {"spec_excerpts": [{"text": code, "source": {"path": "中文\\\\路径\\\".txt"}}],
+               "interfaces": code, "production_contract": code, "review_feedback": code}
+    result = await CodingAgent(client, store, workspace, context_chars=limit).run_feature(
+        rid, {"id": "quoted-context", "objective": code}, context)
+    assert result["status"] == "blocked"
+    for call in client.inputs:
+        assert len(json.dumps(call["data"], ensure_ascii=False)) <= limit
+    stored = store.read_json(rid, CodingAgent._prefix("quoted-context") + ".context.json")
+    assert stored["spec_excerpts"][0]["text"] == code
+
+
+async def test_real_spec_pagination_preserves_source_metadata_and_escapes_read_loop(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    source = ('章节："技能配置"\\n\\\\path\n' * 5_000)
+    store.write(rid, "specification.txt", source)
+    workspace = Workspace(tmp_path / "game")
+
+    class PagingClient:
+        def __init__(self):
+            self.inputs = []
+
+        async def structured(self, rid, stage, role, instruction, packet, schema, **kwargs):
+            self.inputs.append(packet)
+            assert len(json.dumps(packet, ensure_ascii=False)) <= 32_000
+            if len(self.inputs) == 1:
+                assert "approved_configuration" in packet["context"]
+                return schema(tool="read_context", section="__specification__", offset=17_400, limit=16_000)
+            observation = packet["recent_observations"][-1]["result"]
+            if len(self.inputs) == 2:
+                assert observation["characters"] == len(source)
+                assert observation["offset"] == 17_400
+                assert 17_400 < observation["next_offset"] <= 23_400
+                assert len(observation["content"]) == observation["next_offset"] - 17_400
+                assert observation.get("content_view_truncated") is not True
+                receipt = packet["read_receipts"][-1]
+                assert receipt["source"] == "context:__specification__"
+                assert receipt["characters"] == len(source) and receipt["next_offset"] == observation["next_offset"]
+                return schema(tool="read_context", section="__specification__", offset=observation["next_offset"], limit=16_000)
+            if len(self.inputs) == 3:
+                assert observation["offset"] > 17_400
+                return schema(tool="write_file", path="src/types.ts", content="export type State = 'READY';")
+            return schema(tool="finish", summary="根据相关章节开始实现，而非反复读取同一页。")
+
+    client = PagingClient()
+    result = await CodingAgent(client, store, workspace, context_chars=32_000, history_limit=3).run_feature(
+        rid, {"id": "case2-foundation"}, {"source_archive": "specification.txt",
+            "approved_configuration": {"activeSkillCount": 12, "passiveSkillCount": 8},
+            "interfaces": source, "production_contract": source, "spec_excerpts": source})
+    assert result["status"] == "implemented" and len(client.inputs) == 4
+    assert result["changed_files"] == ["src/types.ts"]
+
+
+async def test_five_identical_nonprogress_reads_stop_before_spending_the_session(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    store.write(rid, "specification.txt", "固定章节和真实规则。" * 10_000)
+    client = ScriptedClient([{"tool": "read_context", "section": "__specification__", "offset": 17_400,
+                              "limit": 16_000} for _ in range(36)])
+    result = await CodingAgent(client, store, Workspace(tmp_path / "game"), context_chars=32_000).run_feature(
+        rid, {"id": "stuck-reader"}, {"source_archive": "specification.txt"})
+    assert result["status"] == "needs_work" and result["steps"] == 5
+    assert result["stop_reason"] == "non_progress"
+    assert result["read_receipts"][0]["source"] == "context:__specification__"
+    assert len(client.inputs) == 5 and not result["changed_files"]
+    assert "read_guidance" in client.inputs[2]["data"]["recent_observations"][-1]["result"]
+    checkpoint = store.read_json(rid, result["checkpoint"])
+    assert checkpoint["history"][-1]["result"]["non_progress_stop"] is True
+    assert list(checkpoint["read_receipts"].values())[0]["characters"] == 100_000
+
+
+async def test_segment_result_preserves_precise_handoff_for_a_productive_continuation(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    client = ScriptedClient([
+        {"tool": "read_context", "section": "approved_configuration", "memory": "下一文件 src/types.ts；导出Vec3{x,y,z:number}；speed=6。"},
+        {"tool": "write_file", "path": "src/types.ts", "content": "export interface Vec3 { x:number; y:number; z:number }",
+         "memory": "已完成src/types.ts导出Vec3；下一文件src/config.ts，speed=6，来源approved_configuration。"},
+    ])
+    workspace = Workspace(tmp_path / "game")
+    result = await CodingAgent(client, store, workspace, max_steps=2).run_feature(
+        rid, {"id": "foundation-lease"}, {"approved_configuration": {"speed": 6}})
+    assert result["status"] == "needs_work" and result["stop_reason"] == "action_limit"
+    assert result["changed_files"] == ["src/types.ts"]
+    assert "src/config.ts" in result["memory"] and "speed=6" in result["memory"]
+    assert result["read_receipts"][0]["source"] == "context:approved_configuration"
+    from game_harness.coding_agent import CODING_INSTRUCTION
+    assert "每读取1至2个必要资料页后" in CODING_INSTRUCTION
+    assert "已经读完整的源不得再次从头通读" in CODING_INSTRUCTION
+    continuation_client = ScriptedClient([
+        {"tool": "write_file", "path": "src/config.ts", "content": "export const speed = 6;"},
+        {"tool": "finish", "summary": "继承上一lease已知接口并完成下一配置文件。"},
+    ])
+    completed = await CodingAgent(continuation_client, store, workspace).run_feature(rid,
+        {"id": "foundation-lease-2", "owned_paths": ["src/config.ts"]},
+        {"approved_configuration": {"speed": 6}, "continuation": result})
+    packet = continuation_client.inputs[0]["data"]
+    assert packet["memory"] == result["memory"]
+    assert packet["read_receipts"][0]["source"] == "context:approved_configuration"
+    assert packet["next_unwritten_owned_files"] == ["src/config.ts"]
+    assert completed["status"] == "implemented"
+
+
+async def test_small_approved_configuration_stays_complete_and_file_frontier_updates(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / "game")
+    config = {"tables": [{"id": f"W{i:02}", "effect": "真实技能参数与数值。" * 17, "damage": i * 12} for i in range(24)],
+              "last_required_value": "末尾必须保留：E06范围20。"}
+    assert 4_000 < len(json.dumps(config, ensure_ascii=False)) < 8_000
+    client = ScriptedClient([
+        {"tool": "write_file", "path": "src/types.ts", "content": "export type Id = string;"},
+        {"tool": "write_file", "path": "src/config.ts", "content": "export const targetCount = 20;"},
+        {"tool": "finish", "summary": "每次完成一个文件，未反复读取已常驻的配置。"},
+    ])
+    await CodingAgent(client, store, workspace, context_chars=32_000, history_limit=3).run_feature(rid,
+        {"id": "data-frontier", "owned_paths": ["src/types.ts", "src/config.ts", "src/optional/**"]},
+        {"approved_configuration": config, "spec_excerpts": "原文片段。" * 10_000,
+         "production_contract": "真实共享接口。" * 5_000, "interfaces": "接口定义。" * 5_000})
+    for call in client.inputs:
+        assert call["data"]["context"]["approved_configuration"] == config
+        assert len(json.dumps(call["data"], ensure_ascii=False)) <= 32_000
+    assert client.inputs[0]["data"]["next_unwritten_owned_files"] == ["src/types.ts", "src/config.ts"]
+    assert client.inputs[1]["data"]["next_unwritten_owned_files"] == ["src/config.ts"]
+    assert client.inputs[2]["data"]["next_unwritten_owned_files"] == []

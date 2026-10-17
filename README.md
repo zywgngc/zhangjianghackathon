@@ -1,25 +1,34 @@
-# 游造 · 中文 HTML 游戏生成 Harness
+# 游造 · 中文游戏长程生成 Harness
 
-用户输入一句游戏描述，系统完成 **需求改写 → RAG 检索 → 设计与引擎路由 → 代码生成 → Chromium 实测 → 截图与代码 QA → 限次修复 → 已验证预览**。
+输入完整中文游戏规格，由规划、编码、修复和独立验证代理持续协作，交付 **React + TypeScript + Vite + Phaser / Babylon.js 多文件工程、离线运行资源和逐项验收证据**。系统默认使用 `qwen3.8-max`，通过 OpenAI 兼容 Chat Completions 接口调用。
 
-**First runnable build:** [Start the research service and studio](webmcp/runtime.md). Includes durable runs, bounded discussions, three reference-case profiles, and a synthetic portal adapter. Live source retrieval and verification remain pending.
+v2 已补齐长规格入口、真实第三方引擎模板、工具式编码循环、功能 DAG、检查点恢复及项目交付。**三个官方大型 case 已在 210 使用完整原文开始真实实现，目前尚未全部验收通过。** 引擎模板或 Python 回归测试通过，不代表这些游戏已经完成。
 
-**Receiving the WebMCP work?** Read the [current-state handoff](webmcp/handoff.md) for delivered artifacts, ownership, interface expectations, and next steps.
-首版所有角色默认使用 `qwen3.8-max`，通过 OpenAI 兼容 Chat Completions 接口调用。当前可运行引擎是原生 Canvas 和 DOM，输出单文件离线中文游戏。Phaser、Babylon.js 和 React 的依赖模板尚未实现，不会被路由选中。
+已合并团队新增的 [WebMCP 研究服务与工作台](webmcp/runtime.md)，包括持久任务、受限讨论及三份参考规格；当前门户使用合成候选，真实素材检索与来源验证仍待接入。组件边界见 [WebMCP 交接文档](webmcp/handoff.md)。
 
-**Harness + WebMCP integration:** [联合启动与接口说明](docs/webmcp-integration.md). The harness now hosts the research workspace at `/research`, proxies authenticated commands to the durable MAS, and checks blueprint readiness/engine compatibility before Builder admission.
+本集成分支增加可选的 `/api/research` 适配器与 `/research` 工作台入口，见 [WebMCP 组件接入说明](docs/webmcp-integration.md)。研究组件不接管项目编排、编码、验收或发布；固定蓝图的接收钩子目前仅接入 v1 `/api/runs`，v2 `/api/projects` 仍由 harness 负责人维护。
+
+## 两条工作流
+
+| 模式 | 输入与引擎 | 执行与交付 |
+| --- | --- | --- |
+| 完整规格项目（v2，默认） | 最多 1,000,000 字符；保留原文与源 SHA；锁定 Phaser / Babylon.js | 功能 DAG → 有文件归属的编码工具循环 → TypeScript / Vite 构建 → 独立浏览器、数值与视觉验证 → 修复；交付项目 ZIP |
+| 单文件小游戏（v1） | 最多 8,000 字符；Canvas / DOM | 需求改写 → RAG → 设计 → HTML 生成 → 三尺寸浏览器与截图 QA → 有限修复；交付 HTML |
+
+完整规格模式直接执行已批准的规则，不通过简短 rewrite 删减技能、关卡、数值或验收项。工作台支持完整 TXT 导入、三个官方 case 按钮、功能依赖进度、逐 T 验收状态、原文和详细报告下载。构建后的候选可以预览及下载，但会明确标注“尚未全部验收”；只有完整发布门禁通过才显示正式项目。
 
 ## 在 210 启动
 
-工作目录：`/home/zhaoyiwen/zhaoyiwen_nfs_data/zhangjianghackathon`。
+工作目录：`/home/zhaoyiwen/zhaoyiwen_nfs_data/zhangjianghackathon`。需要 Python 3.10+、Node.js 22 和 npm 10；210 已安装对应 Node/npm。首轮安装需要访问 Python/npm 包源，运行产物不依赖 CDN。
 
 ```bash
 cd /home/zhaoyiwen/zhaoyiwen_nfs_data/zhangjianghackathon
 python3 -m venv .venv
 .venv/bin/python -m pip install -e '.[test]'
 .venv/bin/python -m playwright install chromium
+# 首次部署时复制；已有 .env 请保留并按 .env.example 补充配置。
 cp .env.example .env
-# 编辑 .env，设置 OPENAI_API_KEY。不要提交 .env。
+# 编辑 .env 设置 OPENAI_API_KEY；不要提交密钥。
 bash scripts/run.sh
 ```
 
@@ -30,58 +39,77 @@ python3 -m pip install --target .bootstrap virtualenv
 PYTHONPATH=.bootstrap python3 -m virtualenv .venv
 ```
 
-浏览器打开 `http://127.0.0.1:18080`。远程访问可建立 SSH 隧道：
+浏览器打开 `http://127.0.0.1:18080`。从本机访问 210：
 
 ```bash
 ssh -N -L 18080:127.0.0.1:18080 GPU_210
 ```
 
-内网直接访问可用 `HOST=0.0.0.0 bash scripts/run.sh`，共享环境可设置 `HARNESS_API_TOKEN`，在页面“访问设置”输入同一口令。一个数据目录只能有一个服务进程，**不要使用多个 uvicorn workers 或 reload 模式**。任务内部并发由 `MAX_CONCURRENT_RUNS` 控制。
+默认绑定 loopback；受控内网可用 `HOST=0.0.0.0 bash scripts/run.sh`。共享部署可设置 `HARNESS_API_TOKEN`，在工作台“访问设置”输入同一口令。一个数据目录只运行一个服务进程，使用一个 uvicorn worker，任务并发由 `MAX_CONCURRENT_RUNS` 控制。`requirements.lock.txt` 是 Python 依赖快照；项目模板自带固定 npm 依赖版本与完整性锁文件。
 
-`requirements.lock.txt` 记录 210 的 Python 3.10 实测依赖快照；复现时先 `pip install -r requirements.lock.txt`，再安装本项目。Chromium 版本由对应 Playwright 安装命令确定。
+## 启动与跟踪完整项目
 
-## 验证
+工作台点击官方 case 按钮，或调用 API；启用口令时添加 `Authorization: Bearer <token>`。每次 POST 创建一个新任务，已有任务应按原 ID 跟踪或恢复。
 
 ```bash
-# 不消耗模型额度：队列、恢复、预算、修复门禁、哈希、接口与真实浏览器测试
+curl -X POST http://127.0.0.1:18080/api/benchmarks/GAME-TEST-002/runs
+```
+
+自定义规格调用 `POST /api/projects`：
+
+```json
+{"specification":"在这里提交完整原始游戏规格，包含所有玩法、数值、关卡、操作方式和逐项验收标准。","engine":"auto"}
+```
+
+| API | 用途 |
+| --- | --- |
+| `GET /api/projects/{id}` | 任务、功能 DAG 状态计数与验收报告 |
+| `GET /api/projects/{id}/candidate` | 当前源码的完整候选构建；尚无有效构建返回 409，属于等待状态 |
+| `GET /api/projects/{id}/archive` | 源码、构建资源与证据 ZIP；候选也可下载，查看验收状态区分正式交付 |
+| `GET /api/runs/{id}/events?after=0` | 增量轨迹 |
+| `GET /api/runs/{id}/artifacts/{name}` | 原文、计划、工具观察及报告附件 |
+| `POST /api/runs/{id}/cancel` / `resume` | 取消或恢复；沿用原任务的调用、token 和总时限 |
+| `GET /api/benchmarks` | 官方规格资料与运行能力预检，不代表游戏验收结果 |
+
+API 文档：`/docs`。原小游戏接口 `POST /api/runs` 保留，参数为 `description` 与 `engine: auto/canvas/dom`。
+
+项目默认预算为 **600 次模型请求、6,000,000 个已报告 token、6 小时总时限**，按任务持久记录；各功能工具回合和整体验收修复也有上限。配置名为 `PROJECT_MAX_MODEL_CALLS`、`PROJECT_MAX_TOTAL_TOKENS`、`PROJECT_TIMEOUT_SECONDS`、`PROJECT_FEATURE_STEPS`、`PROJECT_REPAIR_ROUNDS`。单文件模式保留自己的较小预算。模型网络中断时未返回的 usage 无法等同实际计费。
+
+单功能工具租约达到回合上限时，只有主机观察到源码 SHA 实质变化才能续接，最多 8 个租约；无进展故障最多 3 次尝试。续接不重置项目全局调用、token 或时限。
+
+## 验证与交付
+
+```bash
+# 不调用模型：规格、状态/预算/恢复、工具边界、验收器和浏览器回归
 RUN_BROWSER_TESTS=1 .venv/bin/python -m pytest -q
-# 消耗少量模型额度：真实文本、图片理解与中文文字识别
+# 显式安装锁定 npm 依赖，真实验证两个引擎、离线缓存与 opaque iframe
+RUN_PROJECT_BUILDS=1 .venv/bin/python -m pytest -q tests/test_project_runtime.py
+# 仅检查三份原始资料与运行能力，不生成游戏
+.venv/bin/python scripts/check_benchmarks.py --require-runnable
+# 消耗少量模型额度：文本、SSE 和基础图片理解探针
 .venv/bin/python scripts/probe_model.py
 ```
 
-## 组件接入
+项目 ZIP 的 `project/` 包含源码与 `dist/`，`evidence/` 包含规格、计划和报告。进入 `project/` 后可运行 `npm ci --ignore-scripts`、`npm run build`、`npm run preview`。已构建的 `dist/` 可通过本地静态 HTTP 服务离线运行；多文件 ES 模块不要求直接双击 HTML。
 
-- **模型角色**：`MODEL_REWRITE`、`MODEL_DESIGN`、`MODEL_BUILD`、`MODEL_QA`、`MODEL_REPAIR` 可分别覆盖模型。`AgentClient` 是统一适配边界。
-- **已有 RAG**：配置 `RAG_API_URL`（完整检索 URL）；POST `{"query":"…","top_k":4}`，返回 `{"documents":[{"id":"…","title":"…","content":"…","source":"…"}]}`。可配置 `RAG_API_TOKEN`。检索失败记录警告并回退本地知识库。
-- **本地知识库**：`RAG_DIR` 指向额外 Markdown 目录，启动时建立中英文分词 BM25 索引，证据随任务保存。默认内置生命周期、输入碰撞、移动布局与棋盘规则。
-- **外部 agent / 引擎 / 测试器**：接口、任务契约与扩展点见 [harness 架构与边界](docs/harness.md)。
+工作台使用 `sandbox="allow-scripts"` 的 opaque iframe，不开启 `allow-same-origin`。仅当前 run 的游戏存档通过受限桥持久化，父页口令、其他任务的存档和其他本地存储不会注入游戏。
 
-## API
+生成源码的构建通过宿主机 Node/npm/TypeScript/Vite 子进程执行；允许命令和工具链由主机固定，环境不转发模型密钥等凭据。**当前没有 OS 级容器或虚拟机隔离**，子进程仍拥有部署用户的系统权限。文件边界、禁用安装脚本和无凭据环境不能替代系统沙箱。权限和证据门禁详见 [运行架构](docs/harness.md)。
 
-交互文档：`/docs`。启用口令时，请在 API 请求头带 `Authorization: Bearer <token>`。
+## 当前证据与团队接入
 
-```bash
-curl http://127.0.0.1:18080/api/runs \
-  -H 'Content-Type: application/json' \
-  -d '{"description":"做一个太空接星星游戏，100分胜利，支持手机操作","engine":"auto"}'
-```
+三个官方 case 的引擎锁与完整规格已接入，现有真实任务如下；它们尚未宣称通过，状态以 API 和任务目录内报告为准。
 
-`GET /api/runs/{id}` 查看状态，`GET /api/runs/{id}/events?after=0` 增量读取轨迹。`POST …/cancel` 取消，`POST …/resume` 从检查点恢复失败任务（保留原预算）。只有通过浏览器与 QA 的版本可以通过 `GET …/preview/{version}` 预览。源码与报告可从 `GET …/artifacts/{name}` 下载。
+| case | 引擎 | 本轮真实任务 ID |
+| --- | --- | --- |
+| 数字门枪手 `GAME-TEST-001` | Babylon.js | `5534e13dfdc74d1aa810f2beb719e5ed` |
+| 武林幸存者 `GAME-TEST-002` | Phaser | `c0e2aefc313246fc879c5a89f505bdfb` |
+| 百炼英雄／战力吞噬者 `GAME-TEST-003` | Babylon.js | `11fc08ffeb364846aadb87751eb842cf` |
 
-## 已有设计资料
+v1 打地鼠真实生成任务 `b475570322d5409dadfc5549ceae0053` 已通过浏览器和截图 QA，另用真实键盘操作验证胜、负、暂停及重开。它是独立的小型游戏证据，不替代上述大型 case。
 
-保留原始 [系统提示词](system_prompt.txt)、[架构 Markdown](web-game-generator-mas-plan.md)、[架构 HTML](web-game-generator-mas-plan.html) 及 `diagrams/`。原始提示词面向“原型复刻＋人工确认”；本 harness 按当前 hackathon 的一句话自动生成需求运行，自动记录补充假设。原提示词文件没有被直接注入运行时。
+- [Harness 架构、恢复和验收门禁](docs/harness.md)
+- [团队组件、三 case 与素材门户接入状态](docs/team-integration.md)
+- [长程任务框架调研与设计取舍](docs/long-horizon-research.md)
 
-已验证的是 Chromium 的加载、状态机、操作冒烟、暂停、继续、重开、三种屏幕尺寸，以及截图/代码模型审查；不代表完整玩法、iOS Safari、微信或性能验收全部通过。真实测试证据保存在 `data/runs/<id>/`。
-
-## 团队新增组件与验收规格
-
-[WebMCP 架构及素材门户契约](webmcp/README.md) 定义了团队外部素材门户的接入边界；研究 runtime 已实现，默认素材为 mock，不能当成真实检索证据。
-
-[WebMCP 当前交接说明](webmcp/handoff.md) 列出了交付物、组件归属、输入输出及后续工作。研究 MAS 已通过 `game_harness.research.ResearchClient` 接入；真实门户与模型规划仍待实现。
-
-最新 [v0.2 三轮讨论协议](webmcp/discussion-policy.md) 定义了主应用与研究 MAS、MAS 与门户各自独立的追问预算。研究 runtime 持久化执行两套限制；harness 转发原命令和错误，不另建或重置计数器。原 `MaterialPortalClient` 仍是旧生成路径的单轮 bridge；带研究蓝图的生成不重复调用该 bridge。
-
-`tests` 分支提供数字门枪手、武林幸存者、百炼英雄的长规格和参考图片。它们包含严格的引擎与内容要求，与 Python 回归测试分别管理；能力预检不会将不支持的引擎自动改为 Canvas。
-
-运行 `.venv/bin/python scripts/check_benchmarks.py` 查看三份规格的能力预检；也可访问 `/api/benchmarks`。素材门户 bridge、mock 证据规则和当前能力缺口见 [团队组件接入状态](docs/team-integration.md)。
+模型角色可单独配置；项目每个功能按标题、游戏名和引擎检索已有 RAG，保存文档 ID、来源与警告，编码工具可按需读取检索结果。现有 RAG 支持本地 Markdown BM25、`RAG_API_URL` 与可选 `MATERIAL_PORTAL_URL` HTTP bridge；检索不能覆盖原文或宿主指令。外部 RAG/门户真实地址仍未提供，完整讨论状态机仍需与团队对接，不把 mock 样例当成已联网证据。原始 `system_prompt.txt`、架构图及 `webmcp/` 提案完整保留；原始提示词作为设计资料，未直接作为宿主指令执行。

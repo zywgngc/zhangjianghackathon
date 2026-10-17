@@ -290,8 +290,8 @@ $('handoff').onclick = async () => {
       blueprintVersion: run.blueprints.at(-1).version,
     });
     $('handoff-status').textContent = result.eligible
-      ? 'Compatible with Builder. The pinned reference can be supplied as research in POST /api/runs; this check does not start generation.'
-      : `Builder handoff blocked: ${result.blockers.join('; ')}. No generation was started.`;
+      ? 'Compatible with the single-file Builder. The pinned reference can be supplied as research in POST /api/runs; this check does not start generation.'
+      : `Single-file Builder handoff blocked: ${result.blockers.join('; ')}. Full-project blueprint handoff is not connected yet. No generation was started.`;
   } catch (e) {
     error(e);
   }
