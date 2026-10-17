@@ -9,7 +9,7 @@ import pytest
 from playwright.async_api import async_playwright
 
 from game_harness.acceptance import evaluate_assertion
-from game_harness.project_ui_validation import capture_project_ui_scene, capture_isolated_project_ui, validate_project_ui
+from game_harness.project_ui_validation import capture_project_ui_scene, capture_isolated_project_ui, observe_project_power_labels, validate_project_ui
 
 
 pytestmark = pytest.mark.skipif(os.getenv("RUN_BROWSER_TESTS") != "1", reason="Requires real Chromium")
@@ -161,6 +161,12 @@ async def test_real_projection_and_labels_capture_same_enemy_power_transition(st
         browser = await playwright.chromium.launch(chromium_sandbox=settings.browser_sandbox)
         try:
             page = await page_for(browser, LABELS.replace("HIDDEN", "true" if hidden else "false"))
+            state_before = await page.evaluate("() => JSON.stringify(window.__HARNESS__.snapshot())")
+            frame = await observe_project_power_labels(validator, page, rid, spec, evidence, 0)
+            assert await page.evaluate("() => JSON.stringify(window.__HARNESS__.snapshot())") == state_before
+            assert evidence["checks"] == []  # Observation alone declares no pass.
+            assert {row["id"] for row in frame["observation"]["entities"]} == {"player", "weak", "cross"}
+            assert all(bool(row["matchingLabels"]) is (not hidden) for row in frame["observation"]["entities"])
             before = await capture_project_ui_scene(validator, page, rid, spec, evidence, 0, "power_change_before")
             if hidden:
                 assert before["errors"]

@@ -34,6 +34,17 @@ async def _state(page):
     return value
 
 
+async def observe_project_power_labels(validator, page, rid, spec, evidence, round_no):
+    """Read one real normal-play DOM/camera frame without changing the game.
+
+    The trusted normal-route trace retains this whole observation and hashes it
+    together with the production source. It does not declare a test verdict.
+    """
+    probe = _Probe(validator, page, rid, spec, evidence, round_no)
+    state = await probe.state()
+    return {"state": state, "observation": await probe.label_observations(state)}
+
+
 def _choices(state):
     return state.get("upgradeChoices") or state.get("choices") or state.get("skills", {}).get("upgradeChoices") or []
 
@@ -323,7 +334,7 @@ class _Probe:
         gold_before, gold_after = before["progress"].get("gold"), after["progress"].get("gold")
         if not isinstance(gold_before, (int, float)) or not isinstance(gold_after, (int, float)) or gold_after >= gold_before:
             raise AssertionError("Upgrade did not deduct actual production gold")
-        await self.page.reload(wait_until="networkidle")
+        await self.page.reload(wait_until="networkidle", timeout=30000)
         await self.page.wait_for_function("() => Boolean(window.__HARNESS__ && typeof window.__HARNESS__.snapshot==='function')")
         refreshed = await self.state()
         trace = {"before_purchase": before, "after_purchase": after, "after_refresh": refreshed,

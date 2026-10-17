@@ -560,9 +560,16 @@ def scenario_plan(case_id: str, root: str | Path | None = None) -> dict[str, Any
         else:
             process["bossPower"] = POWER_LEVELS[level - 1]["bossPower"]
         route["assertions"].append({"pointer": "", "op": "normal_level_process", "expected": process})
-    mapping = {test["id"]: [s["id"] for s in scenarios + normal_routes if test["id"] in s["acceptance_ids"]] for test in spec.acceptance_tests}
+    normal_observations = []
+    if case_id == "GAME-TEST-003":
+        for route in normal_routes:
+            normal_observations.append({"id": case_id + "/scenario/normal-label-level-" + str(route["level"]),
+                "level": route["level"], "kind": "browser", "initial_fixture_allowed": False, "acceptance_ids": [case_id + "/T03"],
+                "assertions": [{"pointer": "", "op": "power_label_coverage", "expected": {"roles": ["enemy", "boss"]}}]})
+    mapping = {test["id"]: [s["id"] for s in scenarios + normal_routes + normal_observations if test["id"] in s["acceptance_ids"]] for test in spec.acceptance_tests}
     return {"version": 1, "case_id": case_id, "spec_sha256": spec.sha256,
             "expected_configuration": configuration, "scenarios": scenarios, "normal_play_routes": normal_routes,
+            "normal_observation_routes": normal_observations,
             "acceptance_mapping": mapping, "test_requirements": spec.acceptance_tests,
             "required_browser_checks": ["engine-runtime-loaded", "portrait-390x844", "landscape-844x390", "touch-input", "desktop-input",
                                         "orientation-preserves-state", "offline-local-assets", "persistence-refresh", "restart-no-duplicate-loops"],
@@ -702,6 +709,28 @@ def evaluate_assertion(document: Any, assertion: dict[str, Any]) -> bool:
     operator = assertion["op"]
     if operator == "normal_level_process":
         return _normal_level_process(actual, expected)
+    if operator == "power_label_coverage":
+        # A following camera need not show the entire map simultaneously.
+        # Each actual initial hostile must instead have been observed with its
+        # own correct, visible label while it was still active during the route.
+        if actual.get("mode") != "normal_play" or actual.get("fixture") is not None:
+            return False
+        required = {entity["id"] for entity in actual["initial"]["entities"]
+                    if entity.get("kind") in expected["roles"] and entity.get("active", True)}
+        if not required:
+            return False
+        seen = set()
+        for frame in actual["power_label_frames"]:
+            active = {entity["id"]: entity for entity in frame["state"]["entities"]
+                      if entity.get("active", True) and entity.get("kind") in expected["roles"]}
+            for observation in frame["observation"]["entities"]:
+                entity = active.get(observation["id"])
+                if entity is None or not observation["inView"] or observation["power"] != entity["power"]:
+                    continue
+                if any(label["power"] == entity["power"] and label.get("id") == entity["id"]
+                       for label in observation["matchingLabels"]):
+                    seen.add(entity["id"])
+        return required.issubset(seen)
     if operator == "case1_configuration":
         upgrades = actual.get("permanentUpgrades", actual.get("upgrades"))
         if upgrades is None:
@@ -1014,7 +1043,7 @@ def evaluate_evidence(spec: SpecDocument | dict[str, Any], reports: dict[str, An
         plan, plan_error, valid_context = None, str(exc), False
     if plan and plan["spec_sha256"] != spec_hash:
         valid_context = False
-    trusted_scenarios = {scenario["id"]: scenario for scenario in plan["scenarios"] + plan["normal_play_routes"]} if plan else {}
+    trusted_scenarios = {scenario["id"]: scenario for scenario in plan["scenarios"] + plan["normal_play_routes"] + plan.get("normal_observation_routes", [])} if plan else {}
     results, failures = [], []
     for test in data["acceptance_tests"]:
         matching = [check for check in checks if check.get("requirement_id") == test["id"]]

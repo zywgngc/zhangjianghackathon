@@ -175,6 +175,35 @@ class AcceptanceTests(unittest.TestCase):
         trace["events"].insert(0, {"seq": 0, "type": "spawn", "data": boss})
         self.assertTrue(evaluate_assertion(trace, assertion))
 
+    def test_following_camera_labels_require_real_per_entity_coverage_across_frames(self):
+        enemies = [{"id": "near", "kind": "enemy", "power": 3, "active": True},
+                   {"id": "far-boss", "kind": "boss", "power": 150, "active": True}]
+        frames = []
+        for entity in enemies:
+            frames.append({"state": {"entities": copy.deepcopy(enemies)}, "observation": {"entities": [
+                {"id": entity["id"], "power": entity["power"], "inView": True,
+                 "matchingLabels": [{"id": entity["id"], "power": entity["power"]}]}]}})
+        trace = {"mode": "normal_play", "fixture": None, "initial": {"entities": enemies}, "power_label_frames": frames}
+        assertion = {"pointer": "", "op": "power_label_coverage", "expected": {"roles": ["enemy", "boss"]}}
+        self.assertTrue(evaluate_assertion(trace, assertion))
+        for defect in ["never-visible", "wrong-power", "wrong-label-id", "already-dead", "fixture"]:
+            bad = copy.deepcopy(trace)
+            if defect == "never-visible":
+                bad["power_label_frames"][1]["observation"]["entities"][0]["inView"] = False
+            elif defect == "wrong-power":
+                bad["power_label_frames"][1]["observation"]["entities"][0]["matchingLabels"][0]["power"] = 3
+            elif defect == "wrong-label-id":
+                bad["power_label_frames"][1]["observation"]["entities"][0]["matchingLabels"][0]["id"] = "near"
+            elif defect == "already-dead":
+                bad["power_label_frames"][1]["state"]["entities"][1]["active"] = False
+            else:
+                bad["fixture"] = {}
+            with self.subTest(defect=defect):
+                self.assertFalse(evaluate_assertion(bad, assertion))
+        plan = scenario_plan("GAME-TEST-003")
+        self.assertEqual(len(plan["acceptance_mapping"]["GAME-TEST-003/T03"]), 3)
+        self.assertTrue(all(row["level"] in (1, 2, 3) for row in plan["normal_observation_routes"]))
+
     def test_fixed_configurations_preserve_all_levels_numbers_and_exact_skill_counts(self):
         gate = scenario_plan("GAME-TEST-001")["expected_configuration"]
         self.assertEqual([level["gates"][-1] for level in gate["levels"]], [["×2", "-5"], ["+20", "÷3"], ["×2", "-15"]])

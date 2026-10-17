@@ -246,7 +246,7 @@ RUN_NORMAL_ROUTE = """async ({route, sourceHash, specHash, caseId}) => {
     throw Error('HARNESS_ADAPTER: normal play requires production snapshot, advance, events and command/dispatch methods');
   const observe=async()=>{const s=copy(await api.snapshot());s._entities=Object.fromEntries((s.entities||[]).map(e=>[e.id,e]));return s;};
   const command=async(name,args={})=> typeof api.command==='function' ? api.command(name,args) : api.dispatch({type:name,...args});
-  const trace={project_sha256:sourceHash,spec_sha256:specHash,scenario_id:route.id,fixture:null,mode:'normal_play',inputs:[],checkpoints:[],process_observations:[],events:[]};
+  const trace={project_sha256:sourceHash,spec_sha256:specHash,scenario_id:route.id,fixture:null,mode:'normal_play',inputs:[],checkpoints:[],process_observations:[],power_label_frames:[],events:[]};
   trace.configuration=typeof api.config==='function'?copy(await api.config()):null;
   const send=async(name,args={})=>{const before=await api.snapshot();await command(name,args);trace.inputs.push({simTime:(await api.snapshot()).simTime,name,args:copy(args),before:{phase:before.phase,playerPower:before.player?.power}});};
   await send('start',{level:route.level,seed:20261016});
@@ -259,7 +259,7 @@ RUN_NORMAL_ROUTE = """async ({route, sourceHash, specHash, caseId}) => {
   const drainEvents=async()=>{const events=await api.events(lastSeq);if(!Array.isArray(events))throw Error('HARNESS_ADAPTER: events(afterSeq) must return an array');
     for(const e of events){if(!Number.isInteger(e.seq))throw Error('HARNESS_ADAPTER: production events require monotonic integer seq');if(e.seq>lastSeq){trace.events.push(copy(e));lastSeq=e.seq;}}};
   rememberProcess(trace.initial);
-  const captured=new Set();let powerBefore=false,previousPower=trace.initial.player?.power;
+  const captured=new Set(),observedLabels=new Set();let powerBefore=false,previousPower=trace.initial.player?.power;
   const capture=async(scene)=>{if(!window.__HARNESS_HOST_CAPTURE__||captured.has(scene)||route.endurance)return;
     captured.add(scene);await new Promise(resolve=>requestAnimationFrame(resolve));await window.__HARNESS_HOST_CAPTURE__({scene});};
   const maxMs=(route.maxSimSeconds || 150)*1000;
@@ -288,7 +288,7 @@ RUN_NORMAL_ROUTE = """async ({route, sourceHash, specHash, caseId}) => {
       if(powerBefore && p.power>previousPower) {await capture('power_change_after');powerBefore=false;}
       if(target && !entities.some(e=>e.id===target)) target=null;
       if(target && time-targetSince>45) throw Error('Navigation/interaction did not resolve target '+target);
-      if(!target && !['MOVING','INTERACTING'].includes(s.phase)) {
+      if(!target && !s.interactionLock && !['MOVING','INTERACTING'].includes(s.phase)) {
         const distance=e=>Math.hypot((e.x||0)-(p.x||0),(e.z||0)-(p.z||0));
         const weapons=entities.filter(e=>e.kind==='weapon').sort((a,b)=>distance(a)-distance(b));
         const enemies=entities.filter(e=>(e.kind==='enemy'||e.kind==='boss') && p.power>e.power).sort((a,b)=>(a.kind==='boss')-(b.kind==='boss') || a.power-b.power || distance(a)-distance(b));
@@ -321,6 +321,16 @@ RUN_NORMAL_ROUTE = """async ({route, sourceHash, specHash, caseId}) => {
       }
     }
     await api.advance(200);
+    if(caseId==='GAME-TEST-003' && window.__HARNESS_HOST_OBSERVE_POWER__ && trace.power_label_frames.length<120) {
+      const current=await api.snapshot(),selected=(current.entities||[]).find(e=>e.id===target&&e.active!==false&&['enemy','boss'].includes(e.kind));
+      if(selected&&!observedLabels.has(selected.id)&&Math.hypot(selected.x-current.player.x,selected.z-current.player.z)<=1.5) {
+        // Only observation is added: allow the real renderer to draw its current
+        // production frame, then read DOM text and the actual camera projection.
+        await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+        const frame=await window.__HARNESS_HOST_OBSERVE_POWER__();trace.power_label_frames.push(frame);
+        for(const entity of frame.observation?.entities||[])if(entity.inView&&entity.matchingLabels?.some(label=>label.id===entity.id&&label.power===entity.power))observedLabels.add(entity.id);
+      }
+    }
     if(Math.floor(elapsed/1000)!==lastCheckpoint) {
       lastCheckpoint=Math.floor(elapsed/1000);trace.checkpoints.push(await observe());
       rememberProcess(trace.checkpoints[trace.checkpoints.length-1]);await drainEvents();
@@ -446,6 +456,11 @@ class ProjectValidator:
                     return {"captured": bool(result.get("screenshots"))}
 
                 await page.expose_binding("__HARNESS_HOST_CAPTURE__", capture_scene)
+                async def observe_power_labels(source):
+                    from .project_ui_validation import observe_project_power_labels
+                    return await observe_project_power_labels(self, source["page"], rid, spec, evidence, round_no)
+
+                await page.expose_binding("__HARNESS_HOST_OBSERVE_POWER__", observe_power_labels)
                 for index, scenario in enumerate(plan["scenarios"]):
                     if index % 10 == 0:
                         self.store.event(rid, "project_verification", "acceptance_progress", {"scenario": index, "total": len(plan["scenarios"]), "case_id": spec.case_id})
@@ -495,7 +510,8 @@ class ProjectValidator:
                 page.set_default_timeout(3000)
                 page.on("pageerror", lambda error: errors.append(str(error)[:1000]))
                 await page.expose_binding("__HARNESS_HOST_CAPTURE__", capture_scene)
-                await page.goto(origin + "/", wait_until="networkidle")
+                await page.expose_binding("__HARNESS_HOST_OBSERVE_POWER__", observe_power_labels)
+                await page.goto(origin + "/", wait_until="networkidle", timeout=30000)
                 await page.wait_for_function("() => Boolean(window.__HARNESS__ && typeof window.__HARNESS__.snapshot==='function')")
                 report["normal_play_started_in_clean_browser_context"] = True
                 normal_play_traces, verified_normal_completions = [], []
@@ -526,6 +542,11 @@ class ProjectValidator:
                     else:
                         self._evidence(rid, spec, evidence, round_no, "normal-level-" + str(route["level"]), trace,
                             route["acceptance_ids"], assertions, kind="gameplay", scenario_id=route["id"], mode="normal_play")
+                    if not trace.get("execution_error"):
+                        for observation in plan.get("normal_observation_routes", []):
+                            if observation["level"] == route["level"]:
+                                self._evidence(rid, spec, evidence, round_no, "normal-label-level-" + str(route["level"]), trace,
+                                    observation["acceptance_ids"], observation["assertions"], kind="browser", scenario_id=observation["id"], mode="normal_play")
                     report["scenarios"].append({"id": route["id"], "error": trace.get("execution_error"), "phase": trace.get("final", {}).get("phase"),
                         "status": "not_run" if adapter_errors else "failed" if assertion_errors else "passed", "assertion_errors": assertion_errors, "adapter_errors": adapter_errors})
                     if adapter_errors or assertion_errors or trace.get("final", {}).get("phase") != "VICTORY":
@@ -541,7 +562,7 @@ class ProjectValidator:
                     # The won state is real; reloading must preserve unlocked and
                     # completed levels rather than exercising default save values.
                     before_reload = await page.evaluate("() => JSON.parse(JSON.stringify(window.__HARNESS__.snapshot()))")
-                    await page.reload(wait_until="networkidle")
+                    await page.reload(wait_until="networkidle", timeout=30000)
                     await page.wait_for_function("() => Boolean(window.__HARNESS__ && typeof window.__HARNESS__.snapshot==='function')")
                     after_reload = await page.evaluate("() => JSON.parse(JSON.stringify(window.__HARNESS__.snapshot()))")
                     persistence_ids = [52, 53] if spec.case_id.endswith("003") else []
@@ -561,7 +582,7 @@ class ProjectValidator:
                              {"pointer": "/after/progress/completedLevels", "op": "same", "other_pointer": "/before/progress/completedLevels"},
                              {"pointer": "/after/progress/unlockedLevel", "op": "same", "other_pointer": "/before/progress/unlockedLevel"},
                              {"pointer": "/after/level", "op": "eq", "expected": 1}, {"pointer": "/after/phase", "op": "eq", "expected": "PLAYING"}], kind="gameplay", mode="normal_play")
-                    await page.reload(wait_until="networkidle")
+                    await page.reload(wait_until="networkidle", timeout=30000)
                     await page.wait_for_function("() => Boolean(window.__HARNESS__ && typeof window.__HARNESS__.snapshot==='function')")
                 from .project_ui_validation import capture_isolated_project_ui, validate_project_ui
                 merge_ui(await validate_project_ui(self, page, rid, spec, evidence, round_no, normal_play_traces=verified_normal_completions))
@@ -956,7 +977,7 @@ class ProjectValidator:
               return a.command ? a.command('setAudio',args) : a.dispatch({type:'setAudio',...args});
             }""")
             before_reload = await state()
-            await page.reload(wait_until="networkidle")
+            await page.reload(wait_until="networkidle", timeout=30000)
             await page.wait_for_function("() => Boolean(window.__HARNESS__ && typeof window.__HARNESS__.snapshot==='function')")
             after_reload = await state()
             save("audio-persistence", {"before": before_reload, "after": after_reload}, [54] if prefix.endswith("003") else [],

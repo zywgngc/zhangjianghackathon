@@ -121,6 +121,40 @@ class ProjectValidationGates(unittest.IsolatedAsyncioTestCase):
 
 @unittest.skipUnless(os.getenv("RUN_BROWSER_TESTS") == "1", "Real Chromium tests are opt-in")
 class RealProjectBrowserTests(unittest.IsolatedAsyncioTestCase):
+    async def test_power_strategy_waits_for_actual_absorption_lock_before_next_selection(self):
+        from playwright.async_api import async_playwright
+        async with async_playwright() as playwright:
+            browser = await playwright.chromium.launch(headless=True, chromium_sandbox=True)
+            try:
+                page = await browser.new_page()
+                await page.route("http://protocol.test/**", lambda route: route.fulfill(body="<!doctype html><body>normal inputs</body>", content_type="text/html"))
+                await page.goto("http://protocol.test/")
+                await page.evaluate("""() => {
+                  let time=0,phase='MENU',locked=false,releaseAt=0,weak=true,boss=true,power=200,selected=null;
+                  window.rejectedSelections=0;
+                  window.__HARNESS__={
+                    snapshot:()=>({phase,level:1,simTime:time,interactionLock:locked,player:{power,x:0,z:0},entities:[
+                      {id:'weak',kind:'enemy',power:3,x:1,z:0,active:weak},
+                      {id:'boss',kind:'boss',power:150,x:2,z:0,active:boss,hp:boss?1:0}]}),
+                    command:(name,args)=>{if(name==='start')phase='PLAYING';else if(name==='selectTarget'){
+                      if(locked){window.rejectedSelections++;return;}selected=args.id;}},
+                    advance:ms=>{time+=ms/1000;
+                      if(selected==='weak'&&weak){weak=false;locked=true;releaseAt=time+.4;selected=null;}
+                      if(locked&&time>=releaseAt-1e-9){locked=false;power+=3;}
+                      if(selected==='boss'&&!locked){boss=false;power+=150;phase='VICTORY';}},
+                    events:()=>boss?[]:[{seq:1,type:'enemy_defeated',data:{enemyId:'boss'}}]
+                  };
+                }""")
+                trace = await page.evaluate(RUN_NORMAL_ROUTE, {"route": {"id": "locked-power", "level": 1, "maxSimSeconds": 2},
+                    "sourceHash": "a" * 64, "specHash": "b" * 64, "caseId": "GAME-TEST-003"})
+                self.assertEqual(trace["final"]["phase"], "VICTORY")
+                self.assertEqual(await page.evaluate("() => window.rejectedSelections"), 0)
+                boss_input = next(item for item in trace["inputs"] if item.get("args", {}).get("id") == "boss")
+                self.assertGreaterEqual(boss_input["simTime"], .6 - 1e-9)
+                self.assertEqual(boss_input["before"]["playerPower"], 203)
+            finally:
+                await browser.close()
+
     async def test_normal_runner_records_boss_between_checkpoints_and_drains_terminal_events(self):
         from playwright.async_api import async_playwright
         async with async_playwright() as playwright:
