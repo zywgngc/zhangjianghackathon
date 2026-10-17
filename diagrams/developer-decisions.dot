@@ -1,0 +1,34 @@
+digraph Decisions {
+
+  graph [bgcolor="transparent", pad="0.24", nodesep="0.34", ranksep="0.48", splines=spline, outputorder=edgesfirst, fontname="Arial", fontsize=12];
+  node [shape=box, style="rounded,filled", fillcolor="#F5F5F5", color="#D7D7D7", penwidth=1.1, fontname="Arial", fontsize=15, fontcolor="#303030", margin="0.22,0.16", height=0.62];
+  edge [color="#8D9195", penwidth=1.05, arrowsize=0.65, fontname="Arial", fontsize=12, fontcolor="#555A60"];
+
+      rankdir=TB;
+      choice [label="Unresolved choice
+existing preferences do not settle it", width=3.7];
+      card [label="Save decision card
+question + options + recommendation", width=3.9];
+      independent [label="Continue independent work
+pause only affected tasks", style="rounded,filled,dashed", width=3.3];
+      answer [label="Developer answers
+choose an option or give a custom answer", width=4.1];
+      validate [label="Answer still valid for
+current project revision?", shape=diamond, style=filled, fillcolor="#FAFAFA", margin="0.12,0.06", width=3.1, height=1.1];
+      refresh [label="Refresh question
+show updated context", width=2.55];
+      commit [label="Commit answer + preference changes
+create a project revision", width=4.1];
+      resume [label="Resume dependent work
+use the accepted decision", width=3.4];
+      {rank=same; card; independent;}
+      {rank=same; refresh; validate;}
+      choice -> card;
+      card -> independent [style=dashed];
+      card -> answer;
+      answer -> validate;
+      validate -> commit [label="Yes"];
+      validate -> refresh [label="No", constraint=false];
+      refresh -> card [constraint=false];
+      commit -> resume;
+    }

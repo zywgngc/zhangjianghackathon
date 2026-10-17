@@ -1,0 +1,38 @@
+digraph Architecture {
+
+  graph [bgcolor="transparent", pad="0.24", nodesep="0.34", ranksep="0.48", splines=spline, outputorder=edgesfirst, fontname="Arial", fontsize=12];
+  node [shape=box, style="rounded,filled", fillcolor="#F5F5F5", color="#D7D7D7", penwidth=1.1, fontname="Arial", fontsize=15, fontcolor="#303030", margin="0.22,0.16", height=0.62];
+  edge [color="#8D9195", penwidth=1.05, arrowsize=0.65, fontname="Arial", fontsize=12, fontcolor="#555A60"];
+
+      rankdir=TB;
+      developer [label="Developer
+prompt · switches · choices", width=2.8];
+      webmcp [label="WebMCP tools in browser
+references + project commands", width=2.8];
+      api [label="Project API + versioned state
+validated commands · revisions", width=3.2];
+      orchestrator [label="Durable orchestrator
+checkpoints + task scheduling", width=3.2];
+      designer [label="Designer / engine router
+specification + route", width=2.55];
+      builder [label="Builder
+engine-specific implementation", width=2.8];
+      tests [label="Build + browser
+gameplay tests", width=2.4];
+      qa [label="QA agent
+review test evidence", width=2.35];
+      preview [label="Versioned playable preview
+exact tested build", width=2.8];
+      {rank=same; developer; webmcp;}
+      {rank=same; designer; builder; tests; qa;}
+      developer -> api;
+      webmcp -> api;
+      api -> orchestrator;
+      orchestrator -> designer;
+      designer -> builder;
+      builder -> tests;
+      tests -> qa;
+      qa -> preview [label="Checks pass"];
+      qa -> builder [label="Specific defects · bounded repair", constraint=false];
+      orchestrator -> developer [label="Decision needed", constraint=false];
+    }

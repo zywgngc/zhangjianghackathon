@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Three exportable architecture diagrams for a multi-agent web game generator: system, engine routing, and developer decisions.">
+<title>Web Game Generator — Architecture diagrams</title>
+<style>
+  :root { color-scheme: light; --ink:#292b2e; --muted:#666a70; --line:#e3e4e6; --paper:#fff; }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; scroll-padding-top:25px; }
+  body { margin:0; background:#f7f7f8; color:var(--ink); font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif; }
+  a { color:inherit; text-underline-offset:3px; }
+  a:focus-visible, button:focus-visible { outline:3px solid #527b9d; outline-offset:4px; }
+  .wrap { width:min(1280px,100% - 64px); margin:0 auto; }
+  header { padding:48px 0 26px; }
+  .eyebrow { margin:0 0 8px; color:var(--muted); font-size:12px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; }
+  h1 { font-size:clamp(25px,3.2vw,38px); line-height:1.16; letter-spacing:-.035em; margin:0; font-weight:650; }
+  .subtitle { margin:12px 0 0; color:var(--muted); }
+  .toolbar { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-top:26px; }
+  nav { display:flex; flex-wrap:wrap; gap:8px 20px; }
+  nav a { text-decoration:none; color:var(--muted); font-size:13px; }
+  nav a:hover { color:var(--ink); text-decoration:underline; }
+  .actions { display:flex; gap:8px; }
+  .button { appearance:none; border:1px solid #d5d7da; background:white; border-radius:7px; font:inherit; font-size:13px; padding:8px 13px; cursor:pointer; text-decoration:none; color:var(--ink); }
+  .button:hover { background:#f1f2f3; }
+  .diagram { background:var(--paper); border:1px solid var(--line); border-radius:14px; margin:0 0 24px; overflow:hidden; }
+  .diagram-heading { display:flex; justify-content:space-between; gap:18px; padding:23px 28px 0; }
+  .title-line { display:flex; align-items:baseline; gap:12px; }
+  .number { color:#8a8e94; font-size:12px; font-variant-numeric:tabular-nums; }
+  h2 { margin:0; font-size:20px; line-height:1.3; font-weight:600; letter-spacing:-.02em; }
+  .caption { margin:8px 0 0 28px; color:var(--muted); max-width:850px; font-size:13px; }
+  .download { flex-shrink:0; font-size:12px; color:var(--muted); padding-top:3px; }
+  figure { margin:0; padding:24px 24px 26px; text-align:center; overflow-x:auto; }
+  figure svg { display:block; margin:auto; width:auto; height:auto; max-width:100%; max-height:690px; }
+  #system-architecture figure svg { width:100%; }
+  #engine-routing figure svg { width:900px; }
+  #developer-decisions figure svg { width:830px; }
+  footer { padding:2px 0 32px; font-size:12px; color:var(--muted); }
+  @media (max-width:700px) {
+    .wrap { width:calc(100% - 24px); }
+    header { padding:28px 4px 20px; }
+    .toolbar { align-items:flex-start; }
+    .diagram-heading { padding:20px 18px 0; }
+    .caption { margin-left:0; }
+    h2 { font-size:18px; }
+    figure { padding:20px 10px; }
+    figure svg { min-width:650px; }
+    .download { font-size:11px; }
+  }
+  @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+  @media print {
+    @page { size:A4 landscape; margin:12mm; }
+    body { background:white; font-size:11px; }
+    .wrap { width:100%; }
+    header { padding:0 0 8mm; }
+    h1 { font-size:23px; }
+    .eyebrow, .toolbar, .download, footer { display:none; }
+    .subtitle { font-size:11px; margin-top:4px; }
+    .diagram { border:0; border-radius:0; margin:0; break-inside:avoid; }
+    .diagram + .diagram { break-before:page; }
+    .diagram-heading { padding:0; }
+    h2 { font-size:17px; }
+    .caption { font-size:11px; }
+    figure { padding:4mm 0 0; overflow:visible; }
+    figure svg { min-width:0; max-width:100%; max-height:153mm; }
+    #system-architecture figure svg { max-height:125mm; }
+  }
+</style>
+</head>
+<body>
+<header class="wrap">
+  <p class="eyebrow">Web Game Generator · Proposed architecture</p>
+  <h1>The system, in three diagrams.</h1>
+  <p class="subtitle">Multi-agent generation · engine routing · developer choices</p>
+  <div class="toolbar">
+    <nav aria-label="Diagrams"><a href="#system-architecture">01 System architecture</a><a href="#engine-routing">02 Engine routing</a><a href="#developer-decisions">03 Developer choices during generation</a></nav>
+    <div class="actions"><a class="button" href="web-game-generator-mas-plan.md" download>Download Markdown</a><button class="button" type="button" onclick="window.print()">Print / Save PDF</button></div>
+  </div>
+</header>
+<main class="wrap">
+<section class="diagram" id="system-architecture" aria-labelledby="heading-system-architecture">
+  <div class="diagram-heading">
+    <div><div class="title-line"><span class="number">01</span><h2 id="heading-system-architecture">System architecture</h2></div><p class="caption">Three specialist agents share versioned project state through a durable orchestrator.</p></div>
+    <a class="download" href="diagrams/system-architecture.svg" download aria-label="Download System architecture as SVG">Download SVG ↗</a>
+  </div>
+  <figure aria-label="System architecture diagram"><svg role="img" aria-labelledby="system-architecture-title system-architecture-desc" width="1072pt" height="505pt"
+ viewBox="0.00 0.00 1072.00 505.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="system-architecture-graph0" class="graph" transform="scale(1 1) rotate(0) translate(17.28 487.28)">
+<title id="system-architecture-title">System architecture</title><desc id="system-architecture-desc">Developer inputs and WebMCP tools enter the same project API. The orchestrator schedules the designer, builder, and QA workflow. QA defects return to the builder; passing checks create a versioned preview. Unresolved choices return to the developer.</desc>
+<!-- developer&#45;&gt;api -->
+<g id="system-architecture-edge1" class="edge">
+<title>developer&#45;&gt;api</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M136.24,-410.5C144.88,-400.93 154.59,-390.2 163.58,-380.24"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="165.05,-382.02 167.72,-375.67 161.67,-378.96 165.05,-382.02"/>
+</g>
+<!-- webmcp&#45;&gt;api -->
+<g id="system-architecture-edge2" class="edge">
+<title>webmcp&#45;&gt;api</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M312.65,-410.5C294.23,-400.31 273.4,-388.79 254.44,-378.3"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="255.73,-376.41 248.94,-375.26 253.53,-380.39 255.73,-376.41"/>
+</g>
+<!-- api&#45;&gt;orchestrator -->
+<g id="system-architecture-edge3" class="edge">
+<title>api&#45;&gt;orchestrator</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M195.04,-314.46C195.04,-305.61 195.04,-295.76 195.04,-286.45"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="197.32,-286.54 195.04,-280.04 192.77,-286.54 197.32,-286.54"/>
+</g>
+<!-- orchestrator&#45;&gt;developer -->
+<g id="system-architecture-edge10" class="edge">
+<title>orchestrator&#45;&gt;developer</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M289.95,-278.43C305.88,-287.56 320.36,-299.46 330.04,-314.92 343.97,-337.16 345.72,-352.92 330.04,-373.96 323.09,-383.29 276.72,-397.73 228.33,-410.69"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="227.79,-408.48 222.09,-412.35 228.95,-412.88 227.79,-408.48"/>
+<text style="paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round" xml:space="preserve" text-anchor="middle" x="385.85" y="-340.84" font-family="Arial" font-size="12.00" fill="#555a60">Decision needed</text>
+</g>
+<!-- orchestrator&#45;&gt;designer -->
+<g id="system-architecture-edge4" class="edge">
+<title>orchestrator&#45;&gt;designer</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M195.04,-218.61C195.04,-205.72 195.04,-190.38 195.04,-176.68"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="197.32,-176.92 195.04,-170.42 192.77,-176.92 197.32,-176.92"/>
+</g>
+<!-- designer&#45;&gt;builder -->
+<g id="system-architecture-edge5" class="edge">
+<title>designer&#45;&gt;builder</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M291.87,-138.96C304.86,-138.96 317.85,-138.96 330.84,-138.96"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="330.84,-141.24 337.34,-138.96 330.84,-136.69 330.84,-141.24"/>
+</g>
+<!-- builder&#45;&gt;tests -->
+<g id="system-architecture-edge6" class="edge">
+<title>builder&#45;&gt;tests</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M577.13,-138.96C590.25,-138.96 603.36,-138.96 616.48,-138.96"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="616.12,-141.24 622.62,-138.96 616.12,-136.69 616.12,-141.24"/>
+</g>
+<!-- tests&#45;&gt;qa -->
+<g id="system-architecture-edge7" class="edge">
+<title>tests&#45;&gt;qa</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M797.87,-138.96C811.03,-138.96 824.2,-138.96 837.36,-138.96"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="837.02,-141.24 843.52,-138.96 837.02,-136.69 837.02,-141.24"/>
+</g>
+<!-- qa&#45;&gt;builder -->
+<g id="system-architecture-edge9" class="edge">
+<title>qa&#45;&gt;builder</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M870.06,-168.96C848.55,-178.19 823.75,-187.14 800.09,-191.76 761.25,-199.35 661.09,-197.9 621.99,-191.76 595.37,-187.58 567.18,-179.8 541.82,-171.47"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="542.79,-169.4 535.9,-169.5 541.35,-173.72 542.79,-169.4"/>
+<text style="paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round" xml:space="preserve" text-anchor="middle" x="711.04" y="-190.08" font-family="Arial" font-size="12.00" fill="#555a60">Specific defects · bounded repair</text>
+</g>
+<!-- qa&#45;&gt;preview -->
+<g id="system-architecture-edge8" class="edge">
+<title>qa&#45;&gt;preview</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M930.04,-109.17C930.04,-96.28 930.04,-80.94 930.04,-67.24"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="932.32,-67.48 930.04,-60.98 927.77,-67.48 932.32,-67.48"/>
+<text style="paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round" xml:space="preserve" text-anchor="middle" x="964.39" y="-80.64" font-family="Arial" font-size="12.00" fill="#555a60">Checks pass</text>
+</g>
+<!-- developer -->
+<g id="system-architecture-node1" class="node">
+<title>developer</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M208.08,-470C208.08,-470 12,-470 12,-470 6,-470 0,-464 0,-458 0,-458 0,-422.96 0,-422.96 0,-416.96 6,-410.96 12,-410.96 12,-410.96 208.08,-410.96 208.08,-410.96 214.08,-410.96 220.08,-416.96 220.08,-422.96 220.08,-422.96 220.08,-458 220.08,-458 220.08,-464 214.08,-470 208.08,-470"/>
+<text xml:space="preserve" text-anchor="middle" x="110.04" y="-444.98" font-family="Arial" font-size="15.00" fill="#303030">Developer</text>
+<text xml:space="preserve" text-anchor="middle" x="110.04" y="-426.98" font-family="Arial" font-size="15.00" fill="#303030">prompt · switches · choices</text>
+</g>
+<!-- webmcp -->
+<g id="system-architecture-node2" class="node">
+<title>webmcp</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M474.14,-470C474.14,-470 255.94,-470 255.94,-470 249.94,-470 243.94,-464 243.94,-458 243.94,-458 243.94,-422.96 243.94,-422.96 243.94,-416.96 249.94,-410.96 255.94,-410.96 255.94,-410.96 474.14,-410.96 474.14,-410.96 480.14,-410.96 486.14,-416.96 486.14,-422.96 486.14,-422.96 486.14,-458 486.14,-458 486.14,-464 480.14,-470 474.14,-470"/>
+<text xml:space="preserve" text-anchor="middle" x="365.04" y="-444.98" font-family="Arial" font-size="15.00" fill="#303030">WebMCP tools in browser</text>
+<text xml:space="preserve" text-anchor="middle" x="365.04" y="-426.98" font-family="Arial" font-size="15.00" fill="#303030">references + project commands</text>
+</g>
+<!-- api -->
+<g id="system-architecture-node3" class="node">
+<title>api</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M305.59,-373.96C305.59,-373.96 84.49,-373.96 84.49,-373.96 78.49,-373.96 72.49,-367.96 72.49,-361.96 72.49,-361.96 72.49,-326.92 72.49,-326.92 72.49,-320.92 78.49,-314.92 84.49,-314.92 84.49,-314.92 305.59,-314.92 305.59,-314.92 311.59,-314.92 317.59,-320.92 317.59,-326.92 317.59,-326.92 317.59,-361.96 317.59,-361.96 317.59,-367.96 311.59,-373.96 305.59,-373.96"/>
+<text xml:space="preserve" text-anchor="middle" x="195.04" y="-348.94" font-family="Arial" font-size="15.00" fill="#303030">Project API + versioned state</text>
+<text xml:space="preserve" text-anchor="middle" x="195.04" y="-330.94" font-family="Arial" font-size="15.00" fill="#303030">validated commands · revisions</text>
+</g>
+<!-- orchestrator -->
+<g id="system-architecture-node4" class="node">
+<title>orchestrator</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M298.73,-277.92C298.73,-277.92 91.35,-277.92 91.35,-277.92 85.35,-277.92 79.35,-271.92 79.35,-265.92 79.35,-265.92 79.35,-230.88 79.35,-230.88 79.35,-224.88 85.35,-218.88 91.35,-218.88 91.35,-218.88 298.73,-218.88 298.73,-218.88 304.73,-218.88 310.73,-224.88 310.73,-230.88 310.73,-230.88 310.73,-265.92 310.73,-265.92 310.73,-271.92 304.73,-277.92 298.73,-277.92"/>
+<text xml:space="preserve" text-anchor="middle" x="195.04" y="-252.9" font-family="Arial" font-size="15.00" fill="#303030">Durable orchestrator</text>
+<text xml:space="preserve" text-anchor="middle" x="195.04" y="-234.9" font-family="Arial" font-size="15.00" fill="#303030">checkpoints + task scheduling</text>
+</g>
+<!-- designer -->
+<g id="system-architecture-node5" class="node">
+<title>designer</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M279.34,-168.48C279.34,-168.48 110.74,-168.48 110.74,-168.48 104.74,-168.48 98.74,-162.48 98.74,-156.48 98.74,-156.48 98.74,-121.44 98.74,-121.44 98.74,-115.44 104.74,-109.44 110.74,-109.44 110.74,-109.44 279.34,-109.44 279.34,-109.44 285.34,-109.44 291.34,-115.44 291.34,-121.44 291.34,-121.44 291.34,-156.48 291.34,-156.48 291.34,-162.48 285.34,-168.48 279.34,-168.48"/>
+<text xml:space="preserve" text-anchor="middle" x="195.04" y="-143.46" font-family="Arial" font-size="15.00" fill="#303030">Designer / engine router</text>
+<text xml:space="preserve" text-anchor="middle" x="195.04" y="-125.46" font-family="Arial" font-size="15.00" fill="#303030">specification + route</text>
+</g>
+<!-- builder -->
+<g id="system-architecture-node6" class="node">
+<title>builder</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M564.85,-168.48C564.85,-168.48 351.23,-168.48 351.23,-168.48 345.23,-168.48 339.23,-162.48 339.23,-156.48 339.23,-156.48 339.23,-121.44 339.23,-121.44 339.23,-115.44 345.23,-109.44 351.23,-109.44 351.23,-109.44 564.85,-109.44 564.85,-109.44 570.85,-109.44 576.85,-115.44 576.85,-121.44 576.85,-121.44 576.85,-156.48 576.85,-156.48 576.85,-162.48 570.85,-168.48 564.85,-168.48"/>
+<text xml:space="preserve" text-anchor="middle" x="458.04" y="-143.46" font-family="Arial" font-size="15.00" fill="#303030">Builder</text>
+<text xml:space="preserve" text-anchor="middle" x="458.04" y="-125.46" font-family="Arial" font-size="15.00" fill="#303030">engine&#45;specific implementation</text>
+</g>
+<!-- tests -->
+<g id="system-architecture-node7" class="node">
+<title>tests</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M785.44,-168.48C785.44,-168.48 636.64,-168.48 636.64,-168.48 630.64,-168.48 624.64,-162.48 624.64,-156.48 624.64,-156.48 624.64,-121.44 624.64,-121.44 624.64,-115.44 630.64,-109.44 636.64,-109.44 636.64,-109.44 785.44,-109.44 785.44,-109.44 791.44,-109.44 797.44,-115.44 797.44,-121.44 797.44,-121.44 797.44,-156.48 797.44,-156.48 797.44,-162.48 791.44,-168.48 785.44,-168.48"/>
+<text xml:space="preserve" text-anchor="middle" x="711.04" y="-143.46" font-family="Arial" font-size="15.00" fill="#303030">Build + browser</text>
+<text xml:space="preserve" text-anchor="middle" x="711.04" y="-125.46" font-family="Arial" font-size="15.00" fill="#303030">gameplay tests</text>
+</g>
+<!-- qa -->
+<g id="system-architecture-node8" class="node">
+<title>qa</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M1002.64,-168.48C1002.64,-168.48 857.44,-168.48 857.44,-168.48 851.44,-168.48 845.44,-162.48 845.44,-156.48 845.44,-156.48 845.44,-121.44 845.44,-121.44 845.44,-115.44 851.44,-109.44 857.44,-109.44 857.44,-109.44 1002.64,-109.44 1002.64,-109.44 1008.64,-109.44 1014.64,-115.44 1014.64,-121.44 1014.64,-121.44 1014.64,-156.48 1014.64,-156.48 1014.64,-162.48 1008.64,-168.48 1002.64,-168.48"/>
+<text xml:space="preserve" text-anchor="middle" x="930.04" y="-143.46" font-family="Arial" font-size="15.00" fill="#303030">QA agent</text>
+<text xml:space="preserve" text-anchor="middle" x="930.04" y="-125.46" font-family="Arial" font-size="15.00" fill="#303030">review test evidence</text>
+</g>
+<!-- preview -->
+<g id="system-architecture-node9" class="node">
+<title>preview</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M1025.6,-59.04C1025.6,-59.04 834.48,-59.04 834.48,-59.04 828.48,-59.04 822.48,-53.04 822.48,-47.04 822.48,-47.04 822.48,-12 822.48,-12 822.48,-6 828.48,0 834.48,0 834.48,0 1025.6,0 1025.6,0 1031.6,0 1037.6,-6 1037.6,-12 1037.6,-12 1037.6,-47.04 1037.6,-47.04 1037.6,-53.04 1031.6,-59.04 1025.6,-59.04"/>
+<text xml:space="preserve" text-anchor="middle" x="930.04" y="-34.02" font-family="Arial" font-size="15.00" fill="#303030">Versioned playable preview</text>
+<text xml:space="preserve" text-anchor="middle" x="930.04" y="-16.02" font-family="Arial" font-size="15.00" fill="#303030">exact tested build</text>
+</g>
+</g>
+</svg>
+</figure>
+</section>
+<section class="diagram" id="engine-routing" aria-labelledby="heading-engine-routing">
+  <div class="diagram-heading">
+    <div><div class="title-line"><span class="number">02</span><h2 id="heading-engine-routing">Engine routing</h2></div><p class="caption">Route by game requirements and developer preferences; validate explicit engine locks before building.</p></div>
+    <a class="download" href="diagrams/engine-routing.svg" download aria-label="Download Engine routing as SVG">Download SVG ↗</a>
+  </div>
+  <figure aria-label="Engine routing diagram"><svg role="img" aria-labelledby="engine-routing-title engine-routing-desc" width="734pt" height="491pt"
+ viewBox="0.00 0.00 734.00 491.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="engine-routing-graph0" class="graph" transform="scale(1 1) rotate(0) translate(17.28 473.88)">
+<title id="engine-routing-title">Engine routing</title><desc id="engine-routing-desc">A game brief and effective preferences feed the engine router. Interface-heavy games use HTML/CSS and React, 2D sprite games use Phaser, and 3D scene games use Babylon.js. Each route feeds a selected engine adapter, then the shared build and test lifecycle.</desc>
+<!-- brief&#45;&gt;router -->
+<g id="engine-routing-edge1" class="edge">
+<title>brief&#45;&gt;router</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M357.55,-397.1C357.55,-388.25 357.55,-378.4 357.55,-369.09"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="359.82,-369.18 357.55,-362.68 355.27,-369.18 359.82,-369.18"/>
+</g>
+<!-- router&#45;&gt;html -->
+<g id="engine-routing-edge2" class="edge">
+<title>router&#45;&gt;html</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M291.57,-301.11C258.89,-286.77 219.33,-269.43 185.72,-254.69"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="186.97,-252.75 180.1,-252.22 185.14,-256.92 186.97,-252.75"/>
+<text style="paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round" xml:space="preserve" text-anchor="middle" x="291.07" y="-272.72" font-family="Arial" font-size="12.00" fill="#555a60">Interface&#45;heavy</text>
+</g>
+<!-- router&#45;&gt;phaser -->
+<g id="engine-routing-edge3" class="edge">
+<title>router&#45;&gt;phaser</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M357.55,-301.25C357.55,-288.36 357.55,-273.02 357.55,-259.32"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="359.82,-259.56 357.55,-253.06 355.27,-259.56 359.82,-259.56"/>
+<text style="paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round" xml:space="preserve" text-anchor="middle" x="392.9" y="-272.72" font-family="Arial" font-size="12.00" fill="#555a60">2D gameplay</text>
+</g>
+<!-- router&#45;&gt;babylon -->
+<g id="engine-routing-edge4" class="edge">
+<title>router&#45;&gt;babylon</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M421.37,-301.11C452.86,-286.83 490.93,-269.57 523.36,-254.87"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="524.18,-257 529.16,-252.24 522.3,-252.85 524.18,-257"/>
+<text style="paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round" xml:space="preserve" text-anchor="middle" x="518.59" y="-272.72" font-family="Arial" font-size="12.00" fill="#555a60">3D scenes</text>
+</g>
+<!-- html&#45;&gt;adapter -->
+<g id="engine-routing-edge5" class="edge">
+<title>html&#45;&gt;adapter</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M188.06,-191.62C215.42,-181.12 246.47,-169.2 274.45,-158.46"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="275.13,-160.63 280.39,-156.18 273.5,-156.38 275.13,-160.63"/>
+</g>
+<!-- phaser&#45;&gt;adapter -->
+<g id="engine-routing-edge6" class="edge">
+<title>phaser&#45;&gt;adapter</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M357.55,-191.62C357.55,-182.77 357.55,-172.92 357.55,-163.61"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="359.82,-163.7 357.55,-157.2 355.27,-163.7 359.82,-163.7"/>
+</g>
+<!-- babylon&#45;&gt;adapter -->
+<g id="engine-routing-edge7" class="edge">
+<title>babylon&#45;&gt;adapter</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M521.51,-191.62C495.04,-181.12 465,-169.2 437.94,-158.46"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="439.12,-156.48 432.23,-156.19 437.44,-160.71 439.12,-156.48"/>
+</g>
+<!-- adapter&#45;&gt;lifecycle -->
+<g id="engine-routing-edge8" class="edge">
+<title>adapter&#45;&gt;lifecycle</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M357.55,-95.58C357.55,-86.73 357.55,-76.88 357.55,-67.57"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="359.82,-67.66 357.55,-61.16 355.27,-67.66 359.82,-67.66"/>
+</g>
+<!-- brief -->
+<g id="engine-routing-node1" class="node">
+<title>brief</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M482.35,-456.6C482.35,-456.6 232.75,-456.6 232.75,-456.6 226.75,-456.6 220.75,-450.6 220.75,-444.6 220.75,-444.6 220.75,-409.56 220.75,-409.56 220.75,-403.56 226.75,-397.56 232.75,-397.56 232.75,-397.56 482.35,-397.56 482.35,-397.56 488.35,-397.56 494.35,-403.56 494.35,-409.56 494.35,-409.56 494.35,-444.6 494.35,-444.6 494.35,-450.6 488.35,-456.6 482.35,-456.6"/>
+<text xml:space="preserve" text-anchor="middle" x="357.55" y="-431.58" font-family="Arial" font-size="15.00" fill="#303030">Game brief + effective preferences</text>
+<text xml:space="preserve" text-anchor="middle" x="357.55" y="-413.58" font-family="Arial" font-size="15.00" fill="#303030">mechanics · devices · engine locks</text>
+</g>
+<!-- router -->
+<g id="engine-routing-node2" class="node">
+<title>router</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M508.76,-360.56C508.76,-360.56 206.34,-360.56 206.34,-360.56 200.34,-360.56 194.34,-354.56 194.34,-348.56 194.34,-348.56 194.34,-313.52 194.34,-313.52 194.34,-307.52 200.34,-301.52 206.34,-301.52 206.34,-301.52 508.76,-301.52 508.76,-301.52 514.76,-301.52 520.76,-307.52 520.76,-313.52 520.76,-313.52 520.76,-348.56 520.76,-348.56 520.76,-354.56 514.76,-360.56 508.76,-360.56"/>
+<text xml:space="preserve" text-anchor="middle" x="357.55" y="-335.54" font-family="Arial" font-size="15.00" fill="#303030">Designer / engine router</text>
+<text xml:space="preserve" text-anchor="middle" x="357.55" y="-317.54" font-family="Arial" font-size="15.00" fill="#303030">match requirements + supported capabilities</text>
+</g>
+<!-- html -->
+<g id="engine-routing-node3" class="node">
+<title>html</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M213.1,-251.12C213.1,-251.12 12,-251.12 12,-251.12 6,-251.12 0,-245.12 0,-239.12 0,-239.12 0,-204.08 0,-204.08 0,-198.08 6,-192.08 12,-192.08 12,-192.08 213.1,-192.08 213.1,-192.08 219.1,-192.08 225.1,-198.08 225.1,-204.08 225.1,-204.08 225.1,-239.12 225.1,-239.12 225.1,-245.12 219.1,-251.12 213.1,-251.12"/>
+<text xml:space="preserve" text-anchor="middle" x="112.55" y="-226.1" font-family="Arial" font-size="15.00" fill="#303030">HTML/CSS + React</text>
+<text xml:space="preserve" text-anchor="middle" x="112.55" y="-208.1" font-family="Arial" font-size="15.00" fill="#303030">UI · text · turn&#45;based games</text>
+</g>
+<!-- phaser -->
+<g id="engine-routing-node4" class="node">
+<title>phaser</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M454.34,-251.12C454.34,-251.12 260.75,-251.12 260.75,-251.12 254.75,-251.12 248.75,-245.12 248.75,-239.12 248.75,-239.12 248.75,-204.08 248.75,-204.08 248.75,-198.08 254.75,-192.08 260.75,-192.08 260.75,-192.08 454.34,-192.08 454.34,-192.08 460.34,-192.08 466.34,-198.08 466.34,-204.08 466.34,-204.08 466.34,-239.12 466.34,-239.12 466.34,-245.12 460.34,-251.12 454.34,-251.12"/>
+<text xml:space="preserve" text-anchor="middle" x="357.55" y="-226.1" font-family="Arial" font-size="15.00" fill="#303030">Phaser</text>
+<text xml:space="preserve" text-anchor="middle" x="357.55" y="-208.1" font-family="Arial" font-size="15.00" fill="#303030">2D · sprites · action games</text>
+</g>
+<!-- babylon -->
+<g id="engine-routing-node5" class="node">
+<title>babylon</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M686.95,-251.12C686.95,-251.12 502.15,-251.12 502.15,-251.12 496.15,-251.12 490.15,-245.12 490.15,-239.12 490.15,-239.12 490.15,-204.08 490.15,-204.08 490.15,-198.08 496.15,-192.08 502.15,-192.08 502.15,-192.08 686.95,-192.08 686.95,-192.08 692.95,-192.08 698.95,-198.08 698.95,-204.08 698.95,-204.08 698.95,-239.12 698.95,-239.12 698.95,-245.12 692.95,-251.12 686.95,-251.12"/>
+<text xml:space="preserve" text-anchor="middle" x="594.55" y="-226.1" font-family="Arial" font-size="15.00" fill="#303030">Babylon.js</text>
+<text xml:space="preserve" text-anchor="middle" x="594.55" y="-208.1" font-family="Arial" font-size="15.00" fill="#303030">3D · cameras · models</text>
+</g>
+<!-- adapter -->
+<g id="engine-routing-node6" class="node">
+<title>adapter</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M482.35,-155.08C482.35,-155.08 232.75,-155.08 232.75,-155.08 226.75,-155.08 220.75,-149.08 220.75,-143.08 220.75,-143.08 220.75,-108.04 220.75,-108.04 220.75,-102.04 226.75,-96.04 232.75,-96.04 232.75,-96.04 482.35,-96.04 482.35,-96.04 488.35,-96.04 494.35,-102.04 494.35,-108.04 494.35,-108.04 494.35,-143.08 494.35,-143.08 494.35,-149.08 488.35,-155.08 482.35,-155.08"/>
+<text xml:space="preserve" text-anchor="middle" x="357.55" y="-130.06" font-family="Arial" font-size="15.00" fill="#303030">Selected engine adapter</text>
+<text xml:space="preserve" text-anchor="middle" x="357.55" y="-112.06" font-family="Arial" font-size="15.00" fill="#303030">pinned template + dependencies</text>
+</g>
+<!-- lifecycle -->
+<g id="engine-routing-node7" class="node">
+<title>lifecycle</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M511.15,-59.04C511.15,-59.04 203.95,-59.04 203.95,-59.04 197.95,-59.04 191.95,-53.04 191.95,-47.04 191.95,-47.04 191.95,-12 191.95,-12 191.95,-6 197.95,0 203.95,0 203.95,0 511.15,0 511.15,0 517.15,0 523.15,-6 523.15,-12 523.15,-12 523.15,-47.04 523.15,-47.04 523.15,-53.04 517.15,-59.04 511.15,-59.04"/>
+<text xml:space="preserve" text-anchor="middle" x="357.55" y="-34.02" font-family="Arial" font-size="15.00" fill="#303030">Builder → build → browser tests → QA</text>
+<text xml:space="preserve" text-anchor="middle" x="357.55" y="-16.02" font-family="Arial" font-size="15.00" fill="#303030">shared workflow for every route</text>
+</g>
+</g>
+</svg>
+</figure>
+</section>
+<section class="diagram" id="developer-decisions" aria-labelledby="heading-developer-decisions">
+  <div class="diagram-heading">
+    <div><div class="title-line"><span class="number">03</span><h2 id="heading-developer-decisions">Developer choices during generation</h2></div><p class="caption">Save each decision, pause only affected tasks, and validate the answer against current project state.</p></div>
+    <a class="download" href="diagrams/developer-decisions.svg" download aria-label="Download Developer choices during generation as SVG">Download SVG ↗</a>
+  </div>
+  <figure aria-label="Developer choices during generation diagram"><svg role="img" aria-labelledby="developer-decisions-title developer-decisions-desc" width="618pt" height="607pt"
+ viewBox="0.00 0.00 618.00 607.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="developer-decisions-graph0" class="graph" transform="scale(1 1) rotate(0) translate(17.28 590.08)">
+<title id="developer-decisions-title">Developer choices during generation</title><desc id="developer-decisions-desc">When existing preferences cannot resolve a choice, save a multiple-choice decision card. Independent work continues. The developer chooses an option or custom answer, which is checked against the current revision. A compatible answer is committed and dependent work resumes; a stale answer causes the question to be refreshed.</desc>
+<!-- choice&#45;&gt;card -->
+<g id="developer-decisions-edge1" class="edge">
+<title>choice&#45;&gt;card</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M156.34,-513.3C156.34,-504.45 156.34,-494.6 156.34,-485.29"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="158.61,-485.38 156.34,-478.88 154.06,-485.38 158.61,-485.38"/>
+</g>
+<!-- card&#45;&gt;independent -->
+<g id="developer-decisions-edge2" class="edge">
+<title>card&#45;&gt;independent</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" stroke-dasharray="5,2" d="M298,-447.24C311.13,-447.24 324.26,-447.24 337.38,-447.24"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="337.02,-449.52 343.52,-447.24 337.02,-444.97 337.02,-449.52"/>
+</g>
+<!-- card&#45;&gt;answer -->
+<g id="developer-decisions-edge3" class="edge">
+<title>card&#45;&gt;answer</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M156.34,-417.26C156.34,-408.41 156.34,-398.56 156.34,-389.25"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="158.61,-389.34 156.34,-382.84 154.06,-389.34 158.61,-389.34"/>
+</g>
+<!-- answer&#45;&gt;validate -->
+<g id="developer-decisions-edge4" class="edge">
+<title>answer&#45;&gt;validate</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M156.34,-321.2C156.34,-312.45 156.34,-302.62 156.34,-293.02"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="158.61,-293.14 156.34,-286.64 154.06,-293.14 158.61,-293.14"/>
+</g>
+<!-- validate&#45;&gt;refresh -->
+<g id="developer-decisions-edge6" class="edge">
+<title>validate&#45;&gt;refresh</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M309.93,-245.08C322.6,-245.08 335.18,-245.08 347.3,-245.08"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="347.1,-247.36 353.6,-245.08 347.1,-242.81 347.1,-247.36"/>
+<text style="paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round" xml:space="preserve" text-anchor="middle" x="331.85" y="-251.68" font-family="Arial" font-size="12.00" fill="#555a60">No</text>
+</g>
+<!-- validate&#45;&gt;commit -->
+<g id="developer-decisions-edge5" class="edge">
+<title>validate&#45;&gt;commit</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M156.34,-204.95C156.34,-191.57 156.34,-176.65 156.34,-163.45"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="158.61,-163.57 156.34,-157.07 154.06,-163.57 158.61,-163.57"/>
+<text style="paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round" xml:space="preserve" text-anchor="middle" x="166.68" y="-176.68" font-family="Arial" font-size="12.00" fill="#555a60">Yes</text>
+</g>
+<!-- refresh&#45;&gt;card -->
+<g id="developer-decisions-edge7" class="edge">
+<title>refresh&#45;&gt;card</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M427.28,-274.92C405.12,-304.93 366.89,-351.53 324.34,-380.72 304.97,-394 282.53,-405.13 260.47,-414.22"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="259.67,-412.09 254.49,-416.63 261.37,-416.31 259.67,-412.09"/>
+</g>
+<!-- commit&#45;&gt;resume -->
+<g id="developer-decisions-edge8" class="edge">
+<title>commit&#45;&gt;resume</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M156.34,-95.58C156.34,-86.73 156.34,-76.88 156.34,-67.57"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="158.61,-67.66 156.34,-61.16 154.06,-67.66 158.61,-67.66"/>
+</g>
+<!-- choice -->
+<g id="developer-decisions-node1" class="node">
+<title>choice</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M277.54,-572.8C277.54,-572.8 35.14,-572.8 35.14,-572.8 29.14,-572.8 23.14,-566.8 23.14,-560.8 23.14,-560.8 23.14,-525.76 23.14,-525.76 23.14,-519.76 29.14,-513.76 35.14,-513.76 35.14,-513.76 277.54,-513.76 277.54,-513.76 283.54,-513.76 289.54,-519.76 289.54,-525.76 289.54,-525.76 289.54,-560.8 289.54,-560.8 289.54,-566.8 283.54,-572.8 277.54,-572.8"/>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-547.78" font-family="Arial" font-size="15.00" fill="#303030">Unresolved choice</text>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-529.78" font-family="Arial" font-size="15.00" fill="#303030">existing preferences do not settle it</text>
+</g>
+<!-- card -->
+<g id="developer-decisions-node2" class="node">
+<title>card</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M285.67,-476.76C285.67,-476.76 27,-476.76 27,-476.76 21,-476.76 15,-470.76 15,-464.76 15,-464.76 15,-429.72 15,-429.72 15,-423.72 21,-417.72 27,-417.72 27,-417.72 285.67,-417.72 285.67,-417.72 291.67,-417.72 297.67,-423.72 297.67,-429.72 297.67,-429.72 297.67,-464.76 297.67,-464.76 297.67,-470.76 291.67,-476.76 285.67,-476.76"/>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-451.74" font-family="Arial" font-size="15.00" fill="#303030">Save decision card</text>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-433.74" font-family="Arial" font-size="15.00" fill="#303030">question + options + recommendation</text>
+</g>
+<!-- independent -->
+<g id="developer-decisions-node3" class="node">
+<title>independent</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" stroke-dasharray="5,2" d="M571.14,-476.76C571.14,-476.76 357.54,-476.76 357.54,-476.76 351.54,-476.76 345.54,-470.76 345.54,-464.76 345.54,-464.76 345.54,-429.72 345.54,-429.72 345.54,-423.72 351.54,-417.72 357.54,-417.72 357.54,-417.72 571.14,-417.72 571.14,-417.72 577.14,-417.72 583.14,-423.72 583.14,-429.72 583.14,-429.72 583.14,-464.76 583.14,-464.76 583.14,-470.76 577.14,-476.76 571.14,-476.76"/>
+<text xml:space="preserve" text-anchor="middle" x="464.34" y="-451.74" font-family="Arial" font-size="15.00" fill="#303030">Continue independent work</text>
+<text xml:space="preserve" text-anchor="middle" x="464.34" y="-433.74" font-family="Arial" font-size="15.00" fill="#303030">pause only affected tasks</text>
+</g>
+<!-- answer -->
+<g id="developer-decisions-node4" class="node">
+<title>answer</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M300.67,-380.72C300.67,-380.72 12,-380.72 12,-380.72 6,-380.72 0,-374.72 0,-368.72 0,-368.72 0,-333.68 0,-333.68 0,-327.68 6,-321.68 12,-321.68 12,-321.68 300.67,-321.68 300.67,-321.68 306.67,-321.68 312.67,-327.68 312.67,-333.68 312.67,-333.68 312.67,-368.72 312.67,-368.72 312.67,-374.72 306.67,-380.72 300.67,-380.72"/>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-355.7" font-family="Arial" font-size="15.00" fill="#303030">Developer answers</text>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-337.7" font-family="Arial" font-size="15.00" fill="#303030">choose an option or give a custom answer</text>
+</g>
+<!-- validate -->
+<g id="developer-decisions-node5" class="node">
+<title>validate</title>
+<polygon fill="#fafafa" stroke="#d7d7d7" stroke-width="1.1" points="156.34,-284.68 4.52,-245.08 156.34,-205.48 308.16,-245.08 156.34,-284.68"/>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-249.58" font-family="Arial" font-size="15.00" fill="#303030">Answer still valid for</text>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-231.58" font-family="Arial" font-size="15.00" fill="#303030">current project revision?</text>
+</g>
+<!-- refresh -->
+<g id="developer-decisions-node6" class="node">
+<title>refresh</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M527.14,-274.6C527.14,-274.6 367.54,-274.6 367.54,-274.6 361.54,-274.6 355.54,-268.6 355.54,-262.6 355.54,-262.6 355.54,-227.56 355.54,-227.56 355.54,-221.56 361.54,-215.56 367.54,-215.56 367.54,-215.56 527.14,-215.56 527.14,-215.56 533.14,-215.56 539.14,-221.56 539.14,-227.56 539.14,-227.56 539.14,-262.6 539.14,-262.6 539.14,-268.6 533.14,-274.6 527.14,-274.6"/>
+<text xml:space="preserve" text-anchor="middle" x="447.34" y="-249.58" font-family="Arial" font-size="15.00" fill="#303030">Refresh question</text>
+<text xml:space="preserve" text-anchor="middle" x="447.34" y="-231.58" font-family="Arial" font-size="15.00" fill="#303030">show updated context</text>
+</g>
+<!-- commit -->
+<g id="developer-decisions-node7" class="node">
+<title>commit</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M291.94,-155.08C291.94,-155.08 20.74,-155.08 20.74,-155.08 14.74,-155.08 8.74,-149.08 8.74,-143.08 8.74,-143.08 8.74,-108.04 8.74,-108.04 8.74,-102.04 14.74,-96.04 20.74,-96.04 20.74,-96.04 291.94,-96.04 291.94,-96.04 297.94,-96.04 303.94,-102.04 303.94,-108.04 303.94,-108.04 303.94,-143.08 303.94,-143.08 303.94,-149.08 297.94,-155.08 291.94,-155.08"/>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-130.06" font-family="Arial" font-size="15.00" fill="#303030">Commit answer + preference changes</text>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-112.06" font-family="Arial" font-size="15.00" fill="#303030">create a project revision</text>
+</g>
+<!-- resume -->
+<g id="developer-decisions-node8" class="node">
+<title>resume</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M266.74,-59.04C266.74,-59.04 45.94,-59.04 45.94,-59.04 39.94,-59.04 33.94,-53.04 33.94,-47.04 33.94,-47.04 33.94,-12 33.94,-12 33.94,-6 39.94,0 45.94,0 45.94,0 266.74,0 266.74,0 272.74,0 278.74,-6 278.74,-12 278.74,-12 278.74,-47.04 278.74,-47.04 278.74,-53.04 272.74,-59.04 266.74,-59.04"/>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-34.02" font-family="Arial" font-size="15.00" fill="#303030">Resume dependent work</text>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-16.02" font-family="Arial" font-size="15.00" fill="#303030">use the accepted decision</text>
+</g>
+</g>
+</svg>
+</figure>
+</section>
+</main>
+<footer class="wrap">Diagrams are embedded and work offline. <a href="web-game-generator-mas-plan.md">Editable Mermaid diagrams</a></footer>
+</body>
+</html>

@@ -1,0 +1,31 @@
+digraph Routing {
+
+  graph [bgcolor="transparent", pad="0.24", nodesep="0.34", ranksep="0.48", splines=spline, outputorder=edgesfirst, fontname="Arial", fontsize=12];
+  node [shape=box, style="rounded,filled", fillcolor="#F5F5F5", color="#D7D7D7", penwidth=1.1, fontname="Arial", fontsize=15, fontcolor="#303030", margin="0.22,0.16", height=0.62];
+  edge [color="#8D9195", penwidth=1.05, arrowsize=0.65, fontname="Arial", fontsize=12, fontcolor="#555A60"];
+
+      rankdir=TB;
+      brief [label="Game brief + effective preferences
+mechanics · devices · engine locks", width=3.8];
+      router [label="Designer / engine router
+match requirements + supported capabilities", width=4.3];
+      html [label="HTML/CSS + React
+UI · text · turn-based games", width=2.9];
+      phaser [label="Phaser
+2D · sprites · action games", width=2.9];
+      babylon [label="Babylon.js
+3D · cameras · models", width=2.9];
+      adapter [label="Selected engine adapter
+pinned template + dependencies", width=3.8];
+      lifecycle [label="Builder → build → browser tests → QA
+shared workflow for every route", width=4.6];
+      {rank=same; html; phaser; babylon;}
+      brief -> router;
+      router -> html [label="Interface-heavy"];
+      router -> phaser [label="2D gameplay"];
+      router -> babylon [label="3D scenes"];
+      html -> adapter;
+      phaser -> adapter;
+      babylon -> adapter;
+      adapter -> lifecycle;
+    }

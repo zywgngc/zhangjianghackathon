@@ -1,0 +1,132 @@
+<svg role="img" aria-labelledby="system-architecture-title system-architecture-desc" width="1072pt" height="505pt"
+ viewBox="0.00 0.00 1072.00 505.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="system-architecture-graph0" class="graph" transform="scale(1 1) rotate(0) translate(17.28 487.28)">
+<title id="system-architecture-title">System architecture</title><desc id="system-architecture-desc">Developer inputs and WebMCP tools enter the same project API. The orchestrator schedules the designer, builder, and QA workflow. QA defects return to the builder; passing checks create a versioned preview. Unresolved choices return to the developer.</desc>
+<!-- developer&#45;&gt;api -->
+<g id="system-architecture-edge1" class="edge">
+<title>developer&#45;&gt;api</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M136.24,-410.5C144.88,-400.93 154.59,-390.2 163.58,-380.24"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="165.05,-382.02 167.72,-375.67 161.67,-378.96 165.05,-382.02"/>
+</g>
+<!-- webmcp&#45;&gt;api -->
+<g id="system-architecture-edge2" class="edge">
+<title>webmcp&#45;&gt;api</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M312.65,-410.5C294.23,-400.31 273.4,-388.79 254.44,-378.3"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="255.73,-376.41 248.94,-375.26 253.53,-380.39 255.73,-376.41"/>
+</g>
+<!-- api&#45;&gt;orchestrator -->
+<g id="system-architecture-edge3" class="edge">
+<title>api&#45;&gt;orchestrator</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M195.04,-314.46C195.04,-305.61 195.04,-295.76 195.04,-286.45"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="197.32,-286.54 195.04,-280.04 192.77,-286.54 197.32,-286.54"/>
+</g>
+<!-- orchestrator&#45;&gt;developer -->
+<g id="system-architecture-edge10" class="edge">
+<title>orchestrator&#45;&gt;developer</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M289.95,-278.43C305.88,-287.56 320.36,-299.46 330.04,-314.92 343.97,-337.16 345.72,-352.92 330.04,-373.96 323.09,-383.29 276.72,-397.73 228.33,-410.69"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="227.79,-408.48 222.09,-412.35 228.95,-412.88 227.79,-408.48"/>
+<text style="paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round" xml:space="preserve" text-anchor="middle" x="385.85" y="-340.84" font-family="Arial" font-size="12.00" fill="#555a60">Decision needed</text>
+</g>
+<!-- orchestrator&#45;&gt;designer -->
+<g id="system-architecture-edge4" class="edge">
+<title>orchestrator&#45;&gt;designer</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M195.04,-218.61C195.04,-205.72 195.04,-190.38 195.04,-176.68"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="197.32,-176.92 195.04,-170.42 192.77,-176.92 197.32,-176.92"/>
+</g>
+<!-- designer&#45;&gt;builder -->
+<g id="system-architecture-edge5" class="edge">
+<title>designer&#45;&gt;builder</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M291.87,-138.96C304.86,-138.96 317.85,-138.96 330.84,-138.96"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="330.84,-141.24 337.34,-138.96 330.84,-136.69 330.84,-141.24"/>
+</g>
+<!-- builder&#45;&gt;tests -->
+<g id="system-architecture-edge6" class="edge">
+<title>builder&#45;&gt;tests</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M577.13,-138.96C590.25,-138.96 603.36,-138.96 616.48,-138.96"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="616.12,-141.24 622.62,-138.96 616.12,-136.69 616.12,-141.24"/>
+</g>
+<!-- tests&#45;&gt;qa -->
+<g id="system-architecture-edge7" class="edge">
+<title>tests&#45;&gt;qa</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M797.87,-138.96C811.03,-138.96 824.2,-138.96 837.36,-138.96"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="837.02,-141.24 843.52,-138.96 837.02,-136.69 837.02,-141.24"/>
+</g>
+<!-- qa&#45;&gt;builder -->
+<g id="system-architecture-edge9" class="edge">
+<title>qa&#45;&gt;builder</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M870.06,-168.96C848.55,-178.19 823.75,-187.14 800.09,-191.76 761.25,-199.35 661.09,-197.9 621.99,-191.76 595.37,-187.58 567.18,-179.8 541.82,-171.47"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="542.79,-169.4 535.9,-169.5 541.35,-173.72 542.79,-169.4"/>
+<text style="paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round" xml:space="preserve" text-anchor="middle" x="711.04" y="-190.08" font-family="Arial" font-size="12.00" fill="#555a60">Specific defects · bounded repair</text>
+</g>
+<!-- qa&#45;&gt;preview -->
+<g id="system-architecture-edge8" class="edge">
+<title>qa&#45;&gt;preview</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M930.04,-109.17C930.04,-96.28 930.04,-80.94 930.04,-67.24"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="932.32,-67.48 930.04,-60.98 927.77,-67.48 932.32,-67.48"/>
+<text style="paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round" xml:space="preserve" text-anchor="middle" x="964.39" y="-80.64" font-family="Arial" font-size="12.00" fill="#555a60">Checks pass</text>
+</g>
+<!-- developer -->
+<g id="system-architecture-node1" class="node">
+<title>developer</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M208.08,-470C208.08,-470 12,-470 12,-470 6,-470 0,-464 0,-458 0,-458 0,-422.96 0,-422.96 0,-416.96 6,-410.96 12,-410.96 12,-410.96 208.08,-410.96 208.08,-410.96 214.08,-410.96 220.08,-416.96 220.08,-422.96 220.08,-422.96 220.08,-458 220.08,-458 220.08,-464 214.08,-470 208.08,-470"/>
+<text xml:space="preserve" text-anchor="middle" x="110.04" y="-444.98" font-family="Arial" font-size="15.00" fill="#303030">Developer</text>
+<text xml:space="preserve" text-anchor="middle" x="110.04" y="-426.98" font-family="Arial" font-size="15.00" fill="#303030">prompt · switches · choices</text>
+</g>
+<!-- webmcp -->
+<g id="system-architecture-node2" class="node">
+<title>webmcp</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M474.14,-470C474.14,-470 255.94,-470 255.94,-470 249.94,-470 243.94,-464 243.94,-458 243.94,-458 243.94,-422.96 243.94,-422.96 243.94,-416.96 249.94,-410.96 255.94,-410.96 255.94,-410.96 474.14,-410.96 474.14,-410.96 480.14,-410.96 486.14,-416.96 486.14,-422.96 486.14,-422.96 486.14,-458 486.14,-458 486.14,-464 480.14,-470 474.14,-470"/>
+<text xml:space="preserve" text-anchor="middle" x="365.04" y="-444.98" font-family="Arial" font-size="15.00" fill="#303030">WebMCP tools in browser</text>
+<text xml:space="preserve" text-anchor="middle" x="365.04" y="-426.98" font-family="Arial" font-size="15.00" fill="#303030">references + project commands</text>
+</g>
+<!-- api -->
+<g id="system-architecture-node3" class="node">
+<title>api</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M305.59,-373.96C305.59,-373.96 84.49,-373.96 84.49,-373.96 78.49,-373.96 72.49,-367.96 72.49,-361.96 72.49,-361.96 72.49,-326.92 72.49,-326.92 72.49,-320.92 78.49,-314.92 84.49,-314.92 84.49,-314.92 305.59,-314.92 305.59,-314.92 311.59,-314.92 317.59,-320.92 317.59,-326.92 317.59,-326.92 317.59,-361.96 317.59,-361.96 317.59,-367.96 311.59,-373.96 305.59,-373.96"/>
+<text xml:space="preserve" text-anchor="middle" x="195.04" y="-348.94" font-family="Arial" font-size="15.00" fill="#303030">Project API + versioned state</text>
+<text xml:space="preserve" text-anchor="middle" x="195.04" y="-330.94" font-family="Arial" font-size="15.00" fill="#303030">validated commands · revisions</text>
+</g>
+<!-- orchestrator -->
+<g id="system-architecture-node4" class="node">
+<title>orchestrator</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M298.73,-277.92C298.73,-277.92 91.35,-277.92 91.35,-277.92 85.35,-277.92 79.35,-271.92 79.35,-265.92 79.35,-265.92 79.35,-230.88 79.35,-230.88 79.35,-224.88 85.35,-218.88 91.35,-218.88 91.35,-218.88 298.73,-218.88 298.73,-218.88 304.73,-218.88 310.73,-224.88 310.73,-230.88 310.73,-230.88 310.73,-265.92 310.73,-265.92 310.73,-271.92 304.73,-277.92 298.73,-277.92"/>
+<text xml:space="preserve" text-anchor="middle" x="195.04" y="-252.9" font-family="Arial" font-size="15.00" fill="#303030">Durable orchestrator</text>
+<text xml:space="preserve" text-anchor="middle" x="195.04" y="-234.9" font-family="Arial" font-size="15.00" fill="#303030">checkpoints + task scheduling</text>
+</g>
+<!-- designer -->
+<g id="system-architecture-node5" class="node">
+<title>designer</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M279.34,-168.48C279.34,-168.48 110.74,-168.48 110.74,-168.48 104.74,-168.48 98.74,-162.48 98.74,-156.48 98.74,-156.48 98.74,-121.44 98.74,-121.44 98.74,-115.44 104.74,-109.44 110.74,-109.44 110.74,-109.44 279.34,-109.44 279.34,-109.44 285.34,-109.44 291.34,-115.44 291.34,-121.44 291.34,-121.44 291.34,-156.48 291.34,-156.48 291.34,-162.48 285.34,-168.48 279.34,-168.48"/>
+<text xml:space="preserve" text-anchor="middle" x="195.04" y="-143.46" font-family="Arial" font-size="15.00" fill="#303030">Designer / engine router</text>
+<text xml:space="preserve" text-anchor="middle" x="195.04" y="-125.46" font-family="Arial" font-size="15.00" fill="#303030">specification + route</text>
+</g>
+<!-- builder -->
+<g id="system-architecture-node6" class="node">
+<title>builder</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M564.85,-168.48C564.85,-168.48 351.23,-168.48 351.23,-168.48 345.23,-168.48 339.23,-162.48 339.23,-156.48 339.23,-156.48 339.23,-121.44 339.23,-121.44 339.23,-115.44 345.23,-109.44 351.23,-109.44 351.23,-109.44 564.85,-109.44 564.85,-109.44 570.85,-109.44 576.85,-115.44 576.85,-121.44 576.85,-121.44 576.85,-156.48 576.85,-156.48 576.85,-162.48 570.85,-168.48 564.85,-168.48"/>
+<text xml:space="preserve" text-anchor="middle" x="458.04" y="-143.46" font-family="Arial" font-size="15.00" fill="#303030">Builder</text>
+<text xml:space="preserve" text-anchor="middle" x="458.04" y="-125.46" font-family="Arial" font-size="15.00" fill="#303030">engine&#45;specific implementation</text>
+</g>
+<!-- tests -->
+<g id="system-architecture-node7" class="node">
+<title>tests</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M785.44,-168.48C785.44,-168.48 636.64,-168.48 636.64,-168.48 630.64,-168.48 624.64,-162.48 624.64,-156.48 624.64,-156.48 624.64,-121.44 624.64,-121.44 624.64,-115.44 630.64,-109.44 636.64,-109.44 636.64,-109.44 785.44,-109.44 785.44,-109.44 791.44,-109.44 797.44,-115.44 797.44,-121.44 797.44,-121.44 797.44,-156.48 797.44,-156.48 797.44,-162.48 791.44,-168.48 785.44,-168.48"/>
+<text xml:space="preserve" text-anchor="middle" x="711.04" y="-143.46" font-family="Arial" font-size="15.00" fill="#303030">Build + browser</text>
+<text xml:space="preserve" text-anchor="middle" x="711.04" y="-125.46" font-family="Arial" font-size="15.00" fill="#303030">gameplay tests</text>
+</g>
+<!-- qa -->
+<g id="system-architecture-node8" class="node">
+<title>qa</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M1002.64,-168.48C1002.64,-168.48 857.44,-168.48 857.44,-168.48 851.44,-168.48 845.44,-162.48 845.44,-156.48 845.44,-156.48 845.44,-121.44 845.44,-121.44 845.44,-115.44 851.44,-109.44 857.44,-109.44 857.44,-109.44 1002.64,-109.44 1002.64,-109.44 1008.64,-109.44 1014.64,-115.44 1014.64,-121.44 1014.64,-121.44 1014.64,-156.48 1014.64,-156.48 1014.64,-162.48 1008.64,-168.48 1002.64,-168.48"/>
+<text xml:space="preserve" text-anchor="middle" x="930.04" y="-143.46" font-family="Arial" font-size="15.00" fill="#303030">QA agent</text>
+<text xml:space="preserve" text-anchor="middle" x="930.04" y="-125.46" font-family="Arial" font-size="15.00" fill="#303030">review test evidence</text>
+</g>
+<!-- preview -->
+<g id="system-architecture-node9" class="node">
+<title>preview</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M1025.6,-59.04C1025.6,-59.04 834.48,-59.04 834.48,-59.04 828.48,-59.04 822.48,-53.04 822.48,-47.04 822.48,-47.04 822.48,-12 822.48,-12 822.48,-6 828.48,0 834.48,0 834.48,0 1025.6,0 1025.6,0 1031.6,0 1037.6,-6 1037.6,-12 1037.6,-12 1037.6,-47.04 1037.6,-47.04 1037.6,-53.04 1031.6,-59.04 1025.6,-59.04"/>
+<text xml:space="preserve" text-anchor="middle" x="930.04" y="-34.02" font-family="Arial" font-size="15.00" fill="#303030">Versioned playable preview</text>
+<text xml:space="preserve" text-anchor="middle" x="930.04" y="-16.02" font-family="Arial" font-size="15.00" fill="#303030">exact tested build</text>
+</g>
+</g>
+</svg>

@@ -1,0 +1,112 @@
+<svg role="img" aria-labelledby="developer-decisions-title developer-decisions-desc" width="618pt" height="607pt"
+ viewBox="0.00 0.00 618.00 607.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="developer-decisions-graph0" class="graph" transform="scale(1 1) rotate(0) translate(17.28 590.08)">
+<title id="developer-decisions-title">Developer choices during generation</title><desc id="developer-decisions-desc">When existing preferences cannot resolve a choice, save a multiple-choice decision card. Independent work continues. The developer chooses an option or custom answer, which is checked against the current revision. A compatible answer is committed and dependent work resumes; a stale answer causes the question to be refreshed.</desc>
+<!-- choice&#45;&gt;card -->
+<g id="developer-decisions-edge1" class="edge">
+<title>choice&#45;&gt;card</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M156.34,-513.3C156.34,-504.45 156.34,-494.6 156.34,-485.29"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="158.61,-485.38 156.34,-478.88 154.06,-485.38 158.61,-485.38"/>
+</g>
+<!-- card&#45;&gt;independent -->
+<g id="developer-decisions-edge2" class="edge">
+<title>card&#45;&gt;independent</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" stroke-dasharray="5,2" d="M298,-447.24C311.13,-447.24 324.26,-447.24 337.38,-447.24"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="337.02,-449.52 343.52,-447.24 337.02,-444.97 337.02,-449.52"/>
+</g>
+<!-- card&#45;&gt;answer -->
+<g id="developer-decisions-edge3" class="edge">
+<title>card&#45;&gt;answer</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M156.34,-417.26C156.34,-408.41 156.34,-398.56 156.34,-389.25"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="158.61,-389.34 156.34,-382.84 154.06,-389.34 158.61,-389.34"/>
+</g>
+<!-- answer&#45;&gt;validate -->
+<g id="developer-decisions-edge4" class="edge">
+<title>answer&#45;&gt;validate</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M156.34,-321.2C156.34,-312.45 156.34,-302.62 156.34,-293.02"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="158.61,-293.14 156.34,-286.64 154.06,-293.14 158.61,-293.14"/>
+</g>
+<!-- validate&#45;&gt;refresh -->
+<g id="developer-decisions-edge6" class="edge">
+<title>validate&#45;&gt;refresh</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M309.93,-245.08C322.6,-245.08 335.18,-245.08 347.3,-245.08"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="347.1,-247.36 353.6,-245.08 347.1,-242.81 347.1,-247.36"/>
+<text style="paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round" xml:space="preserve" text-anchor="middle" x="331.85" y="-251.68" font-family="Arial" font-size="12.00" fill="#555a60">No</text>
+</g>
+<!-- validate&#45;&gt;commit -->
+<g id="developer-decisions-edge5" class="edge">
+<title>validate&#45;&gt;commit</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M156.34,-204.95C156.34,-191.57 156.34,-176.65 156.34,-163.45"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="158.61,-163.57 156.34,-157.07 154.06,-163.57 158.61,-163.57"/>
+<text style="paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round" xml:space="preserve" text-anchor="middle" x="166.68" y="-176.68" font-family="Arial" font-size="12.00" fill="#555a60">Yes</text>
+</g>
+<!-- refresh&#45;&gt;card -->
+<g id="developer-decisions-edge7" class="edge">
+<title>refresh&#45;&gt;card</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M427.28,-274.92C405.12,-304.93 366.89,-351.53 324.34,-380.72 304.97,-394 282.53,-405.13 260.47,-414.22"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="259.67,-412.09 254.49,-416.63 261.37,-416.31 259.67,-412.09"/>
+</g>
+<!-- commit&#45;&gt;resume -->
+<g id="developer-decisions-edge8" class="edge">
+<title>commit&#45;&gt;resume</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M156.34,-95.58C156.34,-86.73 156.34,-76.88 156.34,-67.57"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="158.61,-67.66 156.34,-61.16 154.06,-67.66 158.61,-67.66"/>
+</g>
+<!-- choice -->
+<g id="developer-decisions-node1" class="node">
+<title>choice</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M277.54,-572.8C277.54,-572.8 35.14,-572.8 35.14,-572.8 29.14,-572.8 23.14,-566.8 23.14,-560.8 23.14,-560.8 23.14,-525.76 23.14,-525.76 23.14,-519.76 29.14,-513.76 35.14,-513.76 35.14,-513.76 277.54,-513.76 277.54,-513.76 283.54,-513.76 289.54,-519.76 289.54,-525.76 289.54,-525.76 289.54,-560.8 289.54,-560.8 289.54,-566.8 283.54,-572.8 277.54,-572.8"/>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-547.78" font-family="Arial" font-size="15.00" fill="#303030">Unresolved choice</text>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-529.78" font-family="Arial" font-size="15.00" fill="#303030">existing preferences do not settle it</text>
+</g>
+<!-- card -->
+<g id="developer-decisions-node2" class="node">
+<title>card</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M285.67,-476.76C285.67,-476.76 27,-476.76 27,-476.76 21,-476.76 15,-470.76 15,-464.76 15,-464.76 15,-429.72 15,-429.72 15,-423.72 21,-417.72 27,-417.72 27,-417.72 285.67,-417.72 285.67,-417.72 291.67,-417.72 297.67,-423.72 297.67,-429.72 297.67,-429.72 297.67,-464.76 297.67,-464.76 297.67,-470.76 291.67,-476.76 285.67,-476.76"/>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-451.74" font-family="Arial" font-size="15.00" fill="#303030">Save decision card</text>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-433.74" font-family="Arial" font-size="15.00" fill="#303030">question + options + recommendation</text>
+</g>
+<!-- independent -->
+<g id="developer-decisions-node3" class="node">
+<title>independent</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" stroke-dasharray="5,2" d="M571.14,-476.76C571.14,-476.76 357.54,-476.76 357.54,-476.76 351.54,-476.76 345.54,-470.76 345.54,-464.76 345.54,-464.76 345.54,-429.72 345.54,-429.72 345.54,-423.72 351.54,-417.72 357.54,-417.72 357.54,-417.72 571.14,-417.72 571.14,-417.72 577.14,-417.72 583.14,-423.72 583.14,-429.72 583.14,-429.72 583.14,-464.76 583.14,-464.76 583.14,-470.76 577.14,-476.76 571.14,-476.76"/>
+<text xml:space="preserve" text-anchor="middle" x="464.34" y="-451.74" font-family="Arial" font-size="15.00" fill="#303030">Continue independent work</text>
+<text xml:space="preserve" text-anchor="middle" x="464.34" y="-433.74" font-family="Arial" font-size="15.00" fill="#303030">pause only affected tasks</text>
+</g>
+<!-- answer -->
+<g id="developer-decisions-node4" class="node">
+<title>answer</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M300.67,-380.72C300.67,-380.72 12,-380.72 12,-380.72 6,-380.72 0,-374.72 0,-368.72 0,-368.72 0,-333.68 0,-333.68 0,-327.68 6,-321.68 12,-321.68 12,-321.68 300.67,-321.68 300.67,-321.68 306.67,-321.68 312.67,-327.68 312.67,-333.68 312.67,-333.68 312.67,-368.72 312.67,-368.72 312.67,-374.72 306.67,-380.72 300.67,-380.72"/>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-355.7" font-family="Arial" font-size="15.00" fill="#303030">Developer answers</text>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-337.7" font-family="Arial" font-size="15.00" fill="#303030">choose an option or give a custom answer</text>
+</g>
+<!-- validate -->
+<g id="developer-decisions-node5" class="node">
+<title>validate</title>
+<polygon fill="#fafafa" stroke="#d7d7d7" stroke-width="1.1" points="156.34,-284.68 4.52,-245.08 156.34,-205.48 308.16,-245.08 156.34,-284.68"/>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-249.58" font-family="Arial" font-size="15.00" fill="#303030">Answer still valid for</text>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-231.58" font-family="Arial" font-size="15.00" fill="#303030">current project revision?</text>
+</g>
+<!-- refresh -->
+<g id="developer-decisions-node6" class="node">
+<title>refresh</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M527.14,-274.6C527.14,-274.6 367.54,-274.6 367.54,-274.6 361.54,-274.6 355.54,-268.6 355.54,-262.6 355.54,-262.6 355.54,-227.56 355.54,-227.56 355.54,-221.56 361.54,-215.56 367.54,-215.56 367.54,-215.56 527.14,-215.56 527.14,-215.56 533.14,-215.56 539.14,-221.56 539.14,-227.56 539.14,-227.56 539.14,-262.6 539.14,-262.6 539.14,-268.6 533.14,-274.6 527.14,-274.6"/>
+<text xml:space="preserve" text-anchor="middle" x="447.34" y="-249.58" font-family="Arial" font-size="15.00" fill="#303030">Refresh question</text>
+<text xml:space="preserve" text-anchor="middle" x="447.34" y="-231.58" font-family="Arial" font-size="15.00" fill="#303030">show updated context</text>
+</g>
+<!-- commit -->
+<g id="developer-decisions-node7" class="node">
+<title>commit</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M291.94,-155.08C291.94,-155.08 20.74,-155.08 20.74,-155.08 14.74,-155.08 8.74,-149.08 8.74,-143.08 8.74,-143.08 8.74,-108.04 8.74,-108.04 8.74,-102.04 14.74,-96.04 20.74,-96.04 20.74,-96.04 291.94,-96.04 291.94,-96.04 297.94,-96.04 303.94,-102.04 303.94,-108.04 303.94,-108.04 303.94,-143.08 303.94,-143.08 303.94,-149.08 297.94,-155.08 291.94,-155.08"/>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-130.06" font-family="Arial" font-size="15.00" fill="#303030">Commit answer + preference changes</text>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-112.06" font-family="Arial" font-size="15.00" fill="#303030">create a project revision</text>
+</g>
+<!-- resume -->
+<g id="developer-decisions-node8" class="node">
+<title>resume</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M266.74,-59.04C266.74,-59.04 45.94,-59.04 45.94,-59.04 39.94,-59.04 33.94,-53.04 33.94,-47.04 33.94,-47.04 33.94,-12 33.94,-12 33.94,-6 39.94,0 45.94,0 45.94,0 266.74,0 266.74,0 272.74,0 278.74,-6 278.74,-12 278.74,-12 278.74,-47.04 278.74,-47.04 278.74,-53.04 272.74,-59.04 266.74,-59.04"/>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-34.02" font-family="Arial" font-size="15.00" fill="#303030">Resume dependent work</text>
+<text xml:space="preserve" text-anchor="middle" x="156.34" y="-16.02" font-family="Arial" font-size="15.00" fill="#303030">use the accepted decision</text>
+</g>
+</g>
+</svg>

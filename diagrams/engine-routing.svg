@@ -1,0 +1,106 @@
+<svg role="img" aria-labelledby="engine-routing-title engine-routing-desc" width="734pt" height="491pt"
+ viewBox="0.00 0.00 734.00 491.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="engine-routing-graph0" class="graph" transform="scale(1 1) rotate(0) translate(17.28 473.88)">
+<title id="engine-routing-title">Engine routing</title><desc id="engine-routing-desc">A game brief and effective preferences feed the engine router. Interface-heavy games use HTML/CSS and React, 2D sprite games use Phaser, and 3D scene games use Babylon.js. Each route feeds a selected engine adapter, then the shared build and test lifecycle.</desc>
+<!-- brief&#45;&gt;router -->
+<g id="engine-routing-edge1" class="edge">
+<title>brief&#45;&gt;router</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M357.55,-397.1C357.55,-388.25 357.55,-378.4 357.55,-369.09"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="359.82,-369.18 357.55,-362.68 355.27,-369.18 359.82,-369.18"/>
+</g>
+<!-- router&#45;&gt;html -->
+<g id="engine-routing-edge2" class="edge">
+<title>router&#45;&gt;html</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M291.57,-301.11C258.89,-286.77 219.33,-269.43 185.72,-254.69"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="186.97,-252.75 180.1,-252.22 185.14,-256.92 186.97,-252.75"/>
+<text style="paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round" xml:space="preserve" text-anchor="middle" x="291.07" y="-272.72" font-family="Arial" font-size="12.00" fill="#555a60">Interface&#45;heavy</text>
+</g>
+<!-- router&#45;&gt;phaser -->
+<g id="engine-routing-edge3" class="edge">
+<title>router&#45;&gt;phaser</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M357.55,-301.25C357.55,-288.36 357.55,-273.02 357.55,-259.32"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="359.82,-259.56 357.55,-253.06 355.27,-259.56 359.82,-259.56"/>
+<text style="paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round" xml:space="preserve" text-anchor="middle" x="392.9" y="-272.72" font-family="Arial" font-size="12.00" fill="#555a60">2D gameplay</text>
+</g>
+<!-- router&#45;&gt;babylon -->
+<g id="engine-routing-edge4" class="edge">
+<title>router&#45;&gt;babylon</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M421.37,-301.11C452.86,-286.83 490.93,-269.57 523.36,-254.87"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="524.18,-257 529.16,-252.24 522.3,-252.85 524.18,-257"/>
+<text style="paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round" xml:space="preserve" text-anchor="middle" x="518.59" y="-272.72" font-family="Arial" font-size="12.00" fill="#555a60">3D scenes</text>
+</g>
+<!-- html&#45;&gt;adapter -->
+<g id="engine-routing-edge5" class="edge">
+<title>html&#45;&gt;adapter</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M188.06,-191.62C215.42,-181.12 246.47,-169.2 274.45,-158.46"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="275.13,-160.63 280.39,-156.18 273.5,-156.38 275.13,-160.63"/>
+</g>
+<!-- phaser&#45;&gt;adapter -->
+<g id="engine-routing-edge6" class="edge">
+<title>phaser&#45;&gt;adapter</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M357.55,-191.62C357.55,-182.77 357.55,-172.92 357.55,-163.61"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="359.82,-163.7 357.55,-157.2 355.27,-163.7 359.82,-163.7"/>
+</g>
+<!-- babylon&#45;&gt;adapter -->
+<g id="engine-routing-edge7" class="edge">
+<title>babylon&#45;&gt;adapter</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M521.51,-191.62C495.04,-181.12 465,-169.2 437.94,-158.46"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="439.12,-156.48 432.23,-156.19 437.44,-160.71 439.12,-156.48"/>
+</g>
+<!-- adapter&#45;&gt;lifecycle -->
+<g id="engine-routing-edge8" class="edge">
+<title>adapter&#45;&gt;lifecycle</title>
+<path fill="none" stroke="#8d9195" stroke-width="1.05" d="M357.55,-95.58C357.55,-86.73 357.55,-76.88 357.55,-67.57"/>
+<polygon fill="#8d9195" stroke="#8d9195" stroke-width="1.05" points="359.82,-67.66 357.55,-61.16 355.27,-67.66 359.82,-67.66"/>
+</g>
+<!-- brief -->
+<g id="engine-routing-node1" class="node">
+<title>brief</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M482.35,-456.6C482.35,-456.6 232.75,-456.6 232.75,-456.6 226.75,-456.6 220.75,-450.6 220.75,-444.6 220.75,-444.6 220.75,-409.56 220.75,-409.56 220.75,-403.56 226.75,-397.56 232.75,-397.56 232.75,-397.56 482.35,-397.56 482.35,-397.56 488.35,-397.56 494.35,-403.56 494.35,-409.56 494.35,-409.56 494.35,-444.6 494.35,-444.6 494.35,-450.6 488.35,-456.6 482.35,-456.6"/>
+<text xml:space="preserve" text-anchor="middle" x="357.55" y="-431.58" font-family="Arial" font-size="15.00" fill="#303030">Game brief + effective preferences</text>
+<text xml:space="preserve" text-anchor="middle" x="357.55" y="-413.58" font-family="Arial" font-size="15.00" fill="#303030">mechanics · devices · engine locks</text>
+</g>
+<!-- router -->
+<g id="engine-routing-node2" class="node">
+<title>router</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M508.76,-360.56C508.76,-360.56 206.34,-360.56 206.34,-360.56 200.34,-360.56 194.34,-354.56 194.34,-348.56 194.34,-348.56 194.34,-313.52 194.34,-313.52 194.34,-307.52 200.34,-301.52 206.34,-301.52 206.34,-301.52 508.76,-301.52 508.76,-301.52 514.76,-301.52 520.76,-307.52 520.76,-313.52 520.76,-313.52 520.76,-348.56 520.76,-348.56 520.76,-354.56 514.76,-360.56 508.76,-360.56"/>
+<text xml:space="preserve" text-anchor="middle" x="357.55" y="-335.54" font-family="Arial" font-size="15.00" fill="#303030">Designer / engine router</text>
+<text xml:space="preserve" text-anchor="middle" x="357.55" y="-317.54" font-family="Arial" font-size="15.00" fill="#303030">match requirements + supported capabilities</text>
+</g>
+<!-- html -->
+<g id="engine-routing-node3" class="node">
+<title>html</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M213.1,-251.12C213.1,-251.12 12,-251.12 12,-251.12 6,-251.12 0,-245.12 0,-239.12 0,-239.12 0,-204.08 0,-204.08 0,-198.08 6,-192.08 12,-192.08 12,-192.08 213.1,-192.08 213.1,-192.08 219.1,-192.08 225.1,-198.08 225.1,-204.08 225.1,-204.08 225.1,-239.12 225.1,-239.12 225.1,-245.12 219.1,-251.12 213.1,-251.12"/>
+<text xml:space="preserve" text-anchor="middle" x="112.55" y="-226.1" font-family="Arial" font-size="15.00" fill="#303030">HTML/CSS + React</text>
+<text xml:space="preserve" text-anchor="middle" x="112.55" y="-208.1" font-family="Arial" font-size="15.00" fill="#303030">UI · text · turn&#45;based games</text>
+</g>
+<!-- phaser -->
+<g id="engine-routing-node4" class="node">
+<title>phaser</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M454.34,-251.12C454.34,-251.12 260.75,-251.12 260.75,-251.12 254.75,-251.12 248.75,-245.12 248.75,-239.12 248.75,-239.12 248.75,-204.08 248.75,-204.08 248.75,-198.08 254.75,-192.08 260.75,-192.08 260.75,-192.08 454.34,-192.08 454.34,-192.08 460.34,-192.08 466.34,-198.08 466.34,-204.08 466.34,-204.08 466.34,-239.12 466.34,-239.12 466.34,-245.12 460.34,-251.12 454.34,-251.12"/>
+<text xml:space="preserve" text-anchor="middle" x="357.55" y="-226.1" font-family="Arial" font-size="15.00" fill="#303030">Phaser</text>
+<text xml:space="preserve" text-anchor="middle" x="357.55" y="-208.1" font-family="Arial" font-size="15.00" fill="#303030">2D · sprites · action games</text>
+</g>
+<!-- babylon -->
+<g id="engine-routing-node5" class="node">
+<title>babylon</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M686.95,-251.12C686.95,-251.12 502.15,-251.12 502.15,-251.12 496.15,-251.12 490.15,-245.12 490.15,-239.12 490.15,-239.12 490.15,-204.08 490.15,-204.08 490.15,-198.08 496.15,-192.08 502.15,-192.08 502.15,-192.08 686.95,-192.08 686.95,-192.08 692.95,-192.08 698.95,-198.08 698.95,-204.08 698.95,-204.08 698.95,-239.12 698.95,-239.12 698.95,-245.12 692.95,-251.12 686.95,-251.12"/>
+<text xml:space="preserve" text-anchor="middle" x="594.55" y="-226.1" font-family="Arial" font-size="15.00" fill="#303030">Babylon.js</text>
+<text xml:space="preserve" text-anchor="middle" x="594.55" y="-208.1" font-family="Arial" font-size="15.00" fill="#303030">3D · cameras · models</text>
+</g>
+<!-- adapter -->
+<g id="engine-routing-node6" class="node">
+<title>adapter</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M482.35,-155.08C482.35,-155.08 232.75,-155.08 232.75,-155.08 226.75,-155.08 220.75,-149.08 220.75,-143.08 220.75,-143.08 220.75,-108.04 220.75,-108.04 220.75,-102.04 226.75,-96.04 232.75,-96.04 232.75,-96.04 482.35,-96.04 482.35,-96.04 488.35,-96.04 494.35,-102.04 494.35,-108.04 494.35,-108.04 494.35,-143.08 494.35,-143.08 494.35,-149.08 488.35,-155.08 482.35,-155.08"/>
+<text xml:space="preserve" text-anchor="middle" x="357.55" y="-130.06" font-family="Arial" font-size="15.00" fill="#303030">Selected engine adapter</text>
+<text xml:space="preserve" text-anchor="middle" x="357.55" y="-112.06" font-family="Arial" font-size="15.00" fill="#303030">pinned template + dependencies</text>
+</g>
+<!-- lifecycle -->
+<g id="engine-routing-node7" class="node">
+<title>lifecycle</title>
+<path fill="#f5f5f5" stroke="#d7d7d7" stroke-width="1.1" d="M511.15,-59.04C511.15,-59.04 203.95,-59.04 203.95,-59.04 197.95,-59.04 191.95,-53.04 191.95,-47.04 191.95,-47.04 191.95,-12 191.95,-12 191.95,-6 197.95,0 203.95,0 203.95,0 511.15,0 511.15,0 517.15,0 523.15,-6 523.15,-12 523.15,-12 523.15,-47.04 523.15,-47.04 523.15,-53.04 517.15,-59.04 511.15,-59.04"/>
+<text xml:space="preserve" text-anchor="middle" x="357.55" y="-34.02" font-family="Arial" font-size="15.00" fill="#303030">Builder → build → browser tests → QA</text>
+<text xml:space="preserve" text-anchor="middle" x="357.55" y="-16.02" font-family="Arial" font-size="15.00" fill="#303030">shared workflow for every route</text>
+</g>
+</g>
+</svg>
