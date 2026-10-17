@@ -608,6 +608,7 @@ class ProjectValidator:
                 for viewport in [("desktop", 1280, 800, False), ("portrait", 390, 844, True), ("landscape", 844, 390, True)]:
                     result = await self._viewport(browser, origin, rid, spec, workspace, evidence, round_no, *viewport)
                     report["browser"].append(result)
+                    report.setdefault("captured_screenshots", []).extend(result.get("screenshots", []))
                     report["errors"].extend(result["errors"])
             finally:
                 await browser.close()
@@ -813,6 +814,14 @@ class ProjectValidator:
             await action("start")
             await page.wait_for_timeout(300)
             result["running"] = await state()
+            # Keep an unobscured production frame as well as the pause/layout
+            # evidence below. A pause overlay cannot establish HUD readability
+            # or the appearance of the underlying game.
+            gameplay_name = f"project-r{round_no}-{name}-gameplay.png"
+            gameplay_sha = self.store.write(rid, gameplay_name, await page.screenshot(full_page=True))
+            result["screenshots"] = [{"path": gameplay_name, "sha256": gameplay_sha,
+                "name": name, "scene": "gameplay", "width": width, "height": height,
+                "project_sha256": workspace.snapshot()["sha256"], "spec_sha256": spec.sha256}]
             await action("pause")
             before = await state()
             await page.wait_for_timeout(150)
