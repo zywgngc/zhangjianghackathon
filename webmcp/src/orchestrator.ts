@@ -5,10 +5,18 @@ import type {
   MainFollowUpRequest,
 } from '../discussion.ts';
 import type { MaterialSearchRequest, MaterialSearchResult } from '../material-portal.ts';
-import { benchmark, decisions, EvidenceReviewer, ReferencePlanner, Researcher } from './agents.ts';
+import { decisions, EvidenceReviewer, ReferencePlanner, Researcher } from './agents.ts';
+import { ideaDecisions, isIdea, propose, refreshIdeaQuestions, selectedEngine } from './ideas.ts';
 import type { PlannerPort } from './agents.ts';
 import { AppError } from './model.ts';
-import type { MainAck, Mechanic, PortalJob, Run, StartRequest } from './model.ts';
+import type {
+  MainAck,
+  Mechanic,
+  PortalJob,
+  Run,
+  StartRequest,
+  ProposalSelection,
+} from './model.ts';
 import type { PortalAdapter } from './portal.ts';
 import { RunStore } from './store.ts';
 import {
@@ -17,6 +25,7 @@ import {
   validateContract,
   validateResult,
   validateStart,
+  validateSelection,
 } from './validation.ts';
 
 const scope = (r: MaterialSearchRequest): string =>
@@ -124,7 +133,7 @@ export class ResearchOrchestrator {
       stage: 'archetypes',
       createdAt: now,
       updatedAt: now,
-      deadline: now + (input.limits?.maxRunMs ?? 120000),
+      deadline: now + (input.limits?.maxRunMs ?? (isIdea(input) ? 3600000 : 120000)),
       mainUsed: 0,
       materialUsed: 0,
       portalAttempts: 0,
@@ -144,10 +153,16 @@ export class ResearchOrchestrator {
         {
           at: now,
           type: 'created',
-          detail: 'Reference-case run created; no game tests have been executed.',
+          detail: isIdea(input)
+            ? 'Sparse idea recorded; missing details are editable proposals, not confirmed requirements.'
+            : 'Reference-case run created; no game tests have been executed.',
         },
       ],
     };
+    if (isIdea(input)) {
+      run.proposal = propose(input);
+      refreshIdeaQuestions(run);
+    }
     const created = this.store.create(run);
     // Re-entering after a crash between create and enqueue also repairs this initial step.
     if (!created.jobs.length && created.status === 'queued')
@@ -159,6 +174,63 @@ export class ResearchOrchestrator {
   }
   get(id: string): Run {
     return this.store.get(id);
+  }
+  /** Initial choice batch is round zero: omit answers to retain their recorded default provenance. */
+  selectProposal(id: string, input: ProposalSelection): { runId: string; projectRevision: number } {
+    validateSelection(input);
+    return this.store.mutate(id, (run) => {
+      const digest = hash(input);
+      if (run.initialSelection?.requestId === input.requestId) {
+        if (run.initialSelection.hash !== digest)
+          throw new AppError('IDEMPOTENCY_CONFLICT', 'Selection ID has different content.');
+        return { runId: id, projectRevision: input.expectedProjectRevision };
+      }
+      this.active(run);
+      this.revision(run, input.expectedProjectRevision);
+      if (!isIdea(run.input) || run.stage !== 'decisions' || run.initialSelection)
+        throw new AppError(
+          'NOT_READY',
+          'Initial choices are not awaiting resolution; use a follow-up for later revisions.',
+        );
+      if (input.clarificationId !== run.decisionBatch.clarificationId)
+        throw new AppError('CLARIFICATION_CONFLICT', 'Unknown proposal batch.');
+      if (
+        [
+          run.input.requestId,
+          ...run.jobs.map((j) => j.request.requestId),
+          ...run.mainRecords.map((r) => r.command.requestId),
+        ].includes(input.requestId)
+      )
+        throw new AppError('IDEMPOTENCY_CONFLICT', 'Request ID belongs to another command.');
+      this.applyChoices(run, input.answers);
+      run.initialSelection = { requestId: input.requestId, hash: digest };
+      this.event(
+        run,
+        'proposal_selected',
+        'Initial choices resolved; omitted answers retain defaults. No follow-up slots consumed.',
+      );
+      const result = latest(run, 'archetypes')?.result ?? null;
+      this.planAfterArchetypes(run, result);
+      this.finalize(run);
+      return { runId: id, projectRevision: run.revision };
+    });
+  }
+  private applyChoices(run: Run, answers: DiscussionAnswer[]): void {
+    validateAnswers(run.decisionBatch.questions, answers);
+    for (const answer of answers) {
+      if (answer.source === 'research_context')
+        throw new AppError(
+          'INVALID_INPUT',
+          'Main preference changes need developer, saved preference, or default provenance.',
+          400,
+        );
+      const decision = run.decisions.find((d) => d.id === answer.questionId)!;
+      if (decision.locked)
+        throw new AppError('LOCK_CONFLICT', 'Cannot change a locked specification.');
+      decision.value = answer.optionId!;
+      decision.source = answer.source;
+    }
+    refreshIdeaQuestions(run);
   }
   private reserve(run: Run, request: MaterialSearchRequest): PortalJob {
     const digest = hash(request);
@@ -172,6 +244,7 @@ export class ResearchOrchestrator {
     validateContract('MaterialSearchRequest', request);
     if (
       run.mainRecords.some((r) => r.command.requestId === request.requestId) ||
+      request.requestId === run.initialSelection?.requestId ||
       request.requestId === run.input.requestId
     )
       throw new AppError('IDEMPOTENCY_CONFLICT', 'Request ID belongs to another command.');
@@ -179,7 +252,12 @@ export class ResearchOrchestrator {
     this.revision(run, request.projectRevision);
     if (
       request.discussion.runId !== run.id ||
-      request.constraints.engine !== benchmark(run.input.caseId).engine
+      (request.constraints.engine !== selectedEngine(run) &&
+        !(
+          isIdea(run.input) &&
+          request.purpose === 'archetype' &&
+          request.constraints.engine === null
+        ))
     )
       throw new AppError(
         'LOCK_CONFLICT',
@@ -338,6 +416,7 @@ export class ResearchOrchestrator {
       validateContract('MainFollowUpRequest', command);
       if (
         command.requestId === run.input.requestId ||
+        command.requestId === run.initialSelection?.requestId ||
         run.jobs.some((j) => j.request.requestId === command.requestId)
       )
         throw new AppError('IDEMPOTENCY_CONFLICT', 'Request ID belongs to another command.');
@@ -354,25 +433,17 @@ export class ResearchOrchestrator {
       if (command.discussion.round !== run.mainUsed + 1)
         throw new AppError('ROUND_CONFLICT', 'Unexpected main round.');
       const content = command.discussion.followUp;
+      if (isIdea(run.input) && run.stage === 'decisions' && !run.initialSelection)
+        throw new AppError(
+          'NOT_READY',
+          'Resolve the initial proposal before submitting follow-ups.',
+        );
       if (content.message.length > 8000)
         throw new AppError('INVALID_INPUT', 'Follow-up message is too long.', 400);
       let portalParent: PortalJob | undefined;
       if (content.clarificationId) {
         if (content.clarificationId === run.decisionBatch.clarificationId) {
-          validateAnswers(run.decisionBatch.questions, content.answers);
-          for (const answer of content.answers) {
-            if (answer.source === 'research_context')
-              throw new AppError(
-                'INVALID_INPUT',
-                'Main preference changes need developer, saved preference, or default provenance.',
-                400,
-              );
-            const decision = run.decisions.find((d) => d.id === answer.questionId)!;
-            if (decision.locked)
-              throw new AppError('LOCK_CONFLICT', 'Cannot change a locked specification.');
-            decision.value = answer.optionId!;
-            decision.source = answer.source;
-          }
+          this.applyChoices(run, content.answers);
         } else {
           portalParent = run.jobs.find(
             (j) =>
@@ -401,10 +472,12 @@ export class ResearchOrchestrator {
       run.issues = [];
       run.status = 'running';
       run.stage = 'archetypes';
+      run.plan = null;
       run.decisionBatch = {
         clarificationId: `decisions:${run.id}:${run.revision}`,
         questions: questions(),
       };
+      refreshIdeaQuestions(run);
       if (portalParent) {
         const request = structuredClone(portalParent.request);
         request.requestId = randomUUID();
@@ -454,15 +527,37 @@ export class ResearchOrchestrator {
     return this.store.get(id);
   }
   private planAfterArchetypes(run: Run, result: MaterialSearchResult | null): void {
+    if (
+      isIdea(run.input) &&
+      !run.initialSelection &&
+      (!run.mainUsed || (run.input.decisionMode ?? 'ask') === 'ask')
+    ) {
+      const candidates =
+        result && 'candidates' in result && !result.isMock ? result.candidates : [];
+      run.proposal = propose(run.input, candidates);
+      // Do this once before presenting the batch; subsequent retries retain developer choices.
+      if (run.stage !== 'decisions') run.decisions = ideaDecisions(run.input, run.proposal);
+      refreshIdeaQuestions(run);
+      if ((run.input.decisionMode ?? 'ask') === 'ask') {
+        run.stage = 'decisions';
+        run.status = 'waiting_input';
+        this.event(
+          run,
+          'proposal_ready',
+          'Choose any optional details or accept all defaults; round zero.',
+        );
+        return;
+      }
+    }
     run.stage = 'planning';
     run.plan = this.planner.plan(run, result && 'candidates' in result ? result.candidates : []);
-    if (run.plan.engine !== benchmark(run.input.caseId).engine)
+    if (run.plan.engine !== selectedEngine(run))
       throw new AppError('INVALID_PLAN', 'Planner changed a locked engine.', 500);
     run.stage = 'mechanics';
     this.event(
       run,
       'planned',
-      `${run.plan.mechanics.length} mechanic contracts; fixed specification retained.`,
+      `${run.plan.mechanics.length} mechanic contracts; ${isIdea(run.input) ? 'acceptance draft derived from effective choices' : 'fixed specification retained'}.`,
     );
     for (const mechanic of run.plan.mechanics) this.queueScope(run, mechanic);
   }
@@ -535,6 +630,7 @@ export class ResearchOrchestrator {
   }
   private finalize(run: Run): void {
     if (run.status === 'cancelled') return;
+    if (run.stage === 'decisions' && !run.initialSelection && this.now() < run.deadline) return;
     if (
       run.jobs.some(
         (j) =>
@@ -557,6 +653,15 @@ export class ResearchOrchestrator {
       run.issues.push(
         'Required clarification remains unresolved; a discussion budget or deadline is exhausted.',
       );
+    if (
+      isIdea(run.input) &&
+      !run.initialSelection &&
+      (run.input.decisionMode ?? 'ask') === 'ask' &&
+      this.now() < run.deadline
+    ) {
+      this.planAfterArchetypes(run, latest(run, 'archetypes')?.result ?? null);
+      return;
+    }
     if (!run.plan) run.plan = this.planner.plan(run, []);
     run.stage = 'review';
     const blueprint = this.reviewer.review(run, run.plan, this.now());
@@ -578,6 +683,14 @@ export class ResearchOrchestrator {
   }
   private expire(run: Run): void {
     if (this.now() < run.deadline) return;
+    if (run.stage === 'decisions' && !run.initialSelection) {
+      run.status = 'failed';
+      run.issues.push(
+        'Proposal selection deadline exceeded; no choices were implicitly confirmed. Start a new run.',
+      );
+      this.event(run, 'expired', 'Proposal selection timed out.');
+      return;
+    }
     for (const job of run.jobs)
       if (['queued', 'running'].includes(job.state)) {
         job.state = 'failed';

@@ -67,6 +67,10 @@ def install_research_routes(app, research, auth):
     async def follow_up(rid: str, request: Request):
         return await research.request("POST", "/api/runs/" + quote(rid, safe="") + "/follow-ups", await payload(request))
 
+    @router.post("/runs/{rid}/decisions", status_code=202)
+    async def decisions(rid: str, request: Request):
+        return await research.request("POST", "/api/runs/" + quote(rid, safe="") + "/decisions", await payload(request))
+
     @router.post("/runs/{rid}/material-follow-ups", status_code=202)
     async def material_follow_up(rid: str, request: Request):
         return await research.request("POST", "/api/runs/" + quote(rid, safe="") + "/material-follow-ups", await payload(request))

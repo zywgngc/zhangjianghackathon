@@ -11,6 +11,7 @@ import type {
   StartRequest,
 } from './model.ts';
 import { AppError } from './model.ts';
+import { ideaDecisions, ideaPlan, isIdea, propose, selectedEngine } from './ideas.ts';
 
 export const benchmarks: Benchmark[] = ['001', '002', '003'].map((id) =>
   JSON.parse(readFileSync(new URL(`../benchmarks/GAME-TEST-${id}.json`, import.meta.url), 'utf8')),
@@ -21,7 +22,8 @@ export function benchmark(id: CaseId): Benchmark {
   return item;
 }
 export function decisions(input: StartRequest): Decision[] {
-  const spec = benchmark(input.caseId);
+  if (isIdea(input)) return ideaDecisions(input, propose(input));
+  const spec = benchmark(input.caseId!);
   if (input.preferences?.engine && input.preferences.engine !== spec.engine)
     throw new AppError('LOCK_CONFLICT', `The specification requires ${spec.engine}.`, 400);
   return [
@@ -34,7 +36,7 @@ export function decisions(input: StartRequest): Decision[] {
     },
     {
       id: 'gameplay',
-      value: input.caseId,
+      value: input.caseId!,
       source: 'specification',
       locked: true,
       rationale: 'Preserve specified controls, numeric rules, theme, and acceptance checks.',
@@ -271,7 +273,8 @@ export interface PlannerPort {
 /** Deterministic reference-case planner, deliberately not an LLM or a general specification parser. */
 export class ReferencePlanner implements PlannerPort {
   plan(run: Run, archetypes: MaterialCandidate[]): Plan {
-    const spec = benchmark(run.input.caseId);
+    if (isIdea(run.input)) return ideaPlan(run, archetypes);
+    const spec = benchmark(run.input.caseId!);
     const mechanics: Mechanic[] = definitions[spec.caseId].map(
       ([id, title, behavior, tests, dependencies]) => ({
         id,
@@ -308,7 +311,8 @@ export class ReferencePlanner implements PlannerPort {
 }
 export class Researcher {
   request(run: Run, mechanic?: Mechanic): MaterialSearchRequest {
-    const spec = benchmark(run.input.caseId);
+    const spec = run.input.caseId ? benchmark(run.input.caseId) : null;
+    const engine = selectedEngine(run);
     const base = {
       contractVersion: '0.2' as const,
       requestId: '',
@@ -321,23 +325,41 @@ export class Researcher {
         followUp: null,
       },
       description: [
-        spec.title,
+        spec?.title ??
+          'Sparse game idea: propose missing details, do not treat defaults as user requirements.',
         run.input.brief ?? '',
+        ...(run.input.knownFeatures ?? []).map((s) => `Developer-provided characteristic: ${s}`),
         mechanic
           ? mechanic.title
-          : 'Find similar game archetypes without changing the fixed specification.',
-        `Required engine: ${spec.engine}. Implementation preference: ${run.decisions.find((d) => d.id === 'implementationStyle')?.value}.`,
+          : spec
+            ? 'Find similar game archetypes without changing the fixed specification.'
+            : 'Compare multiple related game archetypes and describe differences that require developer choices.',
+        `Engine: ${engine}. Effective choices (with provenance): ${run.decisions.map((d) => `${d.id}=${d.value} [${d.source}]`).join('; ')}.`,
+        ...(!spec
+          ? [
+              'Free text characteristics remain constraints to inspect; report conflicts rather than silently overriding them.',
+            ]
+          : []),
         ...run.notes,
       ]
         .filter(Boolean)
         .join('\n'),
       images: run.input.images ?? [],
       constraints: {
-        engine: spec.engine,
+        engine:
+          !mechanic &&
+          !spec &&
+          run.decisions.find((d) => d.id === 'engine')?.source === 'system_default'
+            ? null
+            : engine,
         engineVersion: null,
         platform: 'web' as const,
         language: 'typescript' as const,
-        inputModes: ['pointer', 'touch', 'keyboard'] as Array<'pointer' | 'touch' | 'keyboard'>,
+        inputModes: (run.decisions.find((d) => d.id === 'controls')?.value === 'touch'
+          ? ['touch']
+          : run.decisions.find((d) => d.id === 'controls')?.value === 'keyboard'
+            ? ['pointer', 'keyboard']
+            : ['pointer', 'touch', 'keyboard']) as Array<'pointer' | 'touch' | 'keyboard'>,
       },
       limit: Number(run.decisions.find((d) => d.id === 'candidateCount')?.value ?? 3),
     };
@@ -390,22 +412,35 @@ export class EvidenceReviewer {
     gaps.push(
       'No compatible implementation combination has been verified. Engine dependency versions still need pinning.',
     );
-    const spec = benchmark(run.input.caseId);
+    const spec = run.input.caseId ? benchmark(run.input.caseId) : null;
+    if (run.proposal) gaps.push(...run.proposal.warnings);
     return {
       version: run.blueprints.length + 1,
       projectRevision: run.revision,
       readiness: 'partial',
       generatedAt: now,
-      caseId: spec.caseId,
-      source: spec.source,
+      caseId: spec?.caseId ?? null,
+      source: spec?.source ?? null,
+      mode: spec ? 'benchmark' : 'idea',
+      ...(run.proposal ? { proposal: structuredClone(run.proposal) } : {}),
       plan,
       decisions: structuredClone(run.decisions),
       developerNotes: [...run.notes],
-      assumptions: [...run.assumptions],
+      assumptions: [
+        ...run.assumptions,
+        ...(!spec
+          ? run.decisions
+              .filter((d) => d.source === 'system_default')
+              .map((d) => `${d.id}=${d.value} (system_default; editable proposal)`)
+          : []),
+      ],
       candidates,
       gaps: [...new Set(gaps)],
-      acceptance: spec.checks.map((c) => ({ ...c, status: 'not_executed' })),
-      agentMode: 'reference-planner',
+      acceptance: (spec?.checks ?? plan.acceptanceDraft ?? []).map((c) => ({
+        ...c,
+        status: 'not_executed',
+      })),
+      agentMode: spec ? 'reference-planner' : 'rule-proposal-planner',
     };
   }
 }

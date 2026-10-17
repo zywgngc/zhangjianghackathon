@@ -66,7 +66,7 @@ test('browser tools use the same API and abort unregisters tools without cancell
   };
   const r = await registerResearchTools(document, api, contract);
   assert.equal(r.supported, true);
-  assert.equal(registered.length, 6);
+  assert.equal(registered.length, 7);
   const state = registered.find((x) => x.tool.name === 'get_research_state');
   await state.tool.execute({ runId: 'run-1' });
   assert.deepEqual(calls[0], ['/api/runs/run-1']);
@@ -90,4 +90,39 @@ test('failed registration cleans up already registered tools', async () => {
     /Unsupported/,
   );
   assert.equal(signal?.aborted, true);
+});
+
+test('browser schemas accept sparse ideas and initial choices, retaining server validation', async () => {
+  const calls: any[] = [];
+  const tools = researchTools(async (...args: any[]) => {
+    calls.push(args);
+    return {};
+  }, contract);
+  const ajv = new Ajv2020({ strict: true });
+  createRequire(import.meta.url)('ajv-formats')(ajv);
+  const start = tools.find((t: any) => t.name === 'start_research')!;
+  const validateStart = ajv.compile(start.inputSchema);
+  assert.ok(
+    validateStart({
+      requestId: 'idea',
+      projectId: 'idea',
+      brief: 'cat game',
+      decisionMode: 'auto',
+    }),
+  );
+  assert.equal(validateStart({ requestId: 'empty', projectId: 'empty' }), false);
+  const selection = tools.find((t: any) => t.name === 'resolve_research_proposal')!;
+  const validateSelection = ajv.compile(selection.inputSchema);
+  const input = {
+    runId: 'idea',
+    selection: {
+      requestId: 'pick',
+      expectedProjectRevision: 1,
+      clarificationId: 'batch',
+      answers: [],
+    },
+  };
+  assert.ok(validateSelection(input), ajv.errorsText(validateSelection.errors));
+  await selection.execute(input);
+  assert.deepEqual(calls[0], ['/api/runs/idea/decisions', 'POST', input.selection]);
 });

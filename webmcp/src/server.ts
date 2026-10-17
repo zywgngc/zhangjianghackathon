@@ -117,6 +117,7 @@ export async function createResearchServer(options: {
           engine.store.list().map((r) => ({
             id: r.id,
             caseId: r.input.caseId,
+            title: r.input.brief?.slice(0, 60) || (r.input.caseId ? undefined : '图片 / 特征创意'),
             revision: r.revision,
             status: r.status,
             createdAt: r.createdAt,
@@ -130,7 +131,9 @@ export async function createResearchServer(options: {
         return;
       }
       const match =
-        /^\/api\/runs\/([^/]+)(?:\/(blueprint|follow-ups|material-follow-ups|cancel))?$/.exec(path);
+        /^\/api\/runs\/([^/]+)(?:\/(blueprint|decisions|follow-ups|material-follow-ups|cancel))?$/.exec(
+          path,
+        );
       if (match) {
         const id = decodeURIComponent(match[1]);
         const action = match[2];
@@ -154,6 +157,10 @@ export async function createResearchServer(options: {
           if (command?.discussion?.runId !== id)
             throw new AppError('INVALID_INPUT', 'Route and command run IDs differ.', 400);
           json(202, engine.mainFollowUp(command));
+          return;
+        }
+        if (req.method === 'POST' && action === 'decisions') {
+          json(202, engine.selectProposal(id, await body(req)));
           return;
         }
         if (req.method === 'POST' && action === 'material-follow-ups') {

@@ -177,6 +177,21 @@ summary {
   font-size: 14px;
   color: #bbc7d7;
 }
+.proposal-form {
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid #91cfc3;
+  border-radius: 9px;
+}
+.proposal-form .hint {
+  margin: 5px 0;
+}
+.proposal-form button {
+  margin-right: 8px;
+}
+.mechanics li {
+  font-size: 13px;
+}
 #error {
   color: #ffa6a6;
 }

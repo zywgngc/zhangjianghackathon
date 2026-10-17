@@ -1,4 +1,4 @@
-import { startRequestSchema } from './request-schema.mjs';
+import { startRequestSchema, proposalSelectionSchema } from './request-schema.mjs';
 const runSchema = {
   type: 'object',
   properties: { runId: { type: 'string', minLength: 1 } },
@@ -18,17 +18,33 @@ export function researchTools(api, contract) {
   return [
     tool(
       'get_research_context',
-      '列出支持的参考案例和已有研究任务。',
+      '列出已有研究任务与可选的测试案例。普通创意无需选择测试案例。',
       { type: 'object', properties: {}, additionalProperties: false },
       true,
       async () => ({ cases: await api('/api/cases'), runs: await api('/api/runs') }),
     ),
     tool(
       'start_research',
-      '为参考案例创建可恢复的研究任务。本地演示使用模拟素材门户。',
+      '用图片引用或稀疏创意创建研究任务；省略 caseId。decisionMode=ask 先给选项，auto 自动采用默认。案例模式才加载完整测试规格。当前为规则提案与模拟素材门户。',
       startRequestSchema(contract),
       false,
       (input) => api('/api/runs', 'POST', input),
+    ),
+    tool(
+      'resolve_research_proposal',
+      '提交第一轮提案选择，不消耗追问额度。answers=[] 采用全部当前默认；仅提交开发者实际修改的选项。后续调整使用 follow_up_research。',
+      {
+        type: 'object',
+        properties: {
+          runId: { type: 'string', minLength: 1 },
+          selection: proposalSelectionSchema(contract),
+        },
+        required: ['runId', 'selection'],
+        additionalProperties: false,
+      },
+      false,
+      ({ runId, selection }) =>
+        api(`/api/runs/${encodeURIComponent(runId)}/decisions`, 'POST', selection),
     ),
     tool(
       'get_research_state',
