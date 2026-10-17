@@ -1,0 +1,1 @@
+"""Chinese game generation harness."""
