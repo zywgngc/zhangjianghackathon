@@ -162,7 +162,7 @@ class Harness:
                 "如果附有截图，结合截图检查裁切、文字重叠、游戏区域可读性与按钮可访问性，明确视觉证据。"
                 "浏览器测试未通过则 verdict 必须 repair；存在 critical/major 缺陷必须 repair。minor 可通过并说明。"
                 "避免提出偏好性修改或新增需求；别因未提供高级玩法测试而凭空判定代码有错，但在 limitations 中准确说明覆盖范围。",
-                {"original_request": request, **context, "html": html, "test_report": report,
+                {"original_request": request, "design": design.model_dump(), "html": html, "test_report": report,
                  "screenshots": [p.name for p in screenshots]}, Review, images=screenshots)
             accepted = report["passed"] and review.verdict == "pass" and not any(d.severity in {"critical", "major"} for d in review.defects)
             if accepted:

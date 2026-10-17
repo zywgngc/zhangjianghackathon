@@ -19,6 +19,10 @@ def tokenize(text: str):
 class Retriever:
     def __init__(self, settings):
         self.settings = settings
+        self.portal = None
+        if settings.portal_url:
+            from .material_portal import MaterialPortalClient
+            self.portal = MaterialPortalClient(settings)
         roots = [Path(__file__).parent / "knowledge"]
         if settings.rag_dir:
             roots.append(Path(settings.rag_dir))
@@ -72,4 +76,10 @@ class Retriever:
             except (httpx.HTTPError, ValueError, KeyError, TypeError) as exc:
                 # Do not put remote URLs/tokens or response bodies in public logs.
                 warnings.append("外部 RAG 不可用，已回退本地知识库：" + type(exc).__name__)
-        return {"query": query, "documents": (remote + local)[:top_k], "warnings": warnings}
+        portal = await self.portal.search(query, top_k) if self.portal else None
+        if portal:
+            warnings.extend(portal["warnings"])
+        result = {"query": query, "documents": ((portal["documents"] if portal else []) + remote + local)[:top_k], "warnings": warnings}
+        if portal:
+            result["material_portal"] = portal["trace"]
+        return result

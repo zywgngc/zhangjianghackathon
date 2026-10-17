@@ -26,6 +26,9 @@ class Settings:
     rag_dir: str = field(default_factory=lambda: os.getenv("RAG_DIR", ""))
     rag_url: str = field(default_factory=lambda: os.getenv("RAG_API_URL", ""))
     rag_token: str = field(default_factory=lambda: os.getenv("RAG_API_TOKEN", ""))
+    portal_url: str = field(default_factory=lambda: os.getenv("MATERIAL_PORTAL_URL", ""))
+    portal_token: str = field(default_factory=lambda: os.getenv("MATERIAL_PORTAL_TOKEN", ""))
+    portal_schema: Path = field(default_factory=lambda: Path(os.getenv("MATERIAL_PORTAL_SCHEMA", str(Path(__file__).resolve().parents[1] / "webmcp/material-portal.schema.json"))))
 
     def role_model(self, role: str) -> str:
         return os.getenv("MODEL_" + role.upper(), self.model)

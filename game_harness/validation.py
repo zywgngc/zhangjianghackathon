@@ -65,7 +65,7 @@ def inspect_html(html: str):
 
 
 class BrowserValidator:
-    version = "2-actionable-controls"
+    version = "4-gameplay-input-targets"
     def __init__(self, settings, store):
         self.settings, self.store = settings, store
 
@@ -114,7 +114,7 @@ class BrowserValidator:
 
         async def check(condition, message):
             if not condition:
-                raise AssertionError(message)
+                raise AssertionError("未通过检查：" + message)
             result["checks"].append(message)
 
         async def state():
@@ -154,10 +154,17 @@ class BrowserValidator:
             if touch:
                 controls = page.locator('[data-action]')
                 candidates = await controls.evaluate_all("els => els.filter(e => !['start','pause','resume','restart'].includes(e.dataset.action) && e.getBoundingClientRect().width > 0).map(e=>e.dataset.action)")
-                await check(bool(candidates), "存在移动端操作控件")
-                await page.locator('[data-action="' + candidates[0] + '"]').first.tap()
+                if candidates:
+                    target = page.locator('[data-action="' + candidates[0] + '"]').first
+                    result["input_target"] = "data-action=" + candidates[0]
+                else:
+                    # Grid and canvas games can receive touches directly in the playfield.
+                    target = page.locator('[data-testid="game-root"] [data-index]:visible, [data-testid="game-root"] canvas:visible').first
+                    result["input_target"] = "playfield grid/canvas"
+                await check(await target.count() > 0, "存在可见的移动端操作目标（按钮、棋盘格或画布）")
+                await target.tap()
             else:
-                for key in ("ArrowLeft", "ArrowRight", "Space"):
+                for key in ("ArrowLeft", "ArrowRight"):
                     await page.keyboard.press(key)
             await check(True, "已发送触屏/键盘操作")
             await click_action("restart")

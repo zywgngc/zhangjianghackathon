@@ -11,7 +11,7 @@ from game_harness.schemas import Brief
 async def test_bad_json_retries_and_accounts_usage(settings, store, request_data, contracts):
     rid = store.create(request_data)["id"]
     store.claim()
-    responses = iter(["this is not JSON", json.dumps(contracts["brief"], ensure_ascii=False)])
+    responses = iter(["this is not JSON", "Here is the result:\n```json\n" + json.dumps(contracts["brief"], ensure_ascii=False) + "\n```"])
 
     def respond(request):
         payload = json.loads(request.content)
@@ -59,5 +59,24 @@ async def test_stream_requires_terminal_marker_and_preserves_usage(settings, sto
             with pytest.raises(RuntimeError, match="未完整结束"):
                 await agent.complete(rid, "build", "build", "生成游戏", request_data)
         assert store.get(rid)["tokens"] == 123
+    finally:
+        await agent.close()
+
+
+async def test_actual_provider_usage_over_budget_stops_delivery(settings, store, request_data):
+    rid = store.create(request_data)["id"]
+    store.claim()
+    def respond(request):
+        return httpx.Response(200, json={"id": "over-budget", "object": "chat.completion", "created": 0,
+            "model": settings.model, "choices": [{"index": 0, "message": {"role": "assistant", "content": "结果"}, "finish_reason": "stop"}],
+            "usage": {"prompt_tokens": 100000, "completion_tokens": 1, "total_tokens": 100001}})
+    agent = AgentClient(settings, store)
+    await agent.client.close()
+    agent.client = AsyncOpenAI(api_key="test", base_url="https://mock.invalid/v1", max_retries=0,
+                              http_client=httpx.AsyncClient(transport=httpx.MockTransport(respond)))
+    try:
+        with pytest.raises(RuntimeError, match="预算"):
+            await agent.complete(rid, "brief", "rewrite", "输出结果", request_data)
+        assert store.get(rid)["tokens"] == 100001
     finally:
         await agent.close()

@@ -15,6 +15,22 @@ COMMON = """你是中文 HTML 游戏生成流水线中的专业代理。严格�
 不要声称运行过尚未执行的测试。输出必须符合本阶段格式，不包含过程推理。
 """
 
+
+def estimate_input_tokens(text, images=None):
+    """Admission estimate, not a substitute for the provider's reported usage."""
+    cjk = len(re.findall(r"[\u3400-\u9fff]", text))
+    ascii_count = sum(ord(ch) < 128 for ch in text)
+    other = len(text) - cjk - ascii_count
+    estimate = (ascii_count + 2) // 3 + (cjk * 3 + 1) // 2 + other * 2
+    for path in images or []:
+        data = path.read_bytes()[:24]
+        if data[:8] == b"\x89PNG\r\n\x1a\n" and len(data) == 24:
+            width, height = int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
+            estimate += 256 * (1 + ((width + 511) // 512) * ((height + 511) // 512))
+        else:
+            estimate += 4096
+    return estimate
+
 GAME_CONTRACT = """
 产物：一个完整、自包含的 index.html，只输出 HTML，禁止 Markdown 代码围栏、占位符、TODO。
 只用原生 HTML/CSS/JavaScript，Canvas 或 DOM；禁止 import、外部脚本、iframe、网络请求、远程字体、eval。
@@ -24,6 +40,7 @@ GAME_CONTRACT = """
 - 主游戏区域 data-testid="game-root"；分数标签 data-testid="score"。
 - 按钮 data-action="start"、"pause"、"resume"、"restart"；当前适用的按钮必须可见可点击。
 - 触屏移动或操作按钮也使用 data-action 属性（如 left/right/up/down/action），必须在手机可用。
+- 棋盘或地鼠格子可以使用 data-index 标识可触控单元；Canvas 可直接接收场景触摸输入。
 - window.__GAME__ 暴露实时 {state, score, ticks}，可为 getter。state 只用 ready/running/paused/won/lost。
 - ticks 是非负整数，running 时随 requestAnimationFrame 或游戏回合持续递增；暂停时停止。
 - restart 在任意阶段将游戏重新置为 running，score 和 ticks 归零，清理旧循环和临时状态。
@@ -91,7 +108,7 @@ class AgentClient:
         for attempt in range(3):
             remaining = self.store.reserve_call(rid, self.settings.max_calls, self.settings.max_tokens)
             # Reserve room for estimated input and maximum output before a request.
-            input_estimate = len((COMMON + system + serialized).encode("utf-8")) + len(images or []) * 4096
+            input_estimate = estimate_input_tokens(COMMON + system + serialized, images)
             output_limit = min(max_tokens, remaining - input_estimate)
             if output_limit < 256:
                 raise RuntimeError("剩余 token 预算不足以完成此阶段")
@@ -132,6 +149,9 @@ class AgentClient:
             content = await self.complete(rid, stage, role, instruction + contract, data, images=images)
             try:
                 clean = re.sub(r"^```(?:json)?\s*|\s*```$", "", content.strip())
+                blocks = re.findall(r"```(?:json)?\s*\n?(.*?)```", content, flags=re.DOTALL)
+                if len(blocks) == 1:
+                    clean = blocks[0].strip()
                 return schema.model_validate_json(clean)
             except ValidationError as exc:
                 if attempt:

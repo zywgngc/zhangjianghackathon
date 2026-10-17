@@ -41,7 +41,7 @@ Builder / Repair 默认使用流式响应，每 5 秒记录一次生成进度；
 
 当前 qwen3.8-max 网关已实测支持 `reasoning_effort="none"`，因此 `MODEL_REASONING_EFFORT=none` 为快速默认配置。模型名不变；修改该环境变量可调整推理设置，设为空值则不发送该参数，便于接入其他兼容服务。已验证 `enable_thinking=false` 在此网关不能完全关闭推理，不能用它代替本设置。
 
-默认最多 16 次模型请求、100000 个已报告 token、2 次修复和 1200 秒总任务时限。发起请求前用保守的输入估算和输出上限检查剩余 token；供应商 tokenizer 与图片计费可能不同，真实 usage 超过预算会立即停止后续阶段。网络中断时供应商实际计费可能无法获知，calls 仍被计数。角色和模型名在事件中记录。
+默认最多 16 次模型请求、100000 个已报告 token、2 次修复和 1200 秒总任务时限。发起请求前按中英文文本和 PNG 图像尺寸估算输入，再用剩余空间限制输出；这是调度估算，不是供应商精确 tokenizer。真实 usage 超过预算会立即停止后续阶段。网络中断时供应商实际计费可能无法获知，calls 仍被计数。角色和模型名在事件中记录。
 
 ```text
 data/
@@ -70,7 +70,7 @@ data/
 | 主区域 | `[data-testid="game-root"]` |
 | 分数 | `[data-testid="score"]` |
 | 生命周期按钮 | `[data-action="start/pause/resume/restart"]`，分别独立元素 |
-| 手机输入 | 至少一个可见的其他 `data-action` 控件 |
+| 手机输入 | 可见的其他 `data-action` 控件、带 `data-index` 的棋盘格或可触摸 Canvas |
 | 状态观测 | `window.__GAME__` 实时暴露 `{state, score, ticks}` |
 | 状态枚举 | `ready/running/paused/won/lost` |
 | 计时 | running 时 ticks 递增，暂停时冻结 |

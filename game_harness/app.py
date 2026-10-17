@@ -141,6 +141,14 @@ def create_app(settings=None, agents_factory=AgentClient, validator_factory=Brow
             raise HTTPException(422, "查询长度须为 1–4000")
         return await retriever.search(q)
 
+    @app.get("/api/benchmarks", dependencies=auth)
+    async def benchmarks():
+        from .benchmarks import inventory
+        try:
+            return {"scope": "资料与能力预检，不代表游戏验收通过", "cases": inventory()}
+        except FileNotFoundError:
+            raise HTTPException(503, "验收规格未随当前安装提供，请在完整仓库中运行") from None
+
     static = Path(__file__).parent / "static"
     app.mount("/static", StaticFiles(directory=static), name="static")
 
