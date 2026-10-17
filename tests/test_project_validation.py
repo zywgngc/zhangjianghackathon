@@ -133,6 +133,49 @@ class ProjectValidationGates(unittest.IsolatedAsyncioTestCase):
 
 @unittest.skipUnless(os.getenv("RUN_BROWSER_TESTS") == "1", "Real Chromium tests are opt-in")
 class RealProjectBrowserTests(unittest.IsolatedAsyncioTestCase):
+    async def test_viewport_native_start_waits_for_cold_layout_stability_and_rejects_obstruction(self):
+        from playwright.async_api import async_playwright
+        # Protocol fixtures exercise native actionability; they are not games or
+        # evidence that any official acceptance requirement has passed.
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            html = b"<!doctype html><html lang='zh-CN'><body><button data-action='start' style='position:absolute;left:20px;top:20px'>start</button><canvas></canvas></body></html>"
+            workspace = FixtureWorkspace(root, html)
+            with verified_server(workspace) as origin:
+                async with async_playwright() as playwright:
+                    browser = await playwright.chromium.launch(headless=True, chromium_sandbox=True)
+                    try:
+                        for blocked in [False, True]:
+                            with self.subTest(blocked=blocked):
+                                store = FixtureStore(root / ('blocked' if blocked else 'cold'))
+                                validator = ProjectValidator(SimpleNamespace(browser_sandbox=True), store)
+                                original_context = validator._context
+                                async def instrumented(browser, origin, **kwargs):
+                                    context = await original_context(browser, origin, **kwargs)
+                                    script = """() => {document.addEventListener('DOMContentLoaded',()=>{
+                                      let phase='MENU',trusted=false;
+                                      const button=document.querySelector('[data-action=start]');
+                                      button.addEventListener('click',event=>{trusted=event.isTrusted;phase='PLAYING';});
+                                      window.__HARNESS__={snapshot:()=>({phase,simTime:0,player:{hp:100},progress:{},metrics:{trusted}})};
+                                      if(__BLOCKED__){const cover=document.createElement('div');cover.style.cssText='position:fixed;inset:0;z-index:10';document.body.append(cover);}
+                                      else{const started=performance.now();function coldLayout(now){if(now-started<1800){button.style.left=(20+(Math.floor(now/16)%2))+'px';requestAnimationFrame(coldLayout);}}requestAnimationFrame(coldLayout);}
+                                    });} """.replace('__BLOCKED__', 'true' if blocked else 'false')
+                                    await context.add_init_script('(' + script + ')()')
+                                    return context
+                                validator._context = instrumented
+                                evidence = {'project_sha256': 'a' * 64, 'spec_sha256': load_case('GAME-TEST-001').sha256, 'checks': []}
+                                result = await validator._viewport(browser, origin, 'fixture', load_case('GAME-TEST-001'), workspace,
+                                    evidence, 0, 'desktop', 1280, 800, False)
+                                if blocked:
+                                    self.assertNotIn('running', result)
+                                    self.assertTrue(any('No actionable data-action=start' in error and 'intercepts pointer events' in error for error in result['errors']))
+                                else:
+                                    self.assertEqual(result['running']['phase'], 'PLAYING')
+                                    self.assertTrue(result['running']['metrics']['trusted'])
+                                    self.assertFalse(any('No actionable data-action=start' in error for error in result['errors']))
+                    finally:
+                        await browser.close()
+
     async def test_power_strategy_waits_for_actual_absorption_lock_before_next_selection(self):
         from playwright.async_api import async_playwright
         async with async_playwright() as playwright:

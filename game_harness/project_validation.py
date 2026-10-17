@@ -791,15 +791,20 @@ class ProjectValidator:
 
         async def action(name):
             locators = page.locator('[data-action="' + name + '"]:visible')
+            attempts = []
             for index in reversed(range(await locators.count())):
                 candidate = locators.nth(index)
                 try:
-                    await candidate.click(trial=True, timeout=600)
+                    # Match the existing three-second element deadline. Cold
+                    # software-rendered frames can exceed a 600ms stability
+                    # preflight even when the actual button is unobstructed.
+                    await candidate.click(trial=True, timeout=3000)
                     await candidate.click()
                     return
-                except Exception:
-                    continue
-            raise AssertionError("No actionable data-action=" + name)
+                except Exception as exc:
+                    attempts.append(str(exc)[:1200])
+            detail = "; ".join(attempts) if attempts else "No visible matching control"
+            raise AssertionError("No actionable data-action=" + name + ": " + detail)
 
         def save(label, trace, tests, assertions):
             self._evidence(rid, spec, evidence, round_no, name + "-" + label, trace,
