@@ -1,0 +1,3509 @@
+# GAME DEVELOPMENT TASK
+
+Test Case ID: GAME-TEST-002
+Game Name: 武林幸存者
+English Name: Wuxia Survivors
+Specification Version: 1.0
+
+You are responsible for implementing, testing,
+optimizing, and delivering the complete game
+according to this specification.
+
+This specification is the authoritative source
+of gameplay requirements.
+
+The game mechanics, numerical parameters, level
+design, visual direction, and implementation
+constraints have already been determined.
+
+Do not independently redesign the game.
+
+Do not replace the required mechanics with
+simplified alternatives.
+
+Do not omit required features.
+
+If implementation details are unspecified,
+make reasonable engineering decisions without
+changing the specified gameplay.
+
+All user-facing game content must be in
+Simplified Chinese.
+
+
+==================================================
+01. BASIC GAME INFORMATION
+==================================================
+
+Game Name:
+武林幸存者
+
+English Name:
+Wuxia Survivors
+
+Reference Games:
+
+Vampire Survivors
+https://store.steampowered.com/app/1794680/
+
+武侠割草
+https://www.taptap.cn/app/835729
+
+群侠传：幸存者
+https://store.steampowered.com/app/4957110/
+
+Open-Source Technical Reference:
+https://github.com/nusr/wukong-survivors
+
+Genre:
+2D Top-Down Survivors
+Wuxia Roguelike
+Automatic Combat
+Bullet Heaven
+Skill Evolution
+
+Gameplay Mode:
+Fast-paced advertisement-style survivors game
+
+Target Platform:
+HTML5 Browser Game
+
+Target Devices:
+Mobile Phones
+Tablets
+Desktop Browsers
+
+Screen Orientation:
+Portrait and Landscape
+
+Primary Language:
+Simplified Chinese
+
+Connectivity:
+Offline-first
+
+Required Technology:
+- HTML5
+- TypeScript
+- React
+- Phaser
+- Vite
+
+Rendering:
+WebGL / Canvas through Phaser
+
+Backend:
+Not required
+
+Account System:
+Not required
+
+Payment:
+Not required
+
+Advertising:
+Not required
+
+Game Assets:
+Locally bundled, appropriately licensed assets
+or original procedural assets.
+
+
+==================================================
+02. RECREATION OBJECTIVES
+==================================================
+
+Recreate the complete core gameplay of
+Vampire Survivors using a Chinese Wuxia theme.
+
+The player controls a martial arts hero.
+
+Enemies continuously approach from all directions.
+
+The player moves freely across the battlefield.
+
+All equipped martial arts skills attack automatically.
+
+Defeated enemies drop experience gems.
+
+Collecting experience increases the player's level.
+
+Every level-up presents three upgrade choices.
+
+The player may acquire new martial arts,
+upgrade existing martial arts, or learn
+passive internal cultivation techniques.
+
+Specific combinations of martial arts
+and passive techniques unlock ultimate skills.
+
+The player must survive increasingly difficult
+enemy waves and defeat the final Boss.
+
+Preserve the following systems:
+
+1. Free movement
+2. Automatic attacks
+3. Continuous enemy spawning
+4. Experience collection
+5. Character leveling
+6. Three-choice skill upgrades
+7. Multiple simultaneous weapons
+8. Passive attribute upgrades
+9. Skill evolution
+10. Elite enemies
+11. Boss battles
+12. Level progression
+13. Gold rewards
+14. Permanent character upgrades
+15. Local save data
+
+SPECIAL GAMEPLAY REQUIREMENT:
+
+This game uses an advertisement-style
+accelerated progression system.
+
+The player must experience noticeable
+power growth during the first minute.
+
+The game must support large-scale
+enemy elimination and visually impressive
+martial arts combinations.
+
+Progression targets:
+
+0–15 seconds:
+Basic automatic combat and first kills.
+
+15–30 seconds:
+Access to at least two active skills.
+
+30–60 seconds:
+A normal player should be able to obtain
+three or four active skills.
+
+60–120 seconds:
+Noticeable increases in damage,
+projectile count, and attack coverage.
+
+120–180 seconds:
+At least one valid progression route
+must allow the acquisition of an ultimate skill.
+
+180 seconds onward:
+Large-scale enemy waves and powerful
+multi-skill combinations.
+
+Do not require lengthy grinding before
+the player can experience powerful skills.
+
+VISUAL MODIFICATION:
+
+Replace traditional Western fantasy
+weapons and monsters with Chinese Wuxia
+martial arts, sword techniques, palm strikes,
+hidden weapons, internal cultivation,
+and ancient martial arts environments.
+
+The gameplay should retain the recognizable
+survivors-style combat loop.
+
+Use original or appropriately licensed assets
+rather than copying protected artwork,
+characters, music, or branding.
+
+
+==================================================
+03. CORE GAMEPLAY LOOP
+==================================================
+
+The complete gameplay loop is:
+
+MAIN MENU
+    |
+    v
+SELECT LEVEL
+    |
+    v
+SPAWN WUXIA HERO
+    |
+    v
+EQUIP STARTING MARTIAL ART
+    |
+    v
+PLAYER MOVES FREELY
+    |
+    v
+MARTIAL ARTS ATTACK AUTOMATICALLY
+    |
+    v
+ENEMIES SPAWN AND APPROACH
+    |
+    v
+DEFEAT ENEMIES
+    |
+    v
+COLLECT EXPERIENCE GEMS
+    |
+    v
+GAIN EXPERIENCE
+    |
+    v
+LEVEL UP
+    |
+    v
+CHOOSE ONE OF THREE UPGRADES
+    |
+    +---- NEW ACTIVE SKILL
+    |
+    +---- EXISTING SKILL UPGRADE
+    |
+    +---- PASSIVE CULTIVATION
+    |
+    +---- ULTIMATE SKILL EVOLUTION
+    |
+    v
+INCREASE COMBAT POWER
+    |
+    v
+SURVIVE STRONGER ENEMY WAVES
+    |
+    v
+DEFEAT ELITE ENEMIES
+    |
+    v
+FINAL BOSS APPEARS
+    |
+    +---- BOSS DEFEATED
+    |          |
+    |          v
+    |       VICTORY
+    |          |
+    |          v
+    |     RECEIVE GOLD
+    |          |
+    |          v
+    |     NEXT LEVEL
+    |
+    +---- PLAYER HP REACHES ZERO
+               |
+               v
+             DEFEAT
+               |
+               v
+             RETRY
+
+The player may return to the main menu
+or retry after a failed level.
+
+A successful level unlocks the next level.
+
+The final Boss must be defeated
+to complete the level.
+
+Surviving until the timer expires
+without defeating the Boss
+does not count as victory.
+
+
+==================================================
+04. PLAYER CONTROL SYSTEM
+==================================================
+
+04.1 Movement
+
+The player moves freely in eight directions.
+
+Mobile controls:
+
+Use a virtual joystick.
+
+The joystick is positioned in
+the lower-left region of the screen.
+
+Touch and drag:
+Move in the corresponding direction.
+
+Release:
+Stop movement.
+
+The joystick must support continuous
+360-degree directional input.
+
+Desktop controls:
+
+WASD
+Arrow keys
+
+04.2 Movement Parameters
+
+Game coordinate system:
+
+X = horizontal direction
+Y = vertical direction
+
+Initial movement speed:
+220 pixels per second
+
+Diagonal movement must be normalized.
+
+Movement must be frame-rate independent.
+
+The player must remain inside the
+valid gameplay world boundaries.
+
+04.3 Player Attributes
+
+Initial maximum HP:
+100
+
+Initial HP:
+100
+
+Initial movement speed:
+220 pixels per second
+
+Base damage multiplier:
+1.0
+
+Initial damage reduction:
+0%
+
+Initial cooldown reduction:
+0%
+
+Initial experience multiplier:
+1.0
+
+Experience pickup radius:
+80 pixels
+
+Damage invulnerability duration:
+0.6 seconds
+
+04.4 Starting Skill
+
+The player starts every run with:
+
+御剑术 Lv.1
+
+The starting skill must attack automatically.
+
+04.5 Shooting and Skills
+
+All active skills execute automatically.
+
+The player does not manually aim.
+
+The player does not manually activate attacks.
+
+Multiple equipped skills may execute
+simultaneously.
+
+04.6 Pause
+
+The game must support pausing.
+
+While paused:
+
+- Player movement stops
+- Enemy movement stops
+- Skill timers stop
+- Projectile updates stop
+- Collision processing stops
+- Spawn timers stop
+- Level timer stops
+- Gameplay animations stop where appropriate
+
+The upgrade-selection screen must
+also pause the game world.
+
+
+==================================================
+05. GAME OBJECTS
+==================================================
+
+05.1 Player Character
+
+Character Name:
+无名剑客
+
+Appearance:
+
+- Ancient Chinese martial arts clothing
+- Long hair or traditional tied hairstyle
+- Sword carried on the back or waist
+- Stylized Wuxia proportions
+- Clear player silhouette
+
+Required animations:
+
+Idle
+Running
+Attacking
+Taking damage
+Death
+
+05.2 Normal Enemies
+
+Six enemy types are required.
+
+Enemy 1:
+山贼
+
+HP:
+20
+
+Contact Damage:
+8
+
+Movement Speed:
+75
+
+Base Experience:
+1
+
+Behavior:
+Move directly toward the player.
+
+
+Enemy 2:
+持刀恶徒
+
+HP:
+35
+
+Contact Damage:
+10
+
+Movement Speed:
+95
+
+Base Experience:
+2
+
+Behavior:
+Move toward the player and attack on contact.
+
+
+Enemy 3:
+江湖刺客
+
+HP:
+25
+
+Contact Damage:
+12
+
+Movement Speed:
+145
+
+Base Experience:
+3
+
+Behavior:
+Fast pursuit.
+
+
+Enemy 4:
+魔教弟子
+
+HP:
+60
+
+Contact Damage:
+15
+
+Movement Speed:
+105
+
+Base Experience:
+4
+
+Behavior:
+Standard pursuit.
+
+
+Enemy 5:
+铁甲武士
+
+HP:
+120
+
+Contact Damage:
+18
+
+Movement Speed:
+65
+
+Base Experience:
+6
+
+Behavior:
+Slow, high-health melee enemy.
+
+
+Enemy 6:
+邪派术士
+
+HP:
+50
+
+Contact Damage:
+12
+
+Movement Speed:
+80
+
+Base Experience:
+5
+
+Behavior:
+Maintain distance when possible.
+
+Ranged Attack:
+One projectile every 3 seconds.
+
+Projectile Speed:
+180 pixels per second.
+
+Projectile Damage:
+12
+
+
+05.3 Elite Enemies
+
+Three elite enemy types are required.
+
+Elite 1:
+山贼头目
+
+HP:
+600
+
+Contact Damage:
+20
+
+Special Ability:
+Close-range area attack.
+
+
+Elite 2:
+大漠刀王
+
+HP:
+1000
+
+Contact Damage:
+25
+
+Special Ability:
+Directional dash toward the player.
+
+
+Elite 3:
+魔教护法
+
+HP:
+1500
+
+Contact Damage:
+30
+
+Special Ability:
+Periodic fan-shaped projectile attacks.
+
+
+05.4 Bosses
+
+Three final Bosses are required.
+
+Boss 1:
+黑风寨主
+
+HP:
+3000
+
+Special Attacks:
+- Forward charge
+- Wide melee slash
+
+
+Boss 2:
+大漠狂刀
+
+HP:
+5000
+
+Special Attacks:
+- Three-direction blade projectiles
+- Fast dash
+
+
+Boss 3:
+魔教教主
+
+HP:
+8000
+
+Special Attacks:
+- Lightning projectiles
+- Enemy summoning
+- Large area shockwave
+
+
+05.5 Experience Gems
+
+Defeated enemies drop experience gems.
+
+Gems remain in the world until collected.
+
+Gems within the pickup radius
+move toward the player.
+
+Use pooling and gem merging when necessary.
+
+05.6 Other Drops
+
+Required:
+
+- Healing items
+- Gold
+- Full-screen experience collection item
+
+05.7 Projectiles
+
+Projectiles must have:
+
+- Position
+- Direction
+- Speed
+- Damage
+- Collision detection
+- Hit effects
+- Lifetime
+- Automatic cleanup
+
+05.8 Skill Effects
+
+Required effect categories:
+
+Sword projectiles
+Palm waves
+Rotating blades
+Hidden weapons
+Ice
+Fire
+Lightning
+Sword formations
+Ground shockwaves
+Summoned clones
+
+
+==================================================
+06. CORE GAMEPLAY MECHANICS
+==================================================
+
+06.1 Active Martial Arts
+
+Implement exactly 12 base active skills.
+
+Each active skill has 5 levels.
+
+Skill W01:
+御剑术
+
+Type:
+Homing sword projectiles
+
+Level 1:
+1 sword every 1.5 seconds.
+Base damage: 12.
+
+Level 2:
+Base damage +20%.
+
+Level 3:
+3 swords per attack.
+
+Level 4:
+Base damage +40% total.
+
+Level 5:
+5 swords per attack.
+
+
+Skill W02:
+六脉剑气
+
+Type:
+Penetrating sword energy
+
+Level 1:
+1 projectile every 1.2 seconds.
+Base damage: 16.
+
+Level 2:
+Base damage +20%.
+
+Level 3:
+3 sword-energy projectiles per attack.
+
+Level 4:
+Base damage +40% total.
+
+Level 5:
+5 projectiles per attack.
+Each projectile can hit up to 3 enemies.
+
+
+Skill W03:
+降龙掌
+
+Type:
+Forward cone-shaped area attack
+
+Level 1:
+Damage: 24.
+Cooldown: 2 seconds.
+
+Level 2:
+Base damage +20%.
+
+Level 3:
+Attack width +50%.
+
+Level 4:
+Base damage +40% total.
+
+Level 5:
+Release 3 dragon-shaped palm waves.
+
+
+Skill W04:
+旋风刀法
+
+Type:
+Rotating area attack
+
+Level 1:
+Damage: 12.
+Cooldown: 2 seconds.
+
+Level 2:
+Base damage +20%.
+
+Level 3:
+Attack radius +40%.
+
+Level 4:
+Base damage +40% total.
+
+Level 5:
+Generate two rotating blade waves.
+
+
+Skill W05:
+暴雨梨花针
+
+Type:
+Multiple hidden-weapon projectiles
+
+Level 1:
+5 needles per attack.
+Damage per needle: 5.
+Cooldown: 1.8 seconds.
+
+Level 2:
+Base damage +20%.
+
+Level 3:
+9 needles per attack.
+
+Level 4:
+Base damage +40% total.
+
+Level 5:
+15 needles per attack.
+Apply poison.
+
+
+Skill W06:
+寒冰神掌
+
+Type:
+Ice projectile with crowd control
+
+Level 1:
+Damage: 18.
+Cooldown: 2 seconds.
+Slow: 30%.
+
+Level 2:
+Base damage +20%.
+
+Level 3:
+Create an ice explosion on impact.
+
+Level 4:
+Base damage +40% total.
+
+Level 5:
+20% chance to freeze normal enemies.
+
+
+Skill W07:
+烈火刀法
+
+Type:
+Fire blade wave
+
+Level 1:
+Damage: 20.
+Cooldown: 2 seconds.
+
+Level 2:
+Base damage +20%.
+
+Level 3:
+Apply burning for 3 seconds.
+
+Level 4:
+Base damage +40% total.
+
+Level 5:
+Create an explosion on impact.
+
+
+Skill W08:
+雷霆指
+
+Type:
+Chain lightning
+
+Level 1:
+Damage: 18.
+Cooldown: 2.5 seconds.
+Initial target count: 1.
+
+Level 2:
+Base damage +20%.
+
+Level 3:
+Chain to 3 targets.
+
+Level 4:
+Base damage +40% total.
+
+Level 5:
+Chain to 6 targets.
+
+
+Skill W09:
+万剑归宗
+
+Type:
+Falling sword formation
+
+Level 1:
+6 swords per cast.
+Damage per sword: 15.
+Cooldown: 5 seconds.
+
+Level 2:
+Base damage +20%.
+
+Level 3:
+12 swords per cast.
+
+Level 4:
+Base damage +40% total.
+
+Level 5:
+20 swords per cast.
+
+
+Skill W10:
+太极剑阵
+
+Type:
+Persistent orbiting swords
+
+Level 1:
+2 orbiting swords.
+Damage per hit: 10.
+
+Level 2:
+Base damage +20%.
+
+Level 3:
+4 orbiting swords.
+
+Level 4:
+Base damage +40% total.
+
+Level 5:
+6 orbiting swords.
+Orbit radius +30%.
+
+
+Skill W11:
+金刚震地
+
+Type:
+Radial shockwave
+
+Level 1:
+Damage: 25.
+Cooldown: 4 seconds.
+
+Level 2:
+Base damage +20%.
+
+Level 3:
+Attack radius +50%.
+
+Level 4:
+Base damage +40% total.
+
+Level 5:
+Apply stun and knockback.
+
+
+Skill W12:
+影分身术
+
+Type:
+Summoned clones
+
+Level 1:
+Summon 1 clone.
+Clone duration: 5 seconds.
+Clone damage multiplier: 30%.
+
+Level 2:
+Clone damage +20%.
+
+Level 3:
+Summon 2 clones.
+
+Level 4:
+Clone damage +40% total.
+
+Level 5:
+Summon 3 clones.
+Final clone damage multiplier: 50%.
+
+Clone attack interval:
+1 second.
+
+Clone summoning interval:
+12 seconds.
+
+Maximum simultaneously active clones:
+3.
+
+
+06.2 General Active Skill Rules
+
+All active skills:
+
+- Attack automatically
+- Have independent cooldowns
+- Can operate simultaneously
+- Respect passive attribute modifiers
+- Stop updating during pause
+- Reset when starting a new run
+
+Default targeting radius:
+450 pixels
+
+Default projectile range:
+500 pixels
+
+Homing skills prioritize
+the nearest valid enemy.
+
+Skill damage multipliers are additive
+relative to each skill's base damage.
+
+Level 2 damage multiplier:
+1.2
+
+Level 4 damage multiplier:
+1.4
+
+Do not compound these bonuses.
+
+06.3 Status Effects
+
+Slow:
+
+Duration:
+2 seconds
+
+Default strength:
+30%
+
+Freeze:
+
+Duration:
+1 second
+
+Bosses cannot be completely frozen.
+
+Against Bosses, replace freeze with
+30% movement-speed reduction.
+
+Burn:
+
+Duration:
+3 seconds
+
+Damage:
+20% of the applying skill's base damage
+per second.
+
+Poison:
+
+Duration:
+4 seconds
+
+Damage:
+3 per second.
+
+Stun:
+
+Duration:
+0.8 seconds
+
+Bosses are immune.
+
+Knockback:
+
+Distance:
+40 pixels
+
+Bosses are immune.
+
+Repeated applications of burn or poison
+refresh duration instead of creating
+unlimited overlapping effect instances.
+
+06.4 Passive Cultivation Skills
+
+Implement exactly 8 passive techniques.
+
+Each passive has 5 levels.
+
+
+P01:
+九阳真气
+
+Each level:
+Maximum HP +10%.
+
+Level 5:
+Maximum HP +50%.
+
+
+P02:
+九阴心法
+
+Each level:
+All martial arts damage +8%.
+
+Level 5:
+Damage +40%.
+
+
+P03:
+易筋经
+
+Each level:
+Incoming damage reduction +5%.
+
+Level 5:
+Damage reduction 25%.
+
+
+P04:
+凌波步
+
+Each level:
+Movement speed +8%.
+
+Level 5:
+Movement speed +40%.
+
+
+P05:
+太玄心经
+
+Each level:
+Skill cooldown reduction +5%.
+
+Level 5:
+Cooldown reduction 25%.
+
+
+P06:
+吸星秘术
+
+Each level:
++5% chance to restore 1 HP after a kill.
+
+Level 5:
+25% chance.
+
+Maximum healing triggers:
+5 per second.
+
+
+P07:
+北冥心法
+
+Each level:
+Experience gain +10%.
+
+Level 5:
+Experience gain +50%.
+
+
+P08:
+乾坤心诀
+
+Each level:
+Attack range +8%.
+
+Level 5:
+Attack range +40%.
+
+
+06.5 Passive Skill Rules
+
+Passive bonuses last until the run ends.
+
+All temporary passive levels reset
+at the start of a new run.
+
+Maximum total damage reduction:
+50%
+
+Maximum cooldown reduction:
+40%
+
+Maximum movement speed multiplier:
+1.6
+
+Maximum experience multiplier:
+2.0
+
+When maximum HP increases,
+increase current HP by the same
+absolute amount as the newly added
+maximum HP.
+
+06.6 Ultimate Martial Arts
+
+Implement exactly 6 ultimate skills.
+
+Each ultimate is unlocked through
+a defined evolution formula.
+
+
+E01:
+万剑天诛
+
+Requirements:
+
+御剑术 Lv.5
+太玄心经 Lv.3
+
+Effect:
+
+Every 3 seconds,
+summon 20 homing swords.
+
+Damage per sword:
+25
+
+Replaces:
+御剑术
+
+
+E02:
+六脉归一
+
+Requirements:
+
+六脉剑气 Lv.5
+九阴心法 Lv.3
+
+Effect:
+
+Every 2 seconds,
+release one giant sword-energy wave.
+
+Damage:
+80
+
+Maximum enemies penetrated:
+20
+
+Replaces:
+六脉剑气
+
+
+E03:
+神龙降世
+
+Requirements:
+
+降龙掌 Lv.5
+九阳真气 Lv.3
+
+Effect:
+
+Every 3 seconds,
+release a giant dragon-shaped palm wave.
+
+Damage:
+120
+
+Attack Type:
+Large area of effect
+
+Replaces:
+降龙掌
+
+
+E04:
+冰火九重天
+
+Requirements:
+
+寒冰神掌 Lv.5
+烈火刀法 Lv.5
+
+Effect:
+
+Every 4 seconds,
+generate an ice-fire vortex.
+
+Vortex duration:
+3 seconds
+
+Damage:
+40 per second
+
+Additional effects:
+Slow and burn
+
+Replaces:
+寒冰神掌
+烈火刀法
+
+The evolved skill occupies
+only one active skill slot.
+
+
+E05:
+太极无极阵
+
+Requirements:
+
+太极剑阵 Lv.5
+易筋经 Lv.3
+
+Effect:
+
+8 orbiting swords.
+
+Damage per hit:
+35
+
+Additional damage reduction:
+10%
+
+Replaces:
+太极剑阵
+
+
+E06:
+雷动九霄
+
+Requirements:
+
+雷霆指 Lv.5
+乾坤心诀 Lv.3
+
+Effect:
+
+Every 4 seconds,
+strike up to 20 valid enemies.
+
+Damage per target:
+75
+
+Replaces:
+雷霆指
+
+
+06.7 Evolution Rules
+
+When evolution requirements are met:
+
+- Add the ultimate skill to the upgrade pool.
+- Display the evolution card in gold.
+- Prioritize eligible evolution choices.
+- Replace the required base skill.
+- Preserve required passive skills.
+- Do not consume passive levels.
+- Each ultimate can be obtained once per run.
+
+Ultimate skills cannot be upgraded further.
+
+The evolution must use a real gameplay effect.
+
+Do not implement ultimate skills as
+visual-only effects.
+
+06.8 Active and Passive Slots
+
+Maximum active skill slots:
+6
+
+Maximum passive skill slots:
+6
+
+The starting skill occupies one active slot.
+
+A new active skill may be acquired only
+when an active slot is available.
+
+An existing active skill can be upgraded
+without consuming another slot.
+
+An evolved skill occupies one active slot.
+
+The ice-fire evolution consumes
+two base skills and releases one slot.
+
+06.9 Skill Upgrade Selection
+
+Every level-up pauses the game.
+
+Display up to three unique cards.
+
+Possible card types:
+
+New active skill
+Existing active skill upgrade
+Passive skill
+Ultimate evolution
+
+Base category weights:
+
+Existing skill upgrade:
+45
+
+New active skill:
+25
+
+Passive skill:
+20
+
+Ultimate evolution:
+10
+
+Unavailable categories must be removed.
+
+Redistribute their weights proportionally.
+
+Do not display duplicate choices.
+
+Do not display upgrades for
+already-maxed skills.
+
+When all skill upgrades are unavailable,
+offer repeatable rewards:
+
+Gold
+Healing
+Temporary damage bonus
+
+Repeatable reward values:
+
+Gold:
++20
+
+Healing:
+Restore 20 HP
+
+Temporary damage:
++5% damage for the current run
+
+06.10 Fast Progression System
+
+The game uses accelerated leveling.
+
+At game start:
+
+Equip 御剑术 Lv.1.
+
+At 5 seconds:
+
+Grant one free upgrade selection.
+
+At 15 seconds:
+
+Grant another free upgrade selection.
+
+Free upgrade selections do not consume XP.
+
+Free upgrade selections do not increase
+the character's numerical level.
+
+If the player still owns only one active skill
+at 15 seconds, at least one upgrade choice
+must be a new active skill.
+
+For the first 3 minutes:
+
+Increase the selection weight
+of existing skill upgrades.
+
+At 90 seconds:
+
+Prioritize upgrades related to
+the player's closest achievable evolution.
+
+When evolution conditions are satisfied:
+
+The corresponding ultimate skill must appear
+in the next upgrade selection.
+
+The game must contain at least one
+valid progression route that allows
+ultimate evolution within 180 seconds.
+
+Do not automatically give every player
+an ultimate skill.
+
+Players must still satisfy the
+appropriate evolution requirements.
+
+
+==================================================
+07. NUMERICAL SYSTEM
+==================================================
+
+07.1 Character Level
+
+Initial character level:
+1
+
+07.2 Experience Formula
+
+Experience required for the next level:
+
+XP_next(L) = ceil(4 + 1.5L + 0.12L²)
+
+Where:
+
+L = current character level
+
+Examples:
+
+Level 1:
+6 XP
+
+Level 2:
+8 XP
+
+Level 3:
+10 XP
+
+Level 5:
+15 XP
+
+Level 10:
+31 XP
+
+Level 20:
+82 XP
+
+07.3 Experience Handling
+
+Excess XP carries over.
+
+If one pickup causes multiple level-ups,
+process all level-ups sequentially.
+
+Every level-up must present
+a valid upgrade choice.
+
+Do not silently skip levels.
+
+07.4 Experience Drops
+
+Normal enemy experience:
+
+山贼:
+1
+
+持刀恶徒:
+2
+
+江湖刺客:
+3
+
+魔教弟子:
+4
+
+铁甲武士:
+6
+
+邪派术士:
+5
+
+Elite enemies:
+20 XP
+
+Bosses:
+No XP required after victory.
+
+07.5 Experience Pickup
+
+Initial pickup radius:
+80 pixels
+
+Gems within the pickup radius
+automatically move toward the player.
+
+Pickup attraction speed:
+350 pixels per second.
+
+A full-screen experience collection item
+collects all experience gems currently
+present in the world.
+
+07.6 Healing Drops
+
+Normal enemies have a 1% chance
+to drop a healing item.
+
+Healing amount:
+20 HP
+
+Healing cannot exceed maximum HP.
+
+07.7 Full-Screen Pickup Drops
+
+Normal enemies have a 0.1% chance
+to drop a full-screen experience
+collection item.
+
+Maximum active full-screen pickup items:
+3
+
+07.8 Numerical Limits
+
+Maximum HP:
+300
+
+Maximum movement speed multiplier:
+1.6
+
+Maximum cooldown reduction:
+40%
+
+Maximum damage reduction:
+50%
+
+Maximum experience multiplier:
+2.0
+
+Maximum active skills:
+6
+
+Maximum passive skills:
+6
+
+Maximum simultaneous normal enemies:
+200
+
+Maximum visual projectiles:
+300
+
+Maximum active clones:
+3
+
+07.9 Damage Calculation
+
+Final skill damage:
+
+Base Skill Damage
+× Skill Level Multiplier
+× Global Damage Multiplier
+× Target Damage Modifier
+
+Apply appropriate rounding only
+after calculating final damage.
+
+Default damage values should
+remain floating-point internally.
+
+Display HP and damage values
+as rounded integers.
+
+07.10 Cooldown Calculation
+
+Final Cooldown:
+
+Base Cooldown × (1 - Cooldown Reduction)
+
+Cooldown reduction cannot exceed 40%.
+
+07.11 Movement Speed
+
+Final Movement Speed:
+
+Base Speed × (1 + Movement Bonuses)
+
+Final movement speed multiplier
+cannot exceed 1.6.
+
+07.12 Damage Reduction
+
+Final incoming damage:
+
+Raw Damage × (1 - Total Damage Reduction)
+
+Damage reduction cannot exceed 50%.
+
+07.13 Critical Hits
+
+Critical hit mechanics are not required.
+
+Do not introduce random critical hits
+unless they are later explicitly requested.
+
+
+==================================================
+08. COMBAT AND COLLISION SYSTEM
+==================================================
+
+08.1 Automatic Combat
+
+All active martial arts attack automatically.
+
+Each skill has an independent cooldown.
+
+Multiple skills can attack simultaneously.
+
+Skills must use actual damage calculations.
+
+Visual effects must correspond to
+real attack events.
+
+08.2 Enemy AI
+
+Normal enemies:
+
+Locate the player.
+
+Move toward the player.
+
+Attack through contact or ranged attacks.
+
+Enemies may use simple local separation
+to avoid complete overlap.
+
+Do not spawn normal enemies directly
+on top of the player.
+
+08.3 Enemy Spawn Positions
+
+Spawn enemies outside the visible camera area.
+
+Recommended spawn distance:
+
+At least 80 pixels beyond
+the visible screen boundary.
+
+Enemies must move into the battlefield
+after spawning.
+
+08.4 Contact Damage
+
+When an enemy collides with the player:
+
+- Apply damage.
+- Trigger a hit animation.
+- Activate invulnerability.
+- Prevent repeated collision damage
+  during invulnerability.
+
+Player invulnerability duration:
+0.6 seconds.
+
+08.5 Player Death
+
+If player HP <= 0:
+
+- Stop movement.
+- Stop combat.
+- Stop enemy spawning.
+- Stop timers.
+- Trigger death animation.
+- Display defeat screen.
+
+08.6 Enemy Death
+
+When enemy HP <= 0:
+
+- Stop enemy behavior.
+- Trigger death effect.
+- Drop experience.
+- Roll additional drop probabilities.
+- Remove enemy from active gameplay.
+- Return pooled objects when appropriate.
+
+08.7 Status Effects
+
+Implement:
+
+Slow
+Freeze
+Burn
+Poison
+Stun
+Knockback
+
+Effects must respect the parameters
+defined in Section 06.
+
+Do not allow unlimited status-effect
+object accumulation.
+
+08.8 Boss Combat
+
+Each Boss must have:
+
+- Health bar
+- Multiple attack patterns
+- Telegraph animations
+- Damage feedback
+- Death animation
+
+Boss attack warning time:
+At least 0.8 seconds.
+
+08.9 Boss Victory
+
+A level is completed when:
+
+Boss HP <= 0
+
+The final Boss must be defeated.
+
+08.10 Boss Spawn Timing
+
+Bosses appear at the end
+of the scheduled survival period.
+
+When the Boss appears:
+
+- Stop normal enemy spawning.
+- Preserve already-spawned enemies.
+- Display Boss name and health bar.
+- Play entrance animation.
+- Begin Boss combat.
+
+08.11 Boss Damage Rules
+
+Bosses can receive:
+
+Direct skill damage
+Area damage
+Burn damage
+Poison damage
+Chain lightning damage
+
+Bosses are immune to:
+
+Complete freeze
+Stun
+Knockback
+
+Movement slow effects against Bosses
+are limited to 30%.
+
+08.12 Performance
+
+Use object pooling for:
+
+Enemies
+Projectiles
+Experience gems
+Temporary effects
+
+Use spatial partitioning or equivalent
+collision optimization when necessary.
+
+Do not reduce actual gameplay damage
+to improve visual performance.
+
+Visual effects may be simplified
+on lower-performance devices.
+
+
+==================================================
+09. LEVEL DESIGN
+==================================================
+
+The initial release contains three levels.
+
+Levels must be defined using
+separate configuration data.
+
+Do not hardcode level content inside
+the main rendering loop.
+
+09.1 Level 1
+
+Name:
+竹林秘境
+
+Theme:
+Ancient bamboo forest
+
+Duration:
+6 minutes
+
+Normal Enemy Cap:
+100
+
+Boss:
+黑风寨主
+
+Boss HP:
+3000
+
+Normal Enemies:
+
+山贼
+持刀恶徒
+江湖刺客
+
+Elite:
+山贼头目
+
+Purpose:
+
+Introduce movement, automatic combat,
+experience collection, skill upgrades,
+and ultimate evolution.
+
+09.2 Level 2
+
+Name:
+荒漠古道
+
+Theme:
+Ancient desert road
+
+Duration:
+7 minutes
+
+Normal Enemy Cap:
+150
+
+Boss:
+大漠狂刀
+
+Boss HP:
+5000
+
+Normal Enemies:
+
+山贼
+持刀恶徒
+江湖刺客
+铁甲武士
+
+Elite:
+大漠刀王
+
+Purpose:
+
+Introduce tougher enemies,
+faster pursuit, and more complex waves.
+
+09.3 Level 3
+
+Name:
+魔教总坛
+
+Theme:
+Ancient dark martial arts temple
+
+Duration:
+8 minutes
+
+Normal Enemy Cap:
+200
+
+Boss:
+魔教教主
+
+Boss HP:
+8000
+
+Normal Enemies:
+
+All six normal enemy types.
+
+Elite:
+魔教护法
+
+Purpose:
+
+Combine all enemy behaviors,
+high enemy density,
+multiple martial arts,
+and difficult Boss combat.
+
+09.4 Level 1 Spawn Timeline
+
+0:00–0:30:
+2 enemies per second.
+
+0:30–1:00:
+3 enemies per second.
+
+1:00–2:00:
+4 enemies per second.
+
+2:00–3:00:
+5 enemies per second.
+
+3:00–4:00:
+6 enemies per second.
+
+4:00–5:00:
+7 enemies per second.
+
+5:00–6:00:
+8 enemies per second.
+
+At 6:00:
+Stop normal spawning.
+Spawn Boss.
+
+09.5 Level 2 Spawn Timeline
+
+0:00–0:30:
+3 enemies per second.
+
+0:30–1:00:
+4 enemies per second.
+
+1:00–2:00:
+5 enemies per second.
+
+2:00–3:00:
+6 enemies per second.
+
+3:00–4:00:
+7 enemies per second.
+
+4:00–5:00:
+8 enemies per second.
+
+5:00–6:00:
+9 enemies per second.
+
+6:00–7:00:
+10 enemies per second.
+
+At 7:00:
+Stop normal spawning.
+Spawn Boss.
+
+09.6 Level 3 Spawn Timeline
+
+0:00–0:30:
+4 enemies per second.
+
+0:30–1:00:
+5 enemies per second.
+
+1:00–2:00:
+6 enemies per second.
+
+2:00–3:00:
+7 enemies per second.
+
+3:00–4:00:
+8 enemies per second.
+
+4:00–5:00:
+9 enemies per second.
+
+5:00–6:00:
+10 enemies per second.
+
+6:00–7:00:
+11 enemies per second.
+
+7:00–8:00:
+12 enemies per second.
+
+At 8:00:
+Stop normal spawning.
+Spawn Boss.
+
+09.7 Enemy Spawn Cap
+
+If the active enemy count reaches
+the level's configured enemy cap:
+
+Pause additional enemy spawning.
+
+Resume spawning when active count
+falls below the cap.
+
+Do not accumulate missed spawns
+into a large burst.
+
+09.8 Elite Spawn Schedule
+
+Level 1:
+
+3:00:
+山贼头目
+
+4:30:
+山贼头目
+
+6:00:
+黑风寨主
+
+
+Level 2:
+
+3:00:
+大漠刀王
+
+5:00:
+大漠刀王
+
+7:00:
+大漠狂刀
+
+
+Level 3:
+
+3:00:
+魔教护法
+
+5:00:
+魔教护法
+
+6:30:
+魔教护法
+
+8:00:
+魔教教主
+
+09.9 Elite Rewards
+
+Each defeated elite drops:
+
+20 XP
+
+10 gold
+
+09.10 Boss Attacks
+
+黑风寨主:
+
+Attack interval:
+3 seconds
+
+Patterns:
+
+- Forward charge
+- Wide melee slash
+
+
+大漠狂刀:
+
+Attack interval:
+2.5 seconds
+
+Patterns:
+
+- Three sword-energy projectiles
+- Fast directional dash
+
+
+魔教教主:
+
+Attack interval:
+2 seconds
+
+Patterns:
+
+- Lightning projectiles
+- Enemy summoning
+- Large radial shockwave
+
+All major Boss attacks must have
+visible warning indicators.
+
+Minimum warning duration:
+0.8 seconds.
+
+09.11 Difficulty Progression
+
+Difficulty increases through:
+
+- Faster spawning
+- Higher enemy density
+- Stronger enemy types
+- Elite encounters
+- Higher Boss HP
+- More complex attacks
+
+Maintain an achievable progression path.
+
+Test that every level can be completed
+using legitimate skill combinations.
+
+09.12 Level Completion
+
+Level 1 unlocks Level 2.
+
+Level 2 unlocks Level 3.
+
+Level 3 displays a final completion message.
+
+Completed levels remain replayable.
+
+
+==================================================
+10. ECONOMY AND PERMANENT UPGRADES
+==================================================
+
+10.1 Gold
+
+Gold is earned from:
+
+Enemy drops
+Elite kills
+Level completion
+
+10.2 Normal Enemy Gold
+
+Each defeated normal enemy has:
+
+5% chance to drop 1 gold.
+
+10.3 Elite Gold
+
+Each defeated elite drops:
+
+10 gold.
+
+10.4 Level Rewards
+
+Level 1 completion:
+100 gold.
+
+Level 2 completion:
+200 gold.
+
+Level 3 completion:
+300 gold.
+
+10.5 Defeat Rewards
+
+When the player loses:
+
+Keep gold collected during the run.
+
+Do not grant level completion rewards.
+
+10.6 Permanent Upgrades
+
+Six permanent upgrade categories
+are required.
+
+Upgrade A:
+生命强化
+
+Effect:
+Initial maximum HP +10 per level.
+
+Maximum Level:
+10
+
+
+Upgrade B:
+攻击强化
+
+Effect:
+Global base damage +5% per level.
+
+Maximum Level:
+10
+
+
+Upgrade C:
+身法强化
+
+Effect:
+Movement speed +3% per level.
+
+Maximum Level:
+10
+
+
+Upgrade D:
+悟性强化
+
+Effect:
+Experience gain +5% per level.
+
+Maximum Level:
+10
+
+
+Upgrade E:
+聚气强化
+
+Effect:
+Skill cooldown reduction +2% per level.
+
+Maximum Level:
+10
+
+
+Upgrade F:
+聚宝强化
+
+Effect:
+Gold gain +5% per level.
+
+Maximum Level:
+10
+
+10.7 Upgrade Costs
+
+Base upgrade cost:
+100 gold
+
+Cost formula:
+
+Cost(level) = 100 × (level + 1)
+
+The level represents the number
+of upgrades already purchased.
+
+Examples:
+
+Level 0 -> 1:
+100 gold
+
+Level 1 -> 2:
+200 gold
+
+Level 2 -> 3:
+300 gold
+
+10.8 Upgrade Purchase Rules
+
+A purchase is valid only when:
+
+- The player has sufficient gold.
+- The upgrade is below maximum level.
+- The game is in the upgrade menu.
+
+After purchasing:
+
+- Deduct gold.
+- Increase upgrade level.
+- Update the UI.
+- Save progress.
+
+10.9 Persistence
+
+Use localStorage.
+
+Save:
+
+- Gold balance
+- Current unlocked level
+- Completed levels
+- Permanent upgrade levels
+- Audio settings
+
+Do not require user accounts.
+
+The game must remain playable offline.
+
+10.10 New Run
+
+At the beginning of a new run:
+
+Reset:
+
+- Character level
+- Current XP
+- Active martial arts levels
+- Passive cultivation levels
+- Ultimate skills
+- Temporary buffs
+- Current enemies
+- Projectiles
+- Run timer
+
+Preserve:
+
+- Permanent upgrades
+- Gold balance
+- Unlocked levels
+- Audio preferences
+
+
+==================================================
+11. GAME INTERFACE AND STATES
+==================================================
+
+11.1 Main Menu
+
+Display:
+
+- Game title
+- Current unlocked level
+- Start button
+- Level selection
+- Permanent upgrades
+- Settings
+- Current gold balance
+
+11.2 Gameplay HUD
+
+Display:
+
+- Player HP
+- Character level
+- Experience bar
+- Survival timer
+- Equipped active skills
+- Current gold
+- Pause button
+
+The HUD must remain readable
+during high-density combat.
+
+11.3 Upgrade Selection
+
+Display three cards.
+
+Each card contains:
+
+- Skill icon
+- Chinese skill name
+- Current level
+- Next level
+- Numerical upgrade description
+- Selection control
+
+Do not show unavailable upgrades.
+
+11.4 Ultimate Evolution
+
+Ultimate evolution cards must use
+a distinct gold visual treatment.
+
+Display:
+
+- Ultimate name
+- Required combination
+- New attack effect
+- Evolution animation
+
+11.5 Pause Menu
+
+Buttons:
+
+继续游戏
+重新开始
+返回主页
+
+11.6 Victory Screen
+
+Display:
+
+闯关成功
+
+Survival time
+
+Enemies defeated
+
+Gold earned
+
+Current level
+
+Buttons:
+
+下一关
+返回主页
+再玩一次
+
+11.7 Defeat Screen
+
+Display:
+
+挑战失败
+
+Survival time
+
+Enemies defeated
+
+Gold earned
+
+Buttons:
+
+重新挑战
+返回主页
+
+11.8 Permanent Upgrade Screen
+
+Display:
+
+- Current gold
+- Six upgrade categories
+- Current upgrade levels
+- Next upgrade effects
+- Upgrade prices
+- Purchase buttons
+
+11.9 Settings Screen
+
+Provide:
+
+- Background music on/off
+- Sound effects on/off
+
+11.10 Game States
+
+Required states:
+
+MENU
+PLAYING
+LEVEL_UP
+PAUSED
+VICTORY
+DEFEAT
+UPGRADES
+SETTINGS
+
+11.11 State Management
+
+Only permitted actions should execute
+in each game state.
+
+Gameplay must stop during:
+
+LEVEL_UP
+PAUSED
+VICTORY
+DEFEAT
+
+Restarting must reset all run-specific data.
+
+Permanent upgrades and gold must persist.
+
+
+==================================================
+12. VISUAL AND AUDIO DESIGN
+==================================================
+
+12.1 Visual Theme
+
+Chinese Wuxia.
+
+Use a stylized 2D ink-painting
+and cartoon hybrid appearance.
+
+The game must feel distinctly Chinese.
+
+Use:
+
+- Ancient martial arts clothing
+- Traditional architecture
+- Bamboo forests
+- Ancient roads
+- Temples
+- Sword energy
+- Palm techniques
+- Internal cultivation effects
+
+Avoid realistic gore.
+
+12.2 Player Character
+
+The player is a Wuxia swordsman.
+
+Appearance:
+
+- Traditional martial arts outfit
+- Distinct silhouette
+- Sword
+- Running animation
+- Attack animation
+- Hit reaction
+- Death animation
+
+12.3 Enemies
+
+Enemy categories:
+
+Bandits
+Swordsmen
+Assassins
+Armored warriors
+Cultists
+Sorcerers
+
+Each enemy type must be visually distinct.
+
+12.4 Environments
+
+Level 1:
+竹林秘境
+
+Visual elements:
+
+- Bamboo
+- Stone roads
+- Streams
+- Traditional pavilions
+
+
+Level 2:
+荒漠古道
+
+Visual elements:
+
+- Desert sand
+- Ancient roads
+- Ruined inns
+- Stone formations
+
+
+Level 3:
+魔教总坛
+
+Visual elements:
+
+- Dark temple
+- Ancient stone floors
+- Fire braziers
+- Ritual formations
+
+12.5 Camera
+
+Use a top-down or slightly elevated
+2D camera.
+
+The camera follows the player.
+
+The player should remain near
+the center of the visible gameplay area.
+
+Keep sufficient visibility for
+incoming enemy attacks.
+
+12.6 Martial Arts Visual Effects
+
+Sword skills:
+White or silver sword energy.
+
+Palm skills:
+Gold palm waves.
+
+Ice skills:
+Blue ice particles.
+
+Fire skills:
+Orange-red flames.
+
+Lightning:
+Purple-white lightning.
+
+Tai Chi:
+Black-and-white rotating formations.
+
+Hidden weapons:
+Small metallic projectiles.
+
+Clone technique:
+Semi-transparent Wuxia silhouettes.
+
+12.7 Required Animations
+
+Player movement
+
+Player attacks
+
+Enemy movement
+
+Enemy hit reactions
+
+Enemy death
+
+Experience collection
+
+Level-up effects
+
+Skill acquisition
+
+Skill evolution
+
+Boss entrance
+
+Boss attacks
+
+Boss defeat
+
+Victory celebration
+
+12.8 Ultimate Skill Effects
+
+Every ultimate skill must have
+a visually recognizable effect.
+
+Ultimate effects should feel
+significantly stronger than base skills.
+
+However:
+
+Do not obscure player visibility.
+
+Do not hide Boss attack warnings.
+
+Do not reduce gameplay readability.
+
+12.9 Audio
+
+Required sound events:
+
+Game start
+
+Sword attacks
+
+Palm attacks
+
+Hidden weapon attacks
+
+Lightning attacks
+
+Enemy hits
+
+Player damage
+
+Experience collection
+
+Level up
+
+Skill evolution
+
+Boss entrance
+
+Victory
+
+Defeat
+
+12.10 Background Music
+
+Use Wuxia-inspired instrumental music.
+
+Possible instruments:
+
+Guqin
+Dizi
+Erhu
+Traditional percussion
+
+All audio must be locally bundled
+and properly licensed.
+
+Respect browser autoplay restrictions.
+
+Audio playback begins only after
+a valid user interaction.
+
+
+==================================================
+13. TECHNICAL REQUIREMENTS
+==================================================
+
+13.1 Framework
+
+Use:
+
+React
+Phaser
+TypeScript
+Vite
+
+React manages:
+
+- Main menu
+- Upgrade cards
+- Settings
+- Permanent upgrades
+- Results screens
+
+Phaser manages:
+
+- 2D game scenes
+- Player movement
+- Enemies
+- Combat
+- Projectiles
+- Collision
+- Map rendering
+- Camera
+- Effects
+
+13.2 Architecture
+
+Separate modules for:
+
+Game initialization
+
+Scene management
+
+Game state
+
+Player
+
+Input handling
+
+Enemies
+
+Enemy spawning
+
+Bosses
+
+Combat
+
+Active skills
+
+Passive skills
+
+Ultimate evolution
+
+Experience
+
+Level progression
+
+Gold economy
+
+Permanent upgrades
+
+Drops
+
+Persistence
+
+UI
+
+Audio
+
+13.3 Recommended Structure
+
+src/
+├── game/
+│   ├── Game.ts
+│   ├── Player.ts
+│   ├── Enemy.ts
+│   ├── Boss.ts
+│   ├── SpawnManager.ts
+│   ├── CombatSystem.ts
+│   ├── ExperienceSystem.ts
+│   ├── UpgradeSystem.ts
+│   ├── EvolutionSystem.ts
+│   ├── DropSystem.ts
+│   └── LevelManager.ts
+│
+├── skills/
+│   ├── SkillDefinitions.ts
+│   ├── SkillRuntime.ts
+│   ├── ActiveSkills.ts
+│   ├── PassiveSkills.ts
+│   └── UltimateSkills.ts
+│
+├── scenes/
+├── ui/
+├── assets/
+└── config/
+    ├── balance.ts
+    ├── levels.ts
+    ├── enemies.ts
+    └── evolutions.ts
+
+13.4 Configuration
+
+Store numerical parameters separately.
+
+Skill configuration must include:
+
+- Skill ID
+- Chinese name
+- Damage
+- Cooldown
+- Projectile count
+- Attack type
+- Targeting rules
+- Level effects
+- Evolution requirements
+
+Enemy configuration must include:
+
+- Enemy ID
+- HP
+- Damage
+- Speed
+- XP reward
+- Attack behavior
+
+Level configuration must include:
+
+- Environment
+- Duration
+- Enemy types
+- Spawn rates
+- Elite schedule
+- Boss
+- Rewards
+
+13.5 Performance
+
+Target:
+
+60 FPS on mainstream mobile devices.
+
+Use:
+
+- Object pooling
+- Reusable textures
+- Reusable animations
+- Efficient collision processing
+- Particle limits
+- Enemy batching when appropriate
+- Reduced off-screen updates
+
+Maximum normal enemies:
+200
+
+Maximum visual projectiles:
+300
+
+Do not allocate unnecessary objects
+inside high-frequency update loops.
+
+13.6 Screen Adaptation
+
+Support both:
+
+Portrait
+Landscape
+
+Portrait reference:
+390 × 844
+
+Landscape reference:
+844 × 390
+
+Ensure:
+
+- Full gameplay visibility
+- Readable UI
+- Functional virtual joystick
+- Correct touch coordinates
+- Proper safe-area handling
+- No clipped essential elements
+- No distorted scaling
+
+13.7 Orientation Changes
+
+When orientation changes:
+
+- Recalculate rendering size.
+- Recalculate UI positions.
+- Update camera framing.
+- Update joystick position.
+- Preserve current gameplay state.
+- Preserve player HP.
+- Preserve character level.
+- Preserve equipped skills.
+- Preserve enemy and Boss HP.
+- Prevent duplicate event listeners.
+
+13.8 Offline Requirements
+
+All essential assets must be local.
+
+Do not require remote APIs.
+
+Do not require a backend.
+
+Do not load essential gameplay files
+from third-party CDNs.
+
+The game must function without
+network access once its required
+resources are available locally.
+
+13.9 Build Requirements
+
+Provide working commands for:
+
+Development
+
+Production build
+
+Local production preview
+
+The production build must be suitable
+for deployment to a static web host.
+
+13.10 Resource Management
+
+Correctly clean up:
+
+- Event listeners
+- Timers
+- Projectiles
+- Enemies
+- Temporary effects
+- Audio resources
+- Scene objects
+
+Restarting must not create duplicate
+game loops or memory leaks.
+
+
+==================================================
+14. ACCEPTANCE TESTS
+==================================================
+
+The following tests are mandatory.
+
+GAMEPLAY TESTS
+
+T01:
+The game starts normally.
+
+T02:
+The player moves correctly using
+the virtual joystick.
+
+T03:
+Desktop keyboard controls work.
+
+T04:
+All equipped martial arts
+attack automatically.
+
+T05:
+The player starts with 御剑术 Lv.1.
+
+T06:
+Enemies spawn according
+to level configuration.
+
+T07:
+Enemies correctly pursue the player.
+
+T08:
+Defeated enemies drop experience.
+
+T09:
+Experience gems can be collected.
+
+T10:
+Experience requirements follow
+the specified formula.
+
+T11:
+Every level-up presents up to
+three unique upgrade choices.
+
+T12:
+Free upgrades occur at
+5 and 15 seconds.
+
+T13:
+The 15-second upgrade guarantees
+a new active skill option when required.
+
+SKILL TESTS
+
+T14:
+All 12 active martial arts
+are implemented and functional.
+
+T15:
+Every active skill supports
+all five levels.
+
+T16:
+All eight passive cultivation
+techniques are implemented.
+
+T17:
+All passive techniques support
+all five levels.
+
+T18:
+All six ultimate martial arts
+are implemented.
+
+T19:
+Evolution requirements are
+checked correctly.
+
+T20:
+Evolved skills replace
+the correct base skills.
+
+T21:
+The ice-fire evolution
+consumes two base skills.
+
+T22:
+Evolution preserves
+required passive techniques.
+
+T23:
+Ultimate skills produce
+real gameplay damage.
+
+T24:
+Active skill slots
+never exceed six.
+
+T25:
+Passive skill slots
+never exceed six.
+
+T26:
+All skill cooldowns
+work independently.
+
+T27:
+Damage modifiers
+are calculated correctly.
+
+T28:
+Slow, freeze, burn, poison,
+stun, and knockback function.
+
+T29:
+Status effects respect
+Boss resistance rules.
+
+T30:
+Repeated status effects
+do not generate unlimited stacks.
+
+COMBAT TESTS
+
+T31:
+Enemy contact damages the player.
+
+T32:
+Player invulnerability lasts
+0.6 seconds after damage.
+
+T33:
+Player HP reaching zero
+causes defeat.
+
+T34:
+Enemy HP reaching zero
+causes enemy death.
+
+T35:
+Healing items restore HP correctly.
+
+T36:
+Healing never exceeds maximum HP.
+
+T37:
+Full-screen experience collection works.
+
+T38:
+Elite enemies spawn correctly.
+
+T39:
+Bosses spawn at the scheduled time.
+
+T40:
+Bosses execute their special attacks.
+
+T41:
+Boss attacks have visible warnings.
+
+T42:
+Boss HP reaching zero causes victory.
+
+T43:
+Surviving without defeating the Boss
+does not cause victory.
+
+LEVEL TESTS
+
+T44:
+Level 1 can be completed.
+
+T45:
+Level 2 can be completed.
+
+T46:
+Level 3 can be completed.
+
+T47:
+Completing a level unlocks the next level.
+
+T48:
+Completed levels remain replayable.
+
+T49:
+Restarting resets temporary run state.
+
+FAST PROGRESSION TESTS
+
+T50:
+The player can obtain a second
+active skill within 30 seconds.
+
+T51:
+The first minute provides
+noticeable combat power growth.
+
+T52:
+A valid evolution route can
+produce an ultimate skill
+within 180 seconds.
+
+T53:
+Evolution does not occur
+without satisfying its requirements.
+
+T54:
+The game remains playable
+during high-density enemy waves.
+
+ECONOMY TESTS
+
+T55:
+Gold drops follow the specified rules.
+
+T56:
+Level rewards are calculated correctly.
+
+T57:
+All six permanent upgrades work.
+
+T58:
+Upgrade prices follow
+the specified formula.
+
+T59:
+Permanent upgrades persist
+after refreshing the page.
+
+T60:
+Temporary upgrades reset
+when starting a new run.
+
+UI TESTS
+
+T61:
+Main menu works.
+
+T62:
+Pause and resume work.
+
+T63:
+Upgrade cards display
+correct Chinese descriptions.
+
+T64:
+Ultimate evolution cards
+have distinct visual feedback.
+
+T65:
+Victory screen works.
+
+T66:
+Defeat screen works.
+
+T67:
+Permanent upgrade screen works.
+
+T68:
+Audio settings work.
+
+COMPATIBILITY TESTS
+
+T69:
+Portrait layout works.
+
+T70:
+Landscape layout works.
+
+T71:
+Mobile touch controls work.
+
+T72:
+Desktop controls work.
+
+T73:
+Orientation changes preserve game state.
+
+T74:
+The game does not require
+runtime third-party APIs.
+
+PERFORMANCE TESTS
+
+T75:
+The game remains functional
+with 200 normal enemies.
+
+T76:
+Projectile objects do not
+accumulate indefinitely.
+
+T77:
+Repeated restarts do not create
+duplicate update loops.
+
+T78:
+Game resources are cleaned up correctly.
+
+T79:
+Long gameplay sessions do not
+cause uncontrolled memory growth.
+
+PROTOTYPE FIDELITY TESTS
+
+T80:
+The game retains the classic
+survivors-style core gameplay loop.
+
+T81:
+Attacks are automatic.
+
+T82:
+Enemies approach continuously.
+
+T83:
+Experience collection drives leveling.
+
+T84:
+Leveling uses three-choice upgrades.
+
+T85:
+Multiple martial arts can
+attack simultaneously.
+
+T86:
+Ultimate evolutions produce
+substantially stronger attacks.
+
+T87:
+The game uses a coherent
+Chinese Wuxia visual theme.
+
+T88:
+The game provides the required
+accelerated progression experience.
+
+All applicable tests must pass before
+the project is considered complete.
+
+For tests that cannot be automatically
+executed, provide clear manual
+verification instructions.
+
+Never claim an unexecuted test passed.
+
+Additionally:
+
+Use automated simulations or equivalent
+tests to verify that every level contains
+at least one legitimate winning progression.
+
+Verify that all six ultimate skills can
+be obtained through valid upgrade paths.
+
+Verify that no skill evolution creates
+invalid slot counts.
+
+Verify that the upgrade selection system
+cannot become permanently stuck.
+
+Verify that all three levels remain
+playable in portrait and landscape.
+
+
+==================================================
+15. DEVELOPMENT EXECUTION REQUIREMENTS
+==================================================
+
+The gameplay specification is already fixed.
+
+Do not repeat the prototype-analysis
+and requirements-inference stage.
+
+Begin implementation according to
+this approved specification.
+
+Follow this order:
+
+PHASE 1:
+Project initialization and architecture.
+
+PHASE 2:
+Core player movement,
+enemy spawning,
+automatic combat,
+experience,
+and three-choice upgrades.
+
+PHASE 3:
+Implement all 12 active martial arts
+and their five-level progression.
+
+PHASE 4:
+Implement all 8 passive cultivation
+techniques and their five-level progression.
+
+PHASE 5:
+Implement all 6 ultimate martial arts
+and their evolution formulas.
+
+PHASE 6:
+Implement six normal enemies,
+three elite enemies,
+three Bosses,
+and three complete levels.
+
+PHASE 7:
+Implement gold,
+permanent upgrades,
+level unlocking,
+and local persistence.
+
+PHASE 8:
+Implement the complete UI,
+game states,
+and Chinese-language interfaces.
+
+PHASE 9:
+Implement Wuxia visual assets,
+animations,
+particles,
+and audio.
+
+PHASE 10:
+Implement portrait and landscape adaptation.
+
+PHASE 11:
+Perform automated and interactive testing.
+
+PHASE 12:
+Fix gameplay bugs,
+balance progression,
+and optimize performance.
+
+PHASE 13:
+Final delivery.
+
+Do not deliver a nonfunctional mockup.
+
+Do not substitute visual demonstrations
+for actual gameplay mechanics.
+
+Do not use placeholder skills
+as the final implementation.
+
+Every required martial art must have
+real combat functionality.
+
+Do not remove important systems
+to simplify development.
+
+DELIVERABLES:
+
+1. Complete source code
+2. Local game assets
+3. Three playable levels
+4. All 12 active martial arts
+5. All 8 passive cultivation techniques
+6. All 6 ultimate martial arts
+7. All six evolution formulas
+8. Enemy and Boss implementations
+9. Configuration files
+10. Gold and permanent upgrade system
+11. Save and load functionality
+12. Package and build configuration
+13. Development instructions
+14. Production build instructions
+15. Testing report
+16. Known limitations
+17. Asset attribution and license details
+
+FINAL SUCCESS CRITERIA:
+
+A complete, functional HTML5 game named
+"武林幸存者" that recreates the required
+Vampire Survivors-style gameplay using
+a Chinese Wuxia theme.
+
+The game must include:
+
+- Fast-paced automatic combat
+- Accelerated early progression
+- 12 active martial arts
+- 8 passive cultivation techniques
+- 6 ultimate martial arts
+- Complete skill evolution
+- Three playable levels
+- Six normal enemy types
+- Three elite enemy types
+- Three Bosses
+- Permanent progression
+- Offline functionality
+- Local save data
+- Portrait and landscape support
+- Complete Chinese interfaces
+
+The final game must pass the specified
+acceptance tests.
+
+Do not consider the project complete
+until all required gameplay systems
+are implemented and verified.
