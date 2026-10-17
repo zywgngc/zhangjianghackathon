@@ -1,90 +1,163 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>WebMCP research studio</title>
+    <title>WebMCP · 游戏机制研究工作台</title>
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
     <main>
       <header>
-        <p class="eyebrow">WEBMCP · RESEARCH SERVICE</p>
-        <h1>From game requirements<br />to mechanic research.</h1>
+        <p class="eyebrow">WEBMCP · 游戏机制研究</p>
+        <h1>一个模糊的创意，<br />也能开始做游戏。</h1>
         <p>
-          Explore the three reference cases, inspect decisions, and export a versioned blueprint.
+          提供图片引用、几句想法或核心特征。系统补全可修改的选项，你来选，也可以直接用默认方案。
         </p>
         <p class="notice">
-          Demo provider: synthetic materials. No real source discovery or game acceptance tests are
-          performed.
+          当前使用规则提案与模拟素材门户，尚未接入图片理解和真实源码检索。
+          补全内容是提案，验收是待验证的草案，不代表用户已确认或游戏已生成。
         </p>
-        <p id="webmcp" class="muted">Checking browser tool support…</p>
+        <details class="guide">
+          <summary>使用说明：给创意 → 选方案或用默认 → 拆分机制 → 导出蓝图</summary>
+          <ol>
+            <li>
+              <strong>给一点线索：</strong
+              >创意、核心特征或图片引用，提供其中一项即可。无需预先写完整验收要求。
+            </li>
+            <li>
+              <strong>补全细节：</strong
+              >“先给我选项”会在原型检索后暂停，展示推荐。只改在意的项，也可以不修改、直接继续；或在开始时选择“自动补全”。
+            </li>
+            <li>
+              <strong>看结果、提追问：</strong
+              >选定后拆分机制，并派生验收草案。初次选择不计入追问；后续可批量调整，开发者与素材门户各有独立的
+              3 次追问额度。
+            </li>
+            <li>
+              <strong>导出、交接：</strong>蓝图 JSON
+              包含版本、候选来源与待验证项。“检查生成交接”只检查条件，不会启动游戏生成。刷新页面后可从历史任务继续。
+            </li>
+          </ol>
+          <p class="muted">
+            当前模板覆盖跑酷、生存、解谜、平台跳跃。任意文字仍可能超出规则规划器的理解范围，原文会保留供核对。只有“测试案例”模式才导入完整测试规格。
+          </p>
+        </details>
+        <p id="webmcp" class="muted">正在检查浏览器工具支持…</p>
       </header>
       <div class="columns">
         <section>
-          <h2>Start research</h2>
+          <h2>开始研究</h2>
           <form id="start">
-            <label for="case">Reference case</label
-            ><select id="case"></select
-            ><label for="brief">Additional research context</label
+            <label for="mode">输入方式</label>
+            <select id="mode">
+              <option value="idea">稀疏创意（推荐）</option>
+              <option value="benchmark">测试案例 · 完整规格回归</option>
+            </select>
+            <div id="benchmark-fields" hidden>
+              <label for="case">参考案例（导入全部规格）</label
+              ><select id="case"></select>
+            </div>
+            <label for="brief">你的创意（可选）</label
             ><textarea
               id="brief"
               rows="3"
-              placeholder="Optional. Fixed gameplay requirements remain locked."
-            ></textarea
-            ><label for="style">Implementation preference</label
+              maxlength="8000"
+              placeholder="例如：想做一个猫咪躲避敌人、越打越强的小游戏。其他你来推荐。"
+            ></textarea>
+            <div id="idea-fields">
+              <label for="features">已经确定的核心特征（可选，每行一项）</label>
+              <textarea
+                id="features"
+                rows="2"
+                placeholder="例如：单手操作&#10;一局几分钟"
+              ></textarea>
+              <label for="image-uri">参考图片地址或素材门户引用（可选）</label>
+              <input id="image-uri" type="text" placeholder="https://…/reference.png 或 asset:…" />
+              <label for="image-type">图片格式</label>
+              <select id="image-type">
+                <option value="image/png">PNG</option>
+                <option value="image/jpeg">JPEG</option>
+                <option value="image/webp">WebP</option>
+              </select>
+              <label for="image-description">希望参考图片中的什么？（可选）</label>
+              <input id="image-description" placeholder="例如：只参考俯视视角，不参考人物造型" />
+              <p class="muted hint">
+                图片通过引用交给素材门户；当前不支持本地文件上传或自动看图。仅有图片时仍可先得到可修改的默认提案。
+              </p>
+              <label for="decision-mode">缺失细节如何处理？</label>
+              <select id="decision-mode">
+                <option value="ask">先给我选项，我来挑（推荐）</option>
+                <option value="auto">自动补全，直接研究默认方案</option>
+              </select>
+            </div>
+            <label for="style">实现偏好</label
             ><select id="style">
-              <option value="">Use default</option>
-              <option value="engine_native">Engine-native integration</option>
-              <option value="portable">Portable algorithms</option></select
-            ><button>Start with defaults</button>
+              <option value="">使用默认值（优先贴合引擎）</option>
+              <option value="engine_native">优先贴合引擎</option>
+              <option value="portable">优先可移植算法</option></select
+            ><button>开始研究</button>
+            <p class="muted hint">只需提供一点线索；无需先写功能清单或验收标准。</p>
           </form>
-          <h2>Previous runs</h2>
-          <select id="runs">
-            <option value="">Select a run</option>
+          <h2>历史任务</h2>
+          <select id="runs" aria-label="选择历史任务">
+            <option value="">选择一个任务</option>
           </select>
           <p id="error" role="alert"></p>
+          <details id="error-details" hidden>
+            <summary>查看错误原文</summary>
+            <pre id="error-original"></pre>
+          </details>
         </section>
         <section>
           <div class="heading">
-            <h2>Research state</h2>
-            <button id="refresh" class="secondary">Refresh</button>
+            <h2>研究进度</h2>
+            <button id="refresh" class="secondary">刷新</button>
           </div>
-          <p id="status">Start a case to see its plan and candidate alternatives.</p>
+          <p id="status" role="status">开始研究后，这里会显示生效选择、进度和候选方案。</p>
           <div id="counters" class="counters"></div>
           <ul id="decisions"></ul>
+          <div id="proposal"></div>
           <form id="follow">
-            <label for="note">Follow-up to the MAS</label
+            <label for="note">向研究助手追问</label
             ><textarea
               id="note"
               rows="3"
-              placeholder="Add research context or ask for reconsideration."
+              placeholder="例如：请重点比较这些移动算法的触屏适配方式。每次提交消耗 1 次开发者追问额度。"
               required
             ></textarea
-            ><label for="preference">Implementation preference</label
+            ><label for="preference">调整实现偏好</label
             ><select id="preference">
-              <option value="">Keep current preference</option>
-              <option value="engine_native">Engine-native integration</option>
-              <option value="portable">Portable algorithms</option></select
-            ><button id="send">Send follow-up</button>
+              <option value="">保持当前偏好</option>
+              <option value="engine_native">优先贴合引擎</option>
+              <option value="portable">优先可移植算法</option></select
+            ><button id="send" disabled>提交追问</button>
+            <p id="follow-hint" class="muted hint">
+              每个任务最多追问 3 次；不追问也能获得初始蓝图。
+            </p>
           </form>
           <div class="actions">
-            <button id="export" class="secondary">Export blueprint</button
-            ><button id="cancel" class="secondary">Cancel run</button>
+            <button id="export" class="secondary" disabled>导出蓝图 JSON</button
+            ><button id="cancel" class="secondary" disabled>取消任务</button>
           </div>
           <div id="clarifications"></div>
-          <button id="handoff" class="secondary" hidden disabled>Check Builder handoff</button>
+          <button id="handoff" class="secondary" hidden disabled>检查生成交接</button>
           <p id="handoff-status" role="status"></p>
+          <ul id="handoff-blockers"></ul>
           <details>
-            <summary>Full state and pending portal questions</summary>
-            <pre id="state">No run selected.</pre>
+            <summary>查看原始状态与素材门户问题（技术详情）</summary>
+            <p class="muted hint">JSON 保留接口字段、原始资料和证据，方便对接与排查。</p>
+            <pre id="state">尚未选择任务。</pre>
           </details>
         </section>
       </div>
       <section>
-        <h2>Mechanics and evidence</h2>
+        <h2>玩法机制与候选证据</h2>
+        <p class="muted hint">
+          拆分的是移动、战斗、成长等功能机制，不是图片或装饰素材。候选数量不代表已通过验证。
+        </p>
         <div id="mechanics" class="mechanics">
-          <p class="muted">The archetype search runs before mechanic planning.</p>
+          <p class="muted">先研究相似游戏原型，再拆分玩法机制并寻找候选实现。</p>
         </div>
       </section>
     </main>

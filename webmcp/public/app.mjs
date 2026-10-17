@@ -1,8 +1,148 @@
 import { registerResearchTools } from './webmcp.mjs';
+import { label, sourceText, errorMessage, handoffReasons } from './ui-zh.mjs';
 const $ = (id) => document.getElementById(id);
 let current = null;
 let busy = false;
 let questionKey = '';
+let proposalKey = '';
+const runTitle = (run) =>
+  run.input.caseId ? label(run.input.caseId) : run.input.brief?.slice(0, 60) || '图片 / 特征创意';
+function node(tag, text, className) {
+  const element = document.createElement(tag);
+  element.textContent = text;
+  if (className) element.className = className;
+  return element;
+}
+function renderProposal(run) {
+  const key = `${run.id}:${run.revision}:${run.stage}:${run.proposal?.basis}:${run.mainUsed}`;
+  if (key === proposalKey) return;
+  proposalKey = key;
+  const root = $('proposal');
+  root.replaceChildren();
+  if (!run.proposal) return;
+  const initial = run.stage === 'decisions';
+  root.append(
+    node('h3', '你提供的信息'),
+    node('p', run.proposal.known.join('；') || '仅提供了图片引用，尚无文字特征。'),
+  );
+  if (run.input.images?.length)
+    root.append(
+      node('p', `${run.input.images.length} 张参考图片已记录；内容尚未识别。`, 'muted hint'),
+    );
+  const warning = document.createElement('details');
+  warning.append(node('summary', '提案依据与待确认内容'));
+  for (const message of run.proposal.warnings) warning.append(node('p', message, 'muted hint'));
+  root.append(warning);
+  if (run.stage === 'archetypes') {
+    root.append(node('p', '正在查询相似原型，随后给出补全选项。'));
+    return;
+  }
+  const form = document.createElement('form');
+  form.className = 'proposal-form';
+  form.append(
+    node('h3', initial ? '补全提案 · 只改你在意的选项' : '调整补全方案'),
+    node(
+      'p',
+      initial
+        ? '未改动的项保留原来的来源；采用默认不等于你逐项确认了需求。'
+        : '批量修改后提交一次，消耗 1 次开发者追问额度。',
+      'muted hint',
+    ),
+  );
+  const fields = [];
+  for (const q of run.decisionBatch.questions) {
+    const d = run.decisions.find((d) => d.id === q.questionId);
+    const field = document.createElement('select');
+    field.id = `choice-${q.questionId}`;
+    field.append(...q.options.map((o) => new Option(o.label, o.optionId)));
+    field.value = d?.value ?? q.defaultOptionId;
+    const title = node('label', q.prompt);
+    title.htmlFor = field.id;
+    const from = node('p', `当前来源：${label(d?.source ?? 'system_default')}`, 'muted hint');
+    field.addEventListener('change', () => {
+      from.textContent =
+        field.value === d?.value ? `当前来源：${label(d?.source)}` : '本次修改：开发者选择';
+    });
+    form.append(title, field, from);
+    fields.push({ q, field, value: field.value });
+  }
+  form.append(
+    node(
+      'p',
+      '切换玩法原型后，该原型专属的机制会使用推荐默认值，可在下一版继续调整。',
+      'muted hint',
+    ),
+  );
+  const submit = node('button', initial ? '按以上方案继续研究' : '应用修改并重新研究');
+  submit.disabled = ['cancelled', 'failed'].includes(run.status) || (!initial && run.mainUsed >= 3);
+  form.append(submit);
+  const defaults = node('button', '忽略修改，按原方案继续');
+  defaults.type = 'button';
+  defaults.className = 'secondary';
+  defaults.disabled = submit.disabled;
+  if (initial) form.append(defaults);
+  async function apply(useCurrent) {
+    if (busy) return;
+    busy = true;
+    submit.disabled = defaults.disabled = true;
+    try {
+      const answers = useCurrent
+        ? []
+        : fields
+            .filter((f) => f.field.value !== f.value)
+            .map((f) => ({
+              questionId: f.q.questionId,
+              optionId: f.field.value,
+              text: null,
+              source: 'developer_choice',
+            }));
+      if (initial)
+        await api(`/api/runs/${run.id}/decisions`, 'POST', {
+          requestId: crypto.randomUUID(),
+          expectedProjectRevision: run.revision,
+          clarificationId: run.decisionBatch.clarificationId,
+          answers,
+        });
+      else {
+        if (!answers.length) throw new Error('请先修改至少一个选项，再提交调整。');
+        await api(`/api/runs/${run.id}/follow-ups`, 'POST', {
+          contractVersion: '0.2',
+          requestId: crypto.randomUUID(),
+          projectId: run.projectId,
+          expectedProjectRevision: run.revision,
+          discussion: {
+            runId: run.id,
+            threadId: run.mainThreadId,
+            round: run.mainUsed + 1,
+            inReplyToRequestId: run.lastMainRequestId,
+            followUp: {
+              message: '请按本次选择更新机制和验收草案。',
+              clarificationId: run.decisionBatch.clarificationId,
+              answers,
+            },
+          },
+        });
+      }
+      await refresh();
+    } catch (e) {
+      error(e);
+      submit.disabled = defaults.disabled = false;
+    } finally {
+      busy = false;
+    }
+  }
+  form.onsubmit = (event) => {
+    event.preventDefault();
+    apply(false);
+  };
+  defaults.onclick = () => apply(true);
+  if (initial) root.append(form);
+  else {
+    const details = document.createElement('details');
+    details.append(node('summary', '查看生效方案 / 调整选项'), form);
+    root.append(details);
+  }
+}
 async function api(path, method = 'GET', body) {
   const prefix = document.body.dataset.apiBase ?? '/api';
   const tokenStore = document.body.dataset.authStore;
@@ -22,16 +162,20 @@ async function api(path, method = 'GET', body) {
     body: body ? JSON.stringify(body) : undefined,
   });
   const data = await response.json();
-  if (!response.ok)
-    throw new Error(
-      data.error
-        ? `${data.error.code}: ${data.error.message}`
-        : String(data.detail ?? `Request failed: ${response.status}`),
+  if (!response.ok) {
+    const failure = new Error(
+      data.error?.message ?? JSON.stringify(data.detail ?? response.status),
     );
+    failure.code = data.error?.code;
+    failure.status = response.status;
+    throw failure;
+  }
   return data;
 }
 function error(err) {
-  $('error').textContent = err.message;
+  $('error').textContent = errorMessage(err);
+  $('error-original').textContent = [err.code, err.message].filter(Boolean).join(': ');
+  $('error-details').hidden = false;
 }
 function renderQuestions(run) {
   const latest = new Map();
@@ -49,7 +193,7 @@ function renderQuestions(run) {
     const result = job.result;
     const form = document.createElement('form');
     const title = document.createElement('h3');
-    title.textContent = 'Material portal clarification';
+    title.textContent = '素材门户需要补充信息';
     form.append(title);
     const fields = [];
     for (const q of result.questions) {
@@ -61,8 +205,8 @@ function renderQuestions(run) {
         field.append(
           new Option(
             q.required
-              ? 'Choose an answer'
-              : `Use default: ${q.options.find((o) => o.optionId === q.defaultOptionId)?.label}`,
+              ? '请选择一个答案'
+              : `使用默认值：${q.options.find((o) => o.optionId === q.defaultOptionId)?.label}`,
             '',
           ),
           ...q.options.map((o) => new Option(o.label, o.optionId)),
@@ -78,7 +222,7 @@ function renderQuestions(run) {
       fields.push({ q, field });
     }
     const button = document.createElement('button');
-    button.textContent = 'Submit answers';
+    button.textContent = '提交回答';
     button.disabled = run.mainUsed >= 3 || run.materialUsed >= 3 || run.status === 'cancelled';
     form.append(button);
     form.onsubmit = async (event) => {
@@ -113,7 +257,7 @@ function renderQuestions(run) {
             round: r.mainUsed + 1,
             inReplyToRequestId: r.lastMainRequestId,
             followUp: {
-              message: 'Answer the pending material portal clarification using these selections.',
+              message: '请使用这些选择回答待处理的素材门户问题。',
               clarificationId: result.clarificationId,
               answers,
             },
@@ -133,22 +277,33 @@ async function list() {
   const selected = $('runs').value;
   const runs = await api('/api/runs');
   $('runs').replaceChildren(
-    new Option('Select a run', ''),
-    ...runs.map((r) => new Option(`${r.caseId} · ${r.status} · ${r.id.slice(0, 8)}`, r.id)),
+    new Option('选择一个任务', ''),
+    ...runs.map(
+      (r) =>
+        new Option(
+          `${r.caseId ? label(r.caseId) : r.title} · ${label(r.status)} · ${r.id.slice(0, 8)}`,
+          r.id,
+        ),
+    ),
   );
   $('runs').value = selected;
 }
 function render(run) {
-  if (current?.id !== run.id || current?.revision !== run.revision)
+  if (current?.id !== run.id || current?.revision !== run.revision) {
     $('handoff-status').textContent = '';
+    $('handoff-blockers').replaceChildren();
+  }
   current = run;
   $('status').textContent =
-    `${run.input.caseId} · ${run.status} · ${run.stage} · revision ${run.revision}`;
+    `${runTitle(run)} · ${label(run.status)} · ${run.stage === 'decisions' ? '等待第一轮选择' : label(run.stage)} · 第 ${run.revision} 版`;
+  const option = [...$('runs').options].find((o) => o.value === run.id);
+  if (option)
+    option.textContent = `${runTitle(run)} · ${label(run.status)} · ${run.id.slice(0, 8)}`;
   $('counters').replaceChildren(
     ...[
-      `Main follow-ups: ${run.mainUsed}/3`,
-      `Material follow-ups: ${run.materialUsed}/3`,
-      `Portal attempts: ${run.portalAttempts}/${run.maxPortalAttempts}`,
+      `开发者追问：${run.mainUsed}/3`,
+      `素材门户追问：${run.materialUsed}/3`,
+      `门户请求次数：${run.portalAttempts}/${run.maxPortalAttempts}`,
     ].map((text) => {
       const span = document.createElement('span');
       span.textContent = text;
@@ -158,48 +313,113 @@ function render(run) {
   $('decisions').replaceChildren(
     ...run.decisions.map((d) => {
       const li = document.createElement('li');
-      li.textContent = `${d.id}: ${d.value} · ${d.source}${d.locked ? ' · locked' : ''}`;
+      const q = run.decisionBatch.questions.find((q) => q.questionId === d.id);
+      const value = run.proposal
+        ? (q?.options.find((o) => o.optionId === d.value)?.label ?? label(d.value))
+        : label(d.value);
+      li.textContent = `${run.proposal ? d.rationale : label(d.id)}：${value} · ${label(d.source)}${d.locked ? ' · 已锁定' : ''}`;
       return li;
     }),
   );
+  $('decisions').hidden = !!run.proposal;
   const last = run.blueprints.at(-1);
   const blueprint = last?.projectRevision === run.revision ? last : null;
-  $('send').disabled = run.mainUsed >= 3 || ['cancelled', 'failed'].includes(run.status);
+  $('send').disabled =
+    run.stage === 'decisions' || run.mainUsed >= 3 || ['cancelled', 'failed'].includes(run.status);
+  $('cancel').disabled = run.status === 'cancelled';
+  $('follow-hint').textContent =
+    run.mainUsed >= 3
+      ? '本任务的 3 次开发者追问已用完，已有蓝图仍可查看和导出。'
+      : `还可追问 ${3 - run.mainUsed} 次；素材门户的追问额度独立计算，首轮请求不计入。`;
   $('export').disabled = !blueprint;
   $('handoff').disabled = !blueprint;
   $('state').textContent = JSON.stringify(run, null, 2);
   const mechanics = run.plan?.mechanics ?? [];
   renderQuestions(run);
+  renderProposal(run);
   $('mechanics').replaceChildren(
     ...mechanics.map((m) => {
       const card = document.createElement('article');
       const title = document.createElement('h3');
-      title.textContent = m.title;
+      title.textContent = sourceText(m.title);
       const body = document.createElement('p');
-      body.textContent = m.behavior.join(' ');
+      body.textContent = m.behavior.map(sourceText).join(' ');
       const detail = document.createElement('p');
-      detail.textContent = `${m.checks.length} acceptance checks · ${blueprint?.candidates.filter((c) => c.mechanicId === m.id).length ?? 0} discovered alternatives · behavior unverified`;
+      detail.textContent = `${m.checks.length} 项${run.proposal ? '派生验收草案' : '验收要求'} · ${blueprint?.candidates.filter((c) => c.mechanicId === m.id).length ?? 0} 个候选方案 · 行为尚未验证`;
       card.append(title, body, detail);
+      if (run.proposal) {
+        const acceptance = document.createElement('details');
+        acceptance.append(node('summary', '查看验收草案及来源'));
+        const list = document.createElement('ul');
+        for (const c of (blueprint?.acceptance ?? run.plan.acceptanceDraft ?? []).filter((c) =>
+          m.checks.includes(c.id),
+        )) {
+          const sources = (c.derivedFrom ?? []).map((id) => {
+            const d = run.decisions.find((d) => d.id === id);
+            return `${label(d?.source)}（${run.decisionBatch.questions.find((q) => q.questionId === id)?.options.find((o) => o.optionId === d?.value)?.label ?? id}）`;
+          });
+          list.append(
+            node('li', `${c.requirement} 系统派生草案；依据：${sources.join('、')}。尚未执行。`),
+          );
+        }
+        acceptance.append(list);
+        card.append(acceptance);
+      }
       return card;
     }),
   );
 }
 async function refresh() {
   const id = $('runs').value;
-  if (id) render(await api(`/api/runs/${encodeURIComponent(id)}`));
+  if (id) return render(await api(`/api/runs/${encodeURIComponent(id)}`));
+  current = null;
+  questionKey = '';
+  proposalKey = '';
+  $('status').textContent = '请选择历史任务，或开始新的研究。';
+  $('state').textContent = '尚未选择任务。';
+  $('handoff-status').textContent = '';
+  for (const name of [
+    'counters',
+    'decisions',
+    'mechanics',
+    'clarifications',
+    'handoff-blockers',
+    'proposal',
+  ])
+    $(name).replaceChildren();
+  for (const name of ['send', 'export', 'cancel', 'handoff']) $(name).disabled = true;
 }
 $('start').addEventListener('submit', async (event) => {
   event.preventDefault();
   if (busy) return;
   busy = true;
   $('error').textContent = '';
+  $('error-details').hidden = true;
   try {
     const input = {
       requestId: crypto.randomUUID(),
       projectId: crypto.randomUUID(),
-      caseId: $('case').value,
+      mode: $('mode').value,
       brief: $('brief').value,
     };
+    if (input.mode === 'benchmark') input.caseId = $('case').value;
+    else {
+      input.knownFeatures = $('features')
+        .value.split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      input.decisionMode = $('decision-mode').value;
+      if ($('image-uri').value.trim())
+        input.images = [
+          {
+            uri: $('image-uri').value.trim(),
+            mimeType: $('image-type').value,
+            description: $('image-description').value.trim() || '参考图片（未提供文字描述）',
+          },
+        ];
+      if (!input.brief.trim() && !input.knownFeatures.length && !input.images?.length)
+        throw new Error('请提供一句创意、一项核心特征或一个图片引用，即可开始。');
+    }
     if ($('style').value) input.preferences = { implementationStyle: $('style').value };
     const result = await api('/api/runs', 'POST', input);
     await list();
@@ -270,7 +490,7 @@ $('export').onclick = async () => {
     );
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${data.caseId}-blueprint-v${data.version}.json`;
+    a.download = `${data.caseId ?? 'idea'}-blueprint-v${data.version}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   } catch (e) {
@@ -278,6 +498,10 @@ $('export').onclick = async () => {
   }
 };
 $('runs').onchange = () => refresh().catch(error);
+$('mode').onchange = () => {
+  $('benchmark-fields').hidden = $('mode').value !== 'benchmark';
+  $('idea-fields').hidden = $('mode').value !== 'idea';
+};
 $('refresh').onclick = () => refresh().catch(error);
 $('handoff').hidden = document.body.dataset.handoff !== 'true';
 $('handoff').onclick = async () => {
@@ -290,8 +514,15 @@ $('handoff').onclick = async () => {
       blueprintVersion: run.blueprints.at(-1).version,
     });
     $('handoff-status').textContent = result.eligible
-      ? 'Compatible with the single-file Builder. The pinned reference can be supplied as research in POST /api/runs; this check does not start generation.'
-      : `Single-file Builder handoff blocked: ${result.blockers.join('; ')}. Full-project blueprint handoff is not connected yet. No generation was started.`;
+      ? '已满足单文件小游戏的交接条件，可将此版本的蓝图交给生成端。本次检查未启动游戏生成。'
+      : '暂不满足生成交接条件。完整项目的蓝图接收尚未接入；本次检查未启动游戏生成。';
+    $('handoff-blockers').replaceChildren(
+      ...handoffReasons(result.blockers).map((reason) => {
+        const li = document.createElement('li');
+        li.textContent = reason;
+        return li;
+      }),
+    );
   } catch (e) {
     error(e);
   }
@@ -300,7 +531,8 @@ try {
   const cases = await api('/api/cases');
   $('case').replaceChildren(
     ...cases.map(
-      (c) => new Option(`${c.title} · ${c.engine} · ${c.checks.length} checks`, c.caseId),
+      (c) =>
+        new Option(`${c.title} · ${label(c.engine)} · ${c.checks.length} 项验收要求`, c.caseId),
     ),
   );
   await list();
@@ -311,13 +543,12 @@ try {
   }
   const registration = await registerResearchTools(document, api, await api('/api/contract'));
   $('webmcp').textContent = registration.supported
-    ? 'Browser WebMCP tools registered.'
-    : 'Native WebMCP is unavailable in this browser. The studio uses the same API directly.';
+    ? '浏览器 WebMCP 工具已就绪，可由助手直接发起研究、追问和读取蓝图。'
+    : '此浏览器暂不支持原生 WebMCP；仍可使用页面按钮完成相同操作。';
   addEventListener('pagehide', () => registration.dispose(), { once: true });
 } catch (e) {
   error(e);
-  $('webmcp').textContent =
-    'Browser tool registration could not complete; the API and studio controls remain available.';
+  $('webmcp').textContent = '浏览器工具初始化未完成，请检查服务连接或访问设置。';
 }
 setInterval(() => {
   if (current && !busy) {

@@ -9,7 +9,7 @@ async function researchApi(path, method = 'GET', body) {
     body: body ? JSON.stringify(body) : undefined,
   });
   const result = await response.json();
-  if (!response.ok) throw new Error(result.error?.message ?? String(result.detail ?? 'Research request failed'));
+  if (!response.ok) throw new Error(result.error?.message ?? String(result.detail ?? '研究请求失败'));
   return result;
 }
 let registration;
@@ -21,9 +21,9 @@ async function connect() {
     const config = await researchApi('/api/config');
     if (!config.configured) return;
     registration = await registerResearchTools(document, researchApi, await researchApi('/api/contract'));
-    document.getElementById('research-link').title = registration.supported ? 'Browser WebMCP tools registered' : 'Open the research workspace';
+    document.getElementById('research-link').title = registration.supported ? '浏览器 WebMCP 工具已就绪' : '打开研究工作台';
   } catch {
-    document.getElementById('research-link').title = 'Research unavailable: check access settings and service configuration';
+    document.getElementById('research-link').title = '研究服务暂不可用，请检查访问设置与服务配置';
   } finally { registering = false; }
 }
 document.getElementById('save-token').addEventListener('click', () => { void connect(); });

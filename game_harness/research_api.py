@@ -67,6 +67,10 @@ def install_research_routes(app, research, auth):
     async def follow_up(rid: str, request: Request):
         return await research.request("POST", "/api/runs/" + quote(rid, safe="") + "/follow-ups", await payload(request))
 
+    @router.post("/runs/{rid}/decisions", status_code=202)
+    async def decisions(rid: str, request: Request):
+        return await research.request("POST", "/api/runs/" + quote(rid, safe="") + "/decisions", await payload(request))
+
     @router.post("/runs/{rid}/material-follow-ups", status_code=202)
     async def material_follow_up(rid: str, request: Request):
         return await research.request("POST", "/api/runs/" + quote(rid, safe="") + "/material-follow-ups", await payload(request))
@@ -86,7 +90,7 @@ def install_research_routes(app, research, auth):
 
     @app.get("/research-assets/{name}")
     async def research_asset(name: str):
-        if name not in {"app.mjs", "webmcp.mjs", "request-schema.mjs", "style.css"} or not (assets / name).is_file():
+        if name not in {"app.mjs", "webmcp.mjs", "request-schema.mjs", "ui-zh.mjs", "style.css"} or not (assets / name).is_file():
             raise HTTPException(404, "研究工作台资源不存在，请从完整仓库运行")
         media = "text/css" if name.endswith(".css") else "text/javascript"
         return FileResponse(assets / name, media_type=media, headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})

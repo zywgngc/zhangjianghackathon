@@ -1,4 +1,4 @@
-import { startRequestSchema } from './request-schema.mjs';
+import { startRequestSchema, proposalSelectionSchema } from './request-schema.mjs';
 const runSchema = {
   type: 'object',
   properties: { runId: { type: 'string', minLength: 1 } },
@@ -18,28 +18,44 @@ export function researchTools(api, contract) {
   return [
     tool(
       'get_research_context',
-      'List supported reference cases and existing research runs.',
+      '列出已有研究任务与可选的测试案例。普通创意无需选择测试案例。',
       { type: 'object', properties: {}, additionalProperties: false },
       true,
       async () => ({ cases: await api('/api/cases'), runs: await api('/api/runs') }),
     ),
     tool(
       'start_research',
-      'Start a durable research run for a reference case. Uses a synthetic portal in the local demo.',
+      '用图片引用或稀疏创意创建研究任务；省略 caseId。decisionMode=ask 先给选项，auto 自动采用默认。案例模式才加载完整测试规格。当前为规则提案与模拟素材门户。',
       startRequestSchema(contract),
       false,
       (input) => api('/api/runs', 'POST', input),
     ),
     tool(
+      'resolve_research_proposal',
+      '提交第一轮提案选择，不消耗追问额度。answers=[] 采用全部当前默认；仅提交开发者实际修改的选项。后续调整使用 follow_up_research。',
+      {
+        type: 'object',
+        properties: {
+          runId: { type: 'string', minLength: 1 },
+          selection: proposalSelectionSchema(contract),
+        },
+        required: ['runId', 'selection'],
+        additionalProperties: false,
+      },
+      false,
+      ({ runId, selection }) =>
+        api(`/api/runs/${encodeURIComponent(runId)}/decisions`, 'POST', selection),
+    ),
+    tool(
       'get_research_state',
-      'Read run state, defaults, questions, history, and remaining follow-up allowances.',
+      '读取任务状态、默认选择、待回答问题、历史记录和剩余追问额度。',
       runSchema,
       true,
       ({ runId }) => api(`/api/runs/${encodeURIComponent(runId)}`),
     ),
     tool(
       'follow_up_research',
-      'Refine research or answer a question batch. Consumes one of three main follow-ups; use the current revision and parent request.',
+      '细化研究或回答一批问题。消耗 3 次开发者追问额度中的 1 次；须使用当前修订和父请求。',
       { $defs: contract.$defs, $ref: '#/$defs/MainFollowUpRequest' },
       false,
       (input) =>
@@ -47,14 +63,14 @@ export function researchTools(api, contract) {
     ),
     tool(
       'get_implementation_blueprint',
-      'Read the latest blueprint with source evidence and unexecuted acceptance checks. Partial does not mean ready to build.',
+      '读取最新蓝图，包括来源证据和未执行的验收要求。部分完成不代表已经可以生成游戏。',
       runSchema,
       true,
       ({ runId }) => api(`/api/runs/${encodeURIComponent(runId)}/blueprint`),
     ),
     tool(
       'cancel_research',
-      'Explicitly cancel a research run and stop accepting worker results.',
+      '明确取消研究任务，并停止接收后续工作结果。',
       runSchema,
       false,
       ({ runId }) => api(`/api/runs/${encodeURIComponent(runId)}/cancel`, 'POST', {}),

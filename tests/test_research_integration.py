@@ -74,6 +74,7 @@ def test_harness_proxy_uses_backend_credentials_and_preserves_commands(settings)
         assert 'data-api-base="/api/research"' in page.text
         assert settings.research_token not in page.text
         assert client.get("/research-assets/request-schema.mjs").status_code == 200
+        assert client.get("/research-assets/ui-zh.mjs").status_code == 200
         assert client.get("/research-assets/secret.txt").status_code == 404
 
 
@@ -324,6 +325,32 @@ def test_real_node_runtime_through_fastapi_gateway(settings, tmp_path, request_d
             assert state["mainUsed"] == 3 and state["materialUsed"] <= 3
             assert api.post(f"/api/research/runs/{rid}/cancel", json={}, headers=headers).json()["status"] == "cancelled"
             assert app.state.store.list() == []
+            # Sparse input must not silently load a benchmark or consume a follow-up for first choices.
+            idea = {"requestId": "sparse-live", "projectId": "sparse-project", "mode": "idea", "brief": "猫咪生存小游戏"}
+            response = api.post("/api/research/runs", json=idea, headers=headers)
+            assert response.status_code == 202, response.text
+            idea_id = response.json()["runId"]
+            for _ in range(100):
+                draft = api.get(f"/api/research/runs/{idea_id}", headers=headers).json()
+                if draft["stage"] == "decisions": break
+                time.sleep(.05)
+            assert draft["stage"] == "decisions" and draft["plan"] is None
+            selection = {"requestId": "select-live", "expectedProjectRevision": draft["revision"],
+                         "clarificationId": draft["decisionBatch"]["clarificationId"],
+                         "answers": [{"questionId": "difficulty", "optionId": "easy", "text": None, "source": "developer_choice"}]}
+            assert api.post(f"/api/research/runs/{idea_id}/decisions", json=selection).status_code == 401
+            assert api.post(f"/api/research/runs/{idea_id}/decisions", json=selection, headers=headers).status_code == 202
+            for _ in range(100):
+                draft = api.get(f"/api/research/runs/{idea_id}", headers=headers).json()
+                if draft["status"] == "partial": break
+                time.sleep(.05)
+            assert draft["status"] == "partial"
+            assert draft["mainUsed"] == 0 and draft["materialUsed"] == 0
+            blueprint = draft["blueprints"][-1]
+            assert blueprint["caseId"] is None and blueprint["source"] is None
+            assert all(c["provisional"] and c["id"].startswith("IDEA/") for c in blueprint["acceptance"])
+            assert any("5 点生命" in c["requirement"] for c in blueprint["acceptance"])
+            assert app.state.store.list() == []  # No Builder/model job was started.
     finally:
         process.terminate()
         try: process.wait(timeout=5)

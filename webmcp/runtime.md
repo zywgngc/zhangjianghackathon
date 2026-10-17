@@ -2,7 +2,7 @@
 
 The first executable slice is available on `Webmcp`. It has a durable local orchestrator, separate Researcher/Planner/Reviewer components, a mock material portal, an HTTP API, a small research studio, and a feature-detected browser WebMCP adapter.
 
-**This is a reference-case research service.** The included Planner is deterministic and supports the three pinned benchmark specifications. It is not an LLM, a general game-specification parser, or a playable-game generator. The default portal returns synthetic alternatives. Source inspection and compatible-combination verification remain unimplemented, so exported blueprints explicitly remain `partial` and every game acceptance check remains `not_executed`.
+**The default entry accepts a sparse idea, not a complete acceptance specification.** Supply a brief, known characteristics, and/or image references. Archetype research runs first, followed by editable proposed choices. Developers can resolve the initial batch or opt into automatic completion. Explicit benchmark mode still preserves the three pinned test specifications. The current proposal planner uses rules and four templates, not an LLM or image recognition. The default portal returns synthetic alternatives; blueprints remain `partial`, and acceptance checks remain `not_executed`.
 
 ## Quick start
 
@@ -19,7 +19,7 @@ pnpm demo
 pnpm start
 ```
 
-Open [the local research studio](http://127.0.0.1:4174). Select a case and start with defaults. The worker researches archetypes first, partitions the fixed specification into mechanics, requests candidate alternatives, and exports a partial blueprint. Refreshing or closing the page does not cancel the run. Reopening the studio lists persisted runs.
+Open [the local research studio](http://127.0.0.1:4174). Enter a sentence or reference image URI and choose either “先给我选项” or “自动补全”. In the first mode, change only the details you care about, then continue; omitted answers retain their recorded provenance. Mechanics and acceptance drafts derive from effective choices. Persisted runs remain in history. The default idea deadline is one hour, including selection time; an unanswered proposal expires without being confirmed. Benchmark runs retain the two-minute default. Both can be overridden with bounded `limits.maxRunMs`.
 
 `pnpm demo` runs all three cases without a browser and writes `.demo/GAME-TEST-00N.blueprint.json`. Runtime state lives in `.data/research.sqlite`; `.data`, `.demo`, dependencies, and environment files are ignored by Git.
 
@@ -41,7 +41,11 @@ The 225 check descriptions were extracted from the `tests` branch at commit `81f
 - The Reviewer treats all returned candidates as discovered data. Provider summaries, `isMock: false`, revision strings, or confidence claims cannot promote them to verified implementations.
 - The studio and browser tools use the same HTTP handlers and server-side budget validation. Unavailable native WebMCP support leaves the ordinary studio/API usable.
 
-The deterministic planner preserves specified engines and mechanics. Its editable choices are implementation style and candidate count. Free-text follow-ups are retained as research context and included in portal queries; they are **not automatically translated into arbitrary new gameplay or code changes**. Full contextual preference interpretation and arbitrary game families require a model-backed Planner adapter and further validation.
+Idea proposals expose archetype, engine, difficulty, style, controls, persistence, an archetype-specific mechanic choice, implementation style, and candidate count. The four fallback families are runner, survivor, puzzle, and platformer. Text keywords and non-mock candidate hints can rank suggestions; suggestions remain defaults until explicitly changed. Mock candidates never supply proposal evidence. An archetype change replaces obsolete mechanic-specific options with editable defaults.
+
+`proposal.known` retains developer text, `decisions[].source` distinguishes defaults/saved preferences/developer choices, and `acceptance[].derivedFrom` records the decisions used to produce each provisional check. Idea blueprints have `caseId: null`, `source: null`, and `agentMode: rule-proposal-planner`; they inherit none of the 225 benchmark checks. Template-supplied numbers are provisional assumptions, not extracted user requirements. Free text is passed to the portal and retained for review; the rule planner cannot reliably interpret arbitrary constraints, negation, conflicts, or combined genres. Images are never interpreted here. Vision/model-backed proposals and semantic constraint verification remain future work.
+
+Benchmark mode keeps the original locked gameplay/engine and only exposes implementation style and candidate count. Existing requests with `caseId` and no `mode` retain this behavior.
 
 Revision handling is conservative: a main follow-up invalidates current research acceptance and requests new evidence within the remaining material allowance. Source history is retained, but automatic reuse of unaffected mechanic results is a future optimization. This can produce a partial revised blueprint when three material follow-ups cannot refresh all mechanics.
 
@@ -59,6 +63,7 @@ Optional environment settings: `PORT` (default `4174`), `WEBMCP_DB` (SQLite path
 | `GET /api/runs` | Persisted run summaries |
 | `POST /api/runs` | `StartRequest`; returns HTTP 202 with run ID and project revision |
 | `GET /api/runs/:id` | Durable state, decisions, questions, jobs, counters, and blueprint history |
+| `POST /api/runs/:id/decisions` | Resolve the initial idea batch using `{requestId, expectedProjectRevision, clarificationId, answers}`; `answers: []` keeps the current defaults/preferences without consuming a follow-up |
 | `POST /api/runs/:id/follow-ups` | Existing `MainFollowUpRequest`; returns a durable acknowledgement |
 | `POST /api/runs/:id/material-follow-ups` | `MaterialFollowUp`; the server assigns the next material round |
 | `GET /api/runs/:id/blueprint` | Latest reviewed blueprint **for the current revision**, or `NOT_READY` |
@@ -80,7 +85,7 @@ Example initial request:
 
 Use the returned run state to populate follow-up revision, parent request ID, main thread ID, and next main round. Reply to `decisionBatch.clarificationId` for implementation-style/candidate-count choices. Required portal questions appear on the latest relevant job result; reply to that result's clarification ID through the main command. The complete state is available through both the API and the studio's expandable state panel.
 
-The browser adapter registers `get_research_context`, `start_research`, `get_research_state`, `follow_up_research`, `get_implementation_blueprint`, and `cancel_research` when `document.modelContext.registerTool` is available. Registration lifetime uses an abort signal; unregistering tools never cancels durable backend research. See [the current WebMCP draft](https://webmachinelearning.github.io/webmcp/) for the evolving browser API. Automated adapter tests use a simulated model context. A manual check in the Codex in-app browser registered all six tools, started Number Gate Shooter through `start_research`, and retrieved its partial blueprint through `get_implementation_blueprint` (six mechanics, 21 synthetic alternatives). A second run used image references and portable/two-candidate preferences for Power Hunter; `get_research_state` confirmed the references reached every portal request and the blueprint contained 14 synthetic alternatives. No image was fetched or interpreted. Other browser/agent combinations remain unverified.
+The browser adapter registers `get_research_context`, `start_research`, `resolve_research_proposal`, `get_research_state`, `follow_up_research`, `get_implementation_blueprint`, and `cancel_research` when `document.modelContext.registerTool` is available. Registration lifetime uses an abort signal; unregistering tools never cancels durable backend research. See [the current WebMCP draft](https://webmachinelearning.github.io/webmcp/) for the evolving browser API. Automated adapter tests use a simulated model context. A manual check in the Codex in-app browser registered all six tools, started Number Gate Shooter through `start_research`, and retrieved its partial blueprint through `get_implementation_blueprint` (six mechanics, 21 synthetic alternatives). A second run used image references and portable/two-candidate preferences for Power Hunter; `get_research_state` confirmed the references reached every portal request and the blueprint contained 14 synthetic alternatives. No image was fetched or interpreted. Other browser/agent combinations remain unverified.
 
 ## Connecting the teammate's material portal
 

@@ -66,7 +66,30 @@ Builder 可继续使用已验证的 Node22；以 `--research-node /path/to/node2
 
 网关不重试写操作、不截断或重写研究输入、不把 `needs_clarification` 变成虚构答案。重试使用相同 requestId，由 Node 幂等处理。Node 不可用返回明确 503/504；不会替换成另一份 mock 成功结果。三轮限制和取消均继续由原 runtime 执行。
 
-主工作台和研究工作台都复用 `webmcp/public/webmcp.mjs` 注册六个浏览器工具。普通浏览器没有原生 WebMCP 时，普通页面/API 仍可操作。静态资源公开，所有 `/api/research/*` 路由复用 harness 的鉴权依赖。完整仓库运行是当前部署要求；单独 Python wheel 不包含 Node runtime。
+主工作台和研究工作台都复用 `webmcp/public/webmcp.mjs` 注册七个浏览器工具，新增 `resolve_research_proposal` 处理第一轮提案选择。普通浏览器没有原生 WebMCP 时，页面/API 仍可操作。静态资源公开，所有 `/api/research/*` 路由复用 harness 的鉴权依赖。完整仓库运行是当前部署要求；单独 Python wheel 不包含 Node runtime。
+
+## 稀疏创意与默认补全
+
+普通入口不再要求 `caseId`。使用 `mode: idea`，提供 `brief`、`knownFeatures`、`images` 中至少一项即可。图片继续使用门户可访问的 URI 或双方约定的资源引用，不传本机路径；网页尚未提供文件上传。`decisionMode: ask`（默认）在原型查询后进入 `waiting_input / decisions`；`auto` 自动采用默认方案并研究机制。关键词只用于推荐，不能当作已理解任意文字约束或图片内容。
+
+```json
+{
+  "requestId": "idea-start-1",
+  "projectId": "cat-game-1",
+  "mode": "idea",
+  "brief": "猫咪躲避敌人、越打越强的小游戏",
+  "knownFeatures": ["猫咪主角"],
+  "decisionMode": "ask"
+}
+```
+
+读取任务中的 `decisionBatch`，再向 `POST /api/research/runs/:id/decisions` 提交 `requestId`、`expectedProjectRevision`、`clarificationId` 和 `answers`。空数组采用全部当前默认/偏好；只提交实际修改的选项。初次选择不计入后续 3 次追问，重复相同 requestId 幂等返回；不同内容、过期版本和非法选项拒绝。初次选择在第一版蓝图生成前完成，保持当前修订；后续修改通过原有 `/follow-ups` 增加修订并保留历史。两端的 3 次追问上限仍独立、全任务累计。
+
+蓝图中 `proposal.known` 保留用户文字；`decisions[].source` 标记默认、已保存偏好或开发者选择。验收草案从生效选择派生，带 `provisional: true` 与 `derivedFrom`，不会默认带入三个案例的 225 项规格。选择其他原型会替换原型专属问题，缺失选择继续采用明确默认。系统补全、采用默认和开发者逐项确认是不同来源，不能混为一谈。
+
+当前补全依赖跑酷、生存、解谜、平台跳跃四类规则模板；真实素材、视觉理解和通用模型规划尚未接入。素材仍由 teammate-owned `MaterialPortalPort` 提供，v0.2 不变：原型检索时未知引擎可为 `null`；机制检索收到生效选项、来源、原始特征和图片引用。当前模拟候选不参与提案依据。更改方案后证据按修订失效；素材追问额度不足时会报告缺口，不复用旧证据冒充当前验证。
+
+历史 `caseId` 请求与显式 `mode: benchmark` 继续保留全部案例规格和引擎锁。Python harness 只增加一个 `/decisions` 透传路由；生成、QA、发布和主项目入口的所有权不变。
 
 ## Builder 准入与固定版本
 

@@ -1,10 +1,10 @@
 # WebMCP handoff: current state and integration responsibilities
 
-**Status: executable reference slice plus optional harness adapter. Runtime branch: `Webmcp`; review branch: `codex/webmcp-harness-integration`. Contract: v0.2.**
+**Status: sparse-idea proposal flow and reference benchmarks plus optional harness adapter. Original runtime branch: `Webmcp`; current implementation/review branch: `codex/webmcp-harness-integration`. Material contract: v0.2.**
 
 This branch now delivers a runnable local research service alongside the architecture, contracts, and examples. It includes a SQLite orchestrator, deterministic Researcher/Planner/Reviewer components, a mock portal, an HTTP API, a studio, and a browser WebMCP adapter. **Live portal retrieval, model-backed general planning, source verification, and playable-game generation remain pending.** Read [runtime.md](runtime.md) to run it and integrate the next adapter.
 
-**Latest design change:** main may send up to three follow-ups to our MAS, and the MAS may send up to three follow-ups to the material portal, using independent run-wide counters. Initial requests do not count. The [discussion protocol](discussion-policy.md) defines clarification, defaults, correlation, and stopping behavior; its counters, correlation, and stopping rules are enforced by the local runtime.
+**Latest design change:** ordinary users provide a sparse idea or image reference, not a full benchmark specification. After archetype retrieval, the runtime presents optional choices with defaults; `decisionMode: auto` skips this pause. `POST …/decisions` resolves the first batch without consuming a follow-up. Later main and material discussions each allow three run-wide follow-ups. The [runtime guide](runtime.md) describes the new input, provenance, and acceptance drafts. The [discussion protocol](discussion-policy.md) still governs later rounds.
 
 `Webmcp` was created from `prompting` with the project owner's approval because `main` did not exist at branch creation. “Main application” below means the upstream game-generator product, not a Git branch. This document is a status snapshot; it must be updated when implementation or integration lands.
 
@@ -29,11 +29,11 @@ The output is a plan backed by traceable sources and explicit validation evidenc
 | Area | Delivered on this branch | Still required |
 | --- | --- | --- |
 | Architecture | Workflow, diagrams, and executable deterministic role components | Model-backed general-purpose agents and wider game support |
-| Developer choices | Persisted defaults/provenance, benchmark locks, structured choices, and revision handling | Interpretation of arbitrary preference changes and reuse of unaffected research |
+| Developer choices | Sparse idea/image references, rule-based proposals for four game families, optional initial selection, auto defaults, provenance, derived acceptance drafts, benchmark locks and revisions | Vision/model interpretation of arbitrary inputs, semantic conflict checks, and reuse of unaffected research |
 | Material portal boundary | Types/schema, eight fixtures, mock adapter, injected-function adapter, and runtime validation | Agreement with portal owner and actual MCP/client mapping |
 | Follow-up discussion | Atomic durable reservations, correlation, default/required question handling, and exhaustion behavior | Provider-native session mapping and production authorization |
 | External MCP material portal | Boundary and expected behavior documented | Teammate-owned implementation; its availability has not been verified here |
-| Browser WebMCP | Feature detection, six shared tools, authenticated gateway, and native browser start/state verification | Wider browser/agent compatibility |
+| Browser WebMCP | Feature detection, seven shared tools including initial proposal resolution, authenticated gateway, and browser start/state verification | Wider browser/agent compatibility |
 | Source research and review | Evidence levels and composition rules documented | Real searches, source inspection, pinned revisions, and verification workers |
 | Durable execution | SQLite run/job history, leases, bounded retries, cancellation, and safe restart recovery | Postgres/distributed workers and provider asynchronous-job reconciliation |
 | Builder handoff | Versioned partial blueprints; v1 `/api/runs` adapter with revision/evidence/engine admission and pinned-context hooks | Verified source combinations, a compatible ready blueprint, and v2 `/api/projects` receiver integration |
@@ -180,7 +180,7 @@ For the first live slice, acceptance should cover automatic defaults, one prefer
 
 The executable test suite covers contract fixtures, runtime budgets, defaults and locks, idempotency, stale results, clarification, cancellation, timeouts, restart recovery, cross-worker contention, local HTTP authorization/origin checks, and simulated browser-tool registration. The demo exports partial blueprints for all three reference cases with 225 acceptance requirements preserved. See [runtime.md](runtime.md) for commands and scope.
 
-Game acceptance checks have not been executed. Live source discovery, source behavior verification, and generated-game integration remain unverified. Manual Codex in-app browser checks registered all six WebMCP tools and successfully used the start, state-read, and blueprint-read tools against the mock workflow, including image-reference and preference forwarding. Other browser/agent combinations and the remaining tools still need interoperability checks. Schema and runtime tests are not substitutes for those outcomes.
+Game acceptance checks have not been executed. Live source discovery, source behavior verification, and generated-game integration remain unverified. Earlier browser checks exercised start/state/blueprint tools with benchmark fixtures. Current browser checks also verified sparse text → first choices → mechanics and provenance without spending main follow-up slots. Seven tools register successfully; the new proposal-resolution tool has schema/dispatch tests and shares the endpoint exercised by the studio and FastAPI integration test. Other browser/agent combinations remain unverified. Schema and runtime tests are not substitutes for game acceptance outcomes.
 
 ## 10. Reading order
 

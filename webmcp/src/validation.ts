@@ -2,10 +2,10 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { Ajv2020 } from 'ajv/dist/2020.js';
-import { startRequestSchema } from '../public/request-schema.mjs';
+import { startRequestSchema, proposalSelectionSchema } from '../public/request-schema.mjs';
 import type { ClarificationQuestion, DiscussionAnswer } from '../discussion.ts';
 import type { MaterialSearchRequest, MaterialSearchResult } from '../material-portal.ts';
-import type { StartRequest } from './model.ts';
+import type { StartRequest, ProposalSelection } from './model.ts';
 import { AppError } from './model.ts';
 
 const ajv = new Ajv2020({ strict: true, allErrors: true });
@@ -38,6 +38,11 @@ function canonical(value: unknown): string {
 export const hash = (value: unknown): string =>
   createHash('sha256').update(canonical(value)).digest('hex');
 const startValidator = ajv.compile(startRequestSchema(schema));
+const selectionValidator = ajv.compile(proposalSelectionSchema(schema));
+export function validateSelection(value: unknown): asserts value is ProposalSelection {
+  if (!selectionValidator(value))
+    throw new AppError('INVALID_INPUT', ajv.errorsText(selectionValidator.errors), 400);
+}
 export function validateStart(value: unknown): asserts value is StartRequest {
   if (!startValidator(value))
     throw new AppError('INVALID_INPUT', ajv.errorsText(startValidator.errors), 400);

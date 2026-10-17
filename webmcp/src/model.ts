@@ -12,6 +12,9 @@ export interface AcceptanceCheck {
   id: string;
   category: string;
   requirement: string;
+  derivedFrom?: string[];
+  provisional?: boolean;
+  source?: 'system_proposal';
 }
 export interface Benchmark {
   caseId: CaseId;
@@ -23,13 +26,20 @@ export interface Benchmark {
 export interface StartRequest {
   requestId: string;
   projectId: string;
-  caseId: CaseId;
+  /** Legacy caseId-only requests remain explicit benchmark runs. */
+  mode?: 'idea' | 'benchmark';
+  caseId?: CaseId;
+  decisionMode?: 'ask' | 'auto';
   brief?: string;
+  knownFeatures?: string[];
   images?: ImageReference[];
   preferences?: {
     implementationStyle?: 'engine_native' | 'portable';
     candidateCount?: number;
     engine?: Engine;
+    archetype?: 'runner' | 'survivor' | 'puzzle' | 'platformer';
+    difficulty?: 'easy' | 'normal' | 'hard';
+    visualStyle?: 'minimal' | 'pixel' | 'illustrated';
   };
   limits?: { maxPortalAttempts?: number; maxRunMs?: number };
 }
@@ -56,6 +66,20 @@ export interface Plan {
   crossCuttingChecks: AcceptanceCheck[];
   foundations: { coordinates: string; timing: string; entityOwnership: string };
   archetypeCandidateIds: string[];
+  acceptanceDraft?: AcceptanceCheck[];
+}
+export interface IdeaProposal {
+  basis: 'rule_fallback' | 'candidate_hints';
+  known: string[];
+  imageInterpretation: 'not_performed';
+  warnings: string[];
+  alternatives: Array<{ id: string; label: string; rationale: string; candidateIds: string[] }>;
+}
+export interface ProposalSelection {
+  requestId: string;
+  expectedProjectRevision: number;
+  clarificationId: string;
+  answers: import('../discussion.ts').DiscussionAnswer[];
 }
 export interface CandidateRecord {
   candidate: MaterialCandidate;
@@ -70,8 +94,10 @@ export interface Blueprint {
   projectRevision: number;
   readiness: 'partial';
   generatedAt: number;
-  caseId: CaseId;
-  source: Benchmark['source'];
+  caseId: CaseId | null;
+  source: Benchmark['source'] | null;
+  mode?: 'idea' | 'benchmark';
+  proposal?: IdeaProposal;
   plan: Plan;
   decisions: Decision[];
   developerNotes: string[];
@@ -79,7 +105,7 @@ export interface Blueprint {
   candidates: CandidateRecord[];
   gaps: string[];
   acceptance: Array<AcceptanceCheck & { status: 'not_executed' }>;
-  agentMode: 'reference-planner';
+  agentMode: 'reference-planner' | 'rule-proposal-planner';
 }
 export interface PortalJob {
   request: MaterialSearchRequest;
@@ -111,7 +137,7 @@ export interface Run {
   input: StartRequest;
   startHash: string;
   status: 'queued' | 'running' | 'waiting_input' | 'partial' | 'failed' | 'cancelled';
-  stage: 'archetypes' | 'planning' | 'mechanics' | 'review' | 'finished';
+  stage: 'archetypes' | 'decisions' | 'planning' | 'mechanics' | 'review' | 'finished';
   createdAt: number;
   updatedAt: number;
   deadline: number;
@@ -123,6 +149,8 @@ export interface Run {
   lastMainRequestId: string;
   mainRecords: MainRecord[];
   decisions: Decision[];
+  proposal?: IdeaProposal;
+  initialSelection?: { requestId: string; hash: string };
   decisionBatch: { clarificationId: string; questions: ClarificationQuestion[] };
   plan: Plan | null;
   jobs: PortalJob[];
