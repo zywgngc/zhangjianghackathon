@@ -8,9 +8,12 @@ import struct
 from types import SimpleNamespace
 import zlib
 
+import httpx
+from openai import AsyncOpenAI
 import pytest
 
 from game_harness.acceptance import evaluate_evidence
+from game_harness.agents import AgentClient
 from game_harness.project_review import review_visual, visual_criteria
 from game_harness.specifications import load_case
 
@@ -152,6 +155,45 @@ async def test_concrete_visual_failure_is_kept_as_failed_evidence(store):
     report = evaluate_evidence(spec, {"spec_sha256": spec.sha256, "project_sha256": PROJECT_HASH,
         "artifact_root": str(store.directory(rid)), "checks": checks})
     assert next(t for t in report["tests"] if t["test_id"] == "T54")["status"] == "failed"
+
+
+async def test_pixel_coordinates_trigger_accounted_schema_correction(settings, store):
+    rid = make_run(store)
+    store.claim()
+    spec = load_case("GAME-TEST-001")
+    shots = screenshots(store, rid)
+    requests = []
+
+    def respond(request):
+        payload = json.loads(request.content)
+        requests.append(payload)
+        decisions = []
+        for test_id, shot in (("T37", shots[1]), ("T38", shots[2]), ("T54", shots[0])):
+            decisions.append({"requirement_id": spec.case_id + "/" + test_id, "verdict": "pass",
+                "facts": [{"screenshot": shot["path"], "element": element,
+                    "bbox": [640, 320, 768, 400] if len(requests) == 1 else bbox,
+                    "observed_text": "开始游戏", "appearance": "白色中文位于深绿色矩形内，字形未被裁切。"}
+                    for element, bbox in [("顶部标题", [0.1, 0.1, 0.2, 0.1]), ("底部按钮", [0.1, 0.7, 0.2, 0.1])]],
+                "rationale": "已在指定视口定位两个具体区域，仅判断当前截图的可见布局。",
+                "limitations": ["静态截图不证明操作、规则或真实手机性能。"]})
+        result = {"project_sha256": PROJECT_HASH, "spec_sha256": spec.sha256, "reviews": decisions}
+        return httpx.Response(200, json={"id": "visual-schema", "object": "chat.completion", "created": 0,
+            "model": settings.model, "choices": [{"index": 0, "message": {"role": "assistant", "content": json.dumps(result)}, "finish_reason": "stop"}],
+            "usage": {"prompt_tokens": 70, "completion_tokens": 30, "total_tokens": 100}})
+
+    agent = AgentClient(settings, store)
+    await agent.client.close()
+    agent.client = AsyncOpenAI(api_key="test", base_url="https://mock.invalid/v1", max_retries=0,
+        http_client=httpx.AsyncClient(transport=httpx.MockTransport(respond)))
+    try:
+        checks = await review_visual(rid, spec, store, agent, PROJECT_HASH, shots)
+    finally:
+        await agent.close()
+    assert len(checks) == 3 and len(requests) == 2
+    assert store.get(rid)["calls"] == 2 and store.get(rid)["tokens"] == 200
+    assert any(event["kind"] == "schema_retry" for event in store.events(rid))
+    assert "640" in store.path(rid, "call-01-qa.txt").read_text()
+    assert "validation_errors" in json.dumps(requests[1]["messages"][1]["content"])
 
 
 async def test_required_upgrade_scenes_are_not_inferred_from_paused_gameplay(store):

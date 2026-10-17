@@ -15,7 +15,7 @@ import time
 import uuid
 
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Literal
+from typing import Annotated, Literal
 
 from .agents import COMMON
 
@@ -67,7 +67,9 @@ class VisualFact(BaseModel):
     screenshot: str = Field(min_length=1, max_length=200)
     element: str = Field(min_length=2, max_length=120)
     # Normalized left, top, width, height, so the same schema supports all views.
-    bbox: list[float] = Field(min_length=4, max_length=4)
+    bbox: list[Annotated[float, Field(ge=0, le=1, allow_inf_nan=False)]] = Field(
+        min_length=4, max_length=4,
+        description="Normalized [left/image_width, top/image_height, box_width/image_width, box_height/image_height]. Every value is 0..1. Never pixels or [left,top,right,bottom].")
     observed_text: str = Field(default="", max_length=250)
     appearance: str = Field(min_length=8, max_length=600)
 
@@ -92,6 +94,8 @@ VISUAL_INSTRUCTION = """你是独立视觉验收代理，只看主机真实截�
 逐条判断提供的视觉准则，输出严格JSON。不能新增准则、替数值/物理/动作测试下结论，不能声称真机帧率或真人已复验。
 每条必须pass/fail/insufficient。画面未包含所需界面/元素/前后状态时用insufficient，不得凭经验补全。
 pass/fail至少提供两个具体可观测事实：截图path、元素、归一化bbox[x,y,width,height]、实际文字及具体颜色/形状/遮挡关系。
+bbox四个数必须在0到1之间，x+width和y+height不得超过1，禁止像素坐标或右下角坐标。
+例如1280×800截图中左上角(640,320)、宽128高80的区域必须写[0.5,0.4,0.1,0.1]，不得写[640,320,768,400]。
 通常每项只写2个事实；跨三视口可读性最多4个事实。rationale不超过100汉字，limitations写1至2条，避免重复描述。
 不能只说“布局合理/符合要求/清晰美观/已通过”。引用可见中文或具体外形，并精确指出位于哪张图的哪个区域。
 portrait_layout必须检查竖屏图，landscape_layout必须检查手机横屏图；不要用桌面横屏替代手机横屏。
