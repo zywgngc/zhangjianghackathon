@@ -1,8 +1,8 @@
 # Harness 与 WebMCP 联合运行
 
-本次最终对齐 `codex/game-harness@bb451eb` 与 `Webmcp@82862cf`。Python harness 保留生成队列、模型预算、Builder、Chromium、QA 和发布门禁；Node WebMCP runtime 保留研究任务、修订、默认决策、玩法拆分和两套三轮讨论账本。harness v2 已提供 Phaser/Babylon 多文件项目流水线；本次不改写该实现，研究蓝图的自动接收钩子目前只接入 v1 单文件入口。
+研究适配器最初基于 `codex/game-harness@bb451eb` 与 `Webmcp@82862cf`，已通过 `ab75969` 合入主开发分支。Python harness 保留生成队列、模型预算、Builder、Chromium、QA 和发布门禁；Node WebMCP runtime 保留研究任务、修订、默认决策、玩法拆分和两套三轮讨论账本。harness v2 已提供 Phaser/Babylon 多文件项目流水线；研究蓝图的自动接收钩子目前只接入 v1 单文件入口。
 
-**交付范围：WebMCP 是 harness 内的研究组件。** 本次工作放在独立的 `codex/webmcp-harness-integration` 分支，供 harness 负责人审阅；不直接更新 `codex/game-harness` 或部署服务。harness 侧改动限于接入适配、固定版本蓝图传递、工作台入口，以及本机集成验证所需的 Windows/UTF-8 兼容修复。Builder、浏览器测试器、QA 和发布决策继续由 harness 维护；素材门户实现继续属于门户负责人。
+**交付范围：WebMCP 是 harness 内的研究组件。** 原集成来自 `codex/webmcp-harness-integration@77a0ed2`，合并时保留持续更新的 v2 编码、构建和验收实现。Builder、浏览器测试器、QA 和发布决策继续由 harness 维护；素材门户实现继续属于门户负责人。
 
 ```mermaid
 flowchart LR
@@ -40,11 +40,15 @@ Windows 联合启动用于研究组件与 v1 的接入验证。上游 v2 工程�
 
 需要 Node.js `>=24.10 <25`。脚本在 loopback 启动 Python `18080` 与 Node `4174`，生成仅在两个服务内存中共享的 backend token，退出时停止它启动的 Node 子进程。可用 `--port 18081 --research-port 4175` 改端口。已有独立 studio 占用端口时选择另一个 research port。研究运行不调用模型；生成游戏仍需配置 `OPENAI_API_KEY`，浏览器验收需 `.venv/bin/python -m playwright install chromium`。
 
+Builder 可继续使用已验证的 Node22；以 `--research-node /path/to/node24` 只为研究侧车选择 Node24，不改变 Builder 的 PATH。版本探测和研究子进程仅接收明确列出的平台环境与研究服务配置，不继承模型密钥、RAG/门户口令、SSH agent 或 `NODE_OPTIONS`。
+
 打开 [harness](http://127.0.0.1:18080)，点击“研究 MAS · 决策与蓝图”，或直接访问 [研究工作台](http://127.0.0.1:18080/research)。`HARNESS_API_TOKEN` 如果已配置，在主工作台“访问设置”中输入；研究工作台复用同一 sessionStorage 口令。浏览器不会接触 backend research token。原有独立 `pnpm start` 入口仍可使用。
 
 若分别启动两端：Node 配置 `WEBMCP_TOKEN`，Python 配置相同的 `WEBMCP_RESEARCH_TOKEN`（至少 16 字符）和 `WEBMCP_RESEARCH_URL=http://127.0.0.1:4174`。URL 必须是 origin，不带路径、查询、用户名或密码。backend token 与面向用户的 `HARNESS_API_TOKEN` 是两个不同边界。
 
-**数据路径：** harness 继续使用 `DATA_DIR` 与 rollback journal；Node 使用 `WEBMCP_DB` 与 WAL。Node 的数据库必须位于单台机器的本地磁盘，不能直接放在 210 的 NFS checkout 上。NFS 部署应设置例如 `WEBMCP_DB=/var/lib/webmcp/research.sqlite`，并自行准备该本地目录权限。此集成不自动启动远程服务或部署到 210。
+**数据路径：** harness 继续使用 `DATA_DIR` 与 rollback journal；Node 使用 `WEBMCP_DB` 与 WAL。Node 的数据库必须位于单台机器的本地磁盘，不能直接放在 210 的 NFS checkout 上。NFS 部署应设置例如 `WEBMCP_DB=/var/lib/webmcp/research.sqlite`，并自行准备该本地目录权限。
+
+2026-10-17 已在 210 启动独立 Node24 研究侧车，内部地址 `127.0.0.1:4175`，经主服务 `18080/api/research` 访问；已有其他服务占用的 4174 保持原状。研究 SQLite 位于已确认 ext4 的 `/var/tmp/youzao-webmcp-zhaoyiwen/research.sqlite`，后端口令仅保存在权限为600的服务端 `.env`。通过主网关创建的三个研究任务均真实返回 `partial`，分别保留54/88/83条 `not_executed` 验收项及明确 synthetic 候选；没有启动 Builder 或调用模型。证据保存在服务器 `.harness-dev/research-deployment-smoke.json`。这些研究任务与三份正式游戏生成任务分别计数，研究完成不构成游戏通过。
 
 ## 接口与责任
 

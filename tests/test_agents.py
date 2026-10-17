@@ -115,3 +115,21 @@ async def test_ambiguous_or_incomplete_preamble_output_is_rejected(settings, sto
             await agent.structured(rid, "brief", "rewrite", "改写需求", request_data, Brief)
     finally:
         await agent.close()
+
+
+async def test_valid_json_source_with_literal_fences_is_preserved(settings, store, request_data, contracts):
+    rid = store.create(request_data)["id"]
+    agent = AgentClient(settings, store)
+    payload = {**contracts["brief"], "rewritten_prompt": "游戏内显示代码：```ts\nconst score = 100;\n```，规则保持原样。"}
+    calls = []
+    async def complete(*args, **kwargs):
+        calls.append(args)
+        return json.dumps(payload, ensure_ascii=False)
+    agent.complete = complete
+    try:
+        result = await agent.structured(rid, "brief", "rewrite", "保留内容", request_data, Brief)
+        assert result.rewritten_prompt == payload["rewritten_prompt"]
+        assert len(calls) == 1
+        assert not any(event["kind"] == "schema_retry" for event in store.events(rid))
+    finally:
+        await agent.close()

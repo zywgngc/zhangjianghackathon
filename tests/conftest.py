@@ -6,7 +6,11 @@ from game_harness.store import Store
 
 @pytest.fixture
 def settings(tmp_path):
-    return Settings(data_dir=tmp_path, api_key="test-key", max_repairs=1, concurrency=1)
+    # A configured development service must never turn a unit-test fixture into
+    # an outbound request to its model, research, retrieval or material service.
+    return Settings(data_dir=tmp_path, api_key="test-key", base_url="https://test.invalid/v1",
+                    max_repairs=1, concurrency=1, api_token="", research_url="", research_token="",
+                    rag_url="", rag_token="", portal_url="", portal_token="")
 
 
 @pytest.fixture

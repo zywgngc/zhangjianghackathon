@@ -152,6 +152,12 @@ class AgentClient:
         for attempt in range(2):
             content = await self.complete(rid, stage, role, instruction + contract, data, images=images, max_tokens=max_tokens)
             try:
+                # Source strings may legitimately contain Markdown fences.
+                # A complete JSON document takes precedence over wrapper repair.
+                try:
+                    return schema.model_validate_json(content.strip())
+                except ValidationError:
+                    pass
                 clean = re.sub(r"^```(?:json)?\s*|\s*```$", "", content.strip())
                 blocks = re.findall(r"```(?:json)?\s*\n?(.*?)```", content, flags=re.DOTALL)
                 if len(blocks) == 1:
