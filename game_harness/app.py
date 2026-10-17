@@ -70,6 +70,7 @@ def create_app(settings=None, agents_factory=AgentClient, validator_factory=Brow
         return {"model": settings.model, "role_models": {r: settings.role_model(r) for r in ["rewrite", "design", "build", "qa", "repair"]},
                 "engines": ["auto", "canvas", "dom"], "max_repairs": settings.max_repairs,
                 "max_calls": settings.max_calls, "max_tokens": settings.max_tokens,
+                "reasoning_effort": settings.reasoning_effort, "stream_build": settings.stream_build,
                 "knowledge_chunks": len(retriever.documents), "external_rag": bool(settings.rag_url), "vision_qa": settings.vision_qa}
 
     @app.post("/api/runs", status_code=202, dependencies=auth)

@@ -79,6 +79,7 @@ class Harness:
     async def checkpoint(self, rid, name, role, instruction, data, schema, images=None):
         saved = self.store.read_json(rid, name + ".json")
         metadata = {"data": data, "model": self.settings.role_model(role), "instruction": instruction,
+                    "reasoning_effort": self.settings.reasoning_effort,
                     "images": [{"name": p.name, "sha256": hashlib.sha256(p.read_bytes()).hexdigest()} for p in images or []]}
         fingerprint = hashlib.sha256(json.dumps(metadata, ensure_ascii=False, sort_keys=True).encode()).hexdigest()
         completed = self.store.read_json(rid, name + ".checkpoint.json")
@@ -129,7 +130,8 @@ class Harness:
                             "test_report": self.store.read_json(rid, f"v{version - 1}.report.json"),
                             "qa_review": self.store.read_json(rid, f"v{version - 1}.review.json")}
                 role = "build" if version == 1 else "repair"
-                self.store.write(rid, f"v{version}.build-input.json", {"role": role, "model": self.settings.role_model(role), "data": data})
+                self.store.write(rid, f"v{version}.build-input.json", {"role": role, "model": self.settings.role_model(role),
+                    "reasoning_effort": self.settings.reasoning_effort, "data": data})
                 instruction = ("你是资深游戏开发代理，按设计实现完整可玩的中文游戏。" if version == 1 else
                                "你是游戏修复代理，按实测报告和 QA 缺陷修复全部严重问题，保留已正确实现的玩法。返回完整修复文件。")
                 html = await self.agents.complete(rid, role, role, instruction + GAME_CONTRACT, data, max_tokens=16000)

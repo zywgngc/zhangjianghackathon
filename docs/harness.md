@@ -39,6 +39,8 @@ Pydantic 严格校验 `Brief`、`Design` 和 `Review`。多余字段被拒绝；
 
 Builder / Repair 默认使用流式响应，每 5 秒记录一次生成进度；收到结束标记后才交付候选代码。`STREAM_BUILD=false` 可适配没有 SSE 的服务。单次网络请求默认超时 300 秒，浏览器候选测试默认超时 60 秒，总任务时限仍独立生效。
 
+当前 qwen3.8-max 网关已实测支持 `reasoning_effort="none"`，因此 `MODEL_REASONING_EFFORT=none` 为快速默认配置。模型名不变；修改该环境变量可调整推理设置，设为空值则不发送该参数，便于接入其他兼容服务。已验证 `enable_thinking=false` 在此网关不能完全关闭推理，不能用它代替本设置。
+
 默认最多 16 次模型请求、100000 个已报告 token、2 次修复和 1200 秒总任务时限。发起请求前用保守的输入估算和输出上限检查剩余 token；供应商 tokenizer 与图片计费可能不同，真实 usage 超过预算会立即停止后续阶段。网络中断时供应商实际计费可能无法获知，calls 仍被计数。角色和模型名在事件中记录。
 
 ```text

@@ -35,6 +35,7 @@ async def main():
     settings = load_settings()
     agents = AgentClient(settings, None)
     outputs = {}
+    model_options = {"reasoning_effort": settings.reasoning_effort} if settings.reasoning_effort else {}
     try:
         for mode in ("text", "vision"):
             content = "只回复：连接成功"
@@ -43,7 +44,7 @@ async def main():
                 content = [{"type": "text", "text": "请根据图片输出JSON：{shapes:[{color,shape,position}],number_in_red_shape:字符串,total_shapes:整数,chinese_text:[字符串]}。用中文，区分正方形与长方形，读出全部文字与数字。"},
                            {"type": "image_url", "image_url": {"url": "data:image/png;base64," + encoded}}]
             start = time.monotonic()
-            response = await agents.client.chat.completions.create(model=settings.model, messages=[{"role": "user", "content": content}], max_tokens=1536)
+            response = await agents.client.chat.completions.create(model=settings.model, messages=[{"role": "user", "content": content}], max_tokens=1536, **model_options)
             outputs[mode] = {"model": response.model, "content": response.choices[0].message.content,
                              "finish_reason": response.choices[0].finish_reason,
                              "usage": response.usage.model_dump() if response.usage else None,
@@ -51,7 +52,7 @@ async def main():
         start = time.monotonic()
         stream = await agents.client.chat.completions.create(model=settings.model,
             messages=[{"role": "user", "content": "只回复：流式接口正常"}], max_tokens=128,
-            stream=True, stream_options={"include_usage": True})
+            stream=True, stream_options={"include_usage": True}, **model_options)
         chunks, usage = [], None
         try:
             async for chunk in stream:

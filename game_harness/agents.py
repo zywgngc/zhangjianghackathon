@@ -98,12 +98,16 @@ class AgentClient:
             call_number = self.store.get(rid)["calls"]
             model = self.settings.role_model(role)
             self.store.event(rid, stage, "model_start", {"role": role, "model": model, "call": call_number,
+                                                        "reasoning_effort": self.settings.reasoning_effort,
                                                         "images": [p.name for p in images or []]})
             start = time.monotonic()
             try:
-                content, usage, finish = await self.request(rid, stage, role, {
+                payload = {
                     "model": model, "messages": messages, "max_tokens": output_limit,
-                    "temperature": .3 if role in {"qa", "design"} else .65})
+                    "temperature": .3 if role in {"qa", "design"} else .65}
+                if self.settings.reasoning_effort:
+                    payload["reasoning_effort"] = self.settings.reasoning_effort
+                content, usage, finish = await self.request(rid, stage, role, payload)
             except (APIConnectionError, APIStatusError) as exc:
                 retryable = isinstance(exc, APIConnectionError) or exc.status_code in {408, 409, 429, 500, 502, 503, 504}
                 self.store.event(rid, stage, "model_error", {"error_type": type(exc).__name__, "retryable": retryable})

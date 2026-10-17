@@ -21,6 +21,7 @@ class Settings:
     browser_timeout: float = field(default_factory=lambda: float(os.getenv("BROWSER_TIMEOUT_SECONDS", "60")))
     vision_qa: bool = field(default_factory=lambda: os.getenv("VISION_QA", "true").lower() == "true")
     stream_build: bool = field(default_factory=lambda: os.getenv("STREAM_BUILD", "true").lower() == "true")
+    reasoning_effort: str = field(default_factory=lambda: os.getenv("MODEL_REASONING_EFFORT", "none"))
     api_token: str = field(default_factory=lambda: os.getenv("HARNESS_API_TOKEN", ""))
     rag_dir: str = field(default_factory=lambda: os.getenv("RAG_DIR", ""))
     rag_url: str = field(default_factory=lambda: os.getenv("RAG_API_URL", ""))
