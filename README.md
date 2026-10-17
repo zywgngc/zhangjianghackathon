@@ -4,7 +4,7 @@
 
 v2 已补齐长规格入口、真实第三方引擎模板、工具式编码循环、功能 DAG、检查点恢复及项目交付。**三个官方大型 case 已在 210 使用完整原文开始真实实现，目前尚未全部验收通过。** 引擎模板或 Python 回归测试通过，不代表这些游戏已经完成。
 
-已合并团队新增的 [WebMCP 研究服务与工作台](webmcp/runtime.md)，包括持久任务、受限讨论及三份参考规格；当前门户使用合成候选，真实素材检索与来源验证仍待接入。组件边界见 [WebMCP 交接文档](webmcp/handoff.md)。
+已合并团队新增的 [WebMCP 研究服务与工作台](webmcp/runtime.md)，包括持久任务、受限讨论及三份参考规格。GitHub 原型检索默认仅读缓存，显式开启后受持久额度和冷却限制；真实素材门户仍未配置，缺失时会明确报告，不生成模拟成功。组件边界见 [WebMCP 交接文档](webmcp/handoff.md)。
 
 本集成分支增加可选的 `/api/research` 适配器与 `/research` 工作台入口，见 [WebMCP 组件接入说明](docs/webmcp-integration.md)。研究组件不接管项目编排、编码、验收或发布；固定蓝图的接收钩子目前仅接入 v1 `/api/runs`，v2 `/api/projects` 仍由 harness 负责人维护。
 
@@ -111,13 +111,13 @@ RUN_PROJECT_BUILDS=1 .venv/bin/python -m pytest -q tests/test_project_runtime.py
 
 ## 当前证据与团队接入
 
-三个官方 case 的引擎锁与完整规格已接入，现有真实任务如下；它们尚未宣称通过，状态以 API 和任务目录内报告为准。
+三个官方 case 的引擎锁与完整规格已接入，现有真实任务如下。已保存的源码、离线 HTML 和原始证据包见 [游戏交付目录](examples/README.md)；状态以绑定同一源码 SHA 的逐项验收为准。
 
-| case | 引擎 | 本轮真实任务 ID |
-| --- | --- | --- |
-| 数字门枪手 `GAME-TEST-001` | Babylon.js | `5534e13dfdc74d1aa810f2beb719e5ed` |
-| 武林幸存者 `GAME-TEST-002` | Phaser | `c0e2aefc313246fc879c5a89f505bdfb` |
-| 百炼英雄／战力吞噬者 `GAME-TEST-003` | Babylon.js | `11fc08ffeb364846aadb87751eb842cf` |
+| case | 引擎 | 本轮真实任务 ID | 当前正式验收 |
+| --- | --- | --- | --- |
+| 数字门枪手 `GAME-TEST-001` | Babylon.js | `5534e13dfdc74d1aa810f2beb719e5ed` | 54 / 54 通过，已交付 |
+| 武林幸存者 `GAME-TEST-002` | Phaser | `c0e2aefc313246fc879c5a89f505bdfb` | 完整 88 项验收推进中 |
+| 百炼英雄／战力吞噬者 `GAME-TEST-003` | Babylon.js | `11fc08ffeb364846aadb87751eb842cf` | 82 / 83 通过；T69 待真实手机验证，交付为候选 |
 
 v1 打地鼠真实生成任务 `b475570322d5409dadfc5549ceae0053` 已通过浏览器和截图 QA，另用真实键盘操作验证胜、负、暂停及重开。它是独立的小型游戏证据，不替代上述大型 case。
 

@@ -6,13 +6,13 @@ v2 保留 `prompting` 资料、`tests` 三份完整规格和参考图、`Webmcp`
 
 | case | 完整原文与引擎锁 | 本轮实际任务 ID | 验收状态 |
 | --- | --- | --- | --- |
-| `GAME-TEST-001` 数字门枪手 | `case1-Number_Gate_Shooter/001数字门枪手.txt`；Babylon.js + React + TS + Vite | `5534e13dfdc74d1aa810f2beb719e5ed` | 真实实现推进中，尚未完整通过 |
+| `GAME-TEST-001` 数字门枪手 | `case1-Number_Gate_Shooter/001数字门枪手.txt`；Babylon.js + React + TS + Vite | `5534e13dfdc74d1aa810f2beb719e5ed` | 54 / 54 通过；源码与完整证据已交付 |
 | `GAME-TEST-002` 武林幸存者 | `case2-Wuxia_Survivors/002武林幸存者.txt`；Phaser + React + TS + Vite | `c0e2aefc313246fc879c5a89f505bdfb` | 真实实现推进中，尚未完整通过 |
-| `GAME-TEST-003` 百炼英雄／战力吞噬者 | `case3-Power_Hunter/003百炼英雄.txt`；Babylon.js + React + TS + Vite | `11fc08ffeb364846aadb87751eb842cf` | 真实实现推进中，尚未完整通过 |
+| `GAME-TEST-003` 百炼英雄／战力吞噬者 | `case3-Power_Hunter/003百炼英雄.txt`；Babylon.js + React + TS + Vite | `11fc08ffeb364846aadb87751eb842cf` | 82 / 83 通过；T69 真实手机待验，候选已交付 |
 
-此表运行 ID/状态沿用 harness 负责人的上游交接记录，本次组件集成没有重跑或重新核实远程游戏任务。本分支为 Windows 检出把目录中的冒号改成连字符，原文和图片内容未改。
+上表已根据 210 实际任务状态与导出证据更新。`GAME-TEST-001` 源码 SHA 为 `ff20b0be5e62aec6e18c52a51a1e691bcebe7a077a91e6b089b3a090495353ea`；`GAME-TEST-003` 为 `542342494725538c6ca80c8e5c00299fbb505f3efafe3751ac105c137c544f2a`。源码、离线 HTML、原始报告与逐文件哈希见 [交付目录](../examples/README.md)。目录中的冒号已为 Windows 检出改成连字符，原文和图片内容未改。
 
-任务在 210 的 `data/runs/<id>/` 保留原文、计划、真实编码动作、编译日志、失败/恢复轨迹和独立审查。可用 `GET /api/projects/{id}` 查询当前状态。上述 ID 是持续执行的实际回合，不是三个已完成游戏，也不应通过新建 ID 隐去失败或重置额度。
+任务在 210 的 `data/runs/<id>/` 保留原文、计划、真实编码动作、编译日志、失败/恢复轨迹和独立审查。可用 `GET /api/projects/{id}` 查询当前状态。三个游戏尚未全部验收；待完成任务继续使用原 ID，不通过新建 ID 隐去失败或重置额度。
 
 工作台可以从官方 case 直接启动，或通过 `POST /api/benchmarks/{case_id}/runs` 创建新回合。已存在的任务继续使用同一 ID 跟踪与恢复；每次 POST 都会创建新任务。完整长规格也可经 `POST /api/projects` 或 TXT 导入提交，最大 1,000,000 字符。
 
@@ -52,6 +52,8 @@ v2 保留 `prompting` 资料、`tests` 三份完整规格和参考图、`Webmcp`
 
 v2 已调用该检索边界，而非只预留接口：每个功能节点生成 `project-retrieval-<feature>.json` 并保留 query、documents 和 warnings；编码工具按需读取 `retrieved_knowledge`。外部 RAG 和素材门户的真实服务地址仍未提供，默认本地检索与 HTTP 适配实现不能表述为真实外部服务已经上线。
 
+`zx@2fb926c` 的素材与来源发现组件已完成静态接入评估，尚未合入运行时。保留路径、旧 harness 冲突、下载器另存策略和待实现的桥接验收见 [素材组件接入评估](material-component-integration.md)。
+
 `material_portal.MaterialPortalClient` 使用团队 `webmcp/material-portal.schema.json` 校验请求与结果，并检查版本、requestId、数量、类型、候选 ID 唯一性和讨论关联字段。配置 `MATERIAL_PORTAL_URL` 后通过 HTTP bridge 发送 v0.2 首轮 archetype 请求，`discussion.runId` 使用真实任务 ID；可选 `MATERIAL_PORTAL_TOKEN` 用于鉴权，`MATERIAL_PORTAL_SCHEMA` 可覆盖契约路径。目前没有将该适配器表述为已连接真实外部 MCP 服务。
 
 - mock 结果仅作契约和接口测试，不能成为真实素材来源证据。
@@ -61,7 +63,7 @@ v2 已调用该检索边界，而非只预留接口：每个功能节点生成 `
 - 异步取消传播至 HTTP 请求；没有真实作业协议时不声称具备外部作业恢复。
 - `needs_clarification` 保留问题与候选，不能伪造答复或把未解决澄清结果直接注入生成。
 
-[WebMCP 交接说明](../webmcp/handoff.md) 区分研究 MAS、浏览器 WebMCP 命令适配器和外部素材门户。合并的组件 `82862cf` 已提供可执行的独立研究服务，详见 [运行说明](../webmcp/runtime.md)。它为三个固定 case 分配机制，采用分离的 Researcher / Planner / Reviewer 组件、确定性参考规划和默认 synthetic 门户；尚未调用 LLM 规划、检查来源代码或验证候选之间的兼容组合。全部蓝图明确标记 `readiness: partial`，全部正式游戏测试仍为 `not_executed`。
+[WebMCP 交接说明](../webmcp/handoff.md) 区分研究 MAS、浏览器 WebMCP 命令适配器和外部素材门户。最初组件 `82862cf` 使用确定性参考规划与 synthetic 门户；下方保留其早期隔离验证记录。后续 `527a4da`、`4304ae6` 已接入 GitHub 原型发现、固定 commit 的少量源码静态证据及持久请求保护，详见 [仓库研究边界](../webmcp/github-research.md)。210 当前 `/api/research/providers` 返回 `github-archetype-research`、`github.enabled: false`、`material-portal-not-configured`：原型默认仅读缓存，真实材料缺口明确保留。59 项 Node 回归和 TypeScript check 已通过；这不代表联网搜索、来源行为或游戏玩法已经验证。研究仍未调用 LLM 规划、解释图片或验证候选组合，蓝图继续标记 `readiness: partial`；蓝图的 `not_executed` 验收字段与上表独立执行的正式游戏结果分开记录。
 
 该服务已实现两套各最多三次的独立追问预算、必答澄清等待、可选问题默认值、修订与父请求关联、请求幂等、取消与迟到结果隔离，以及 SQLite 重启恢复和跨进程预算预留。门户请求只有在适配器明确保证 request-ID 幂等时才能安全重放。浏览器适配器提供七个研究工具，检测到 `modelContext` 才注册；普通 studio / HTTP API 可单独使用。自动化注册测试使用模拟 `modelContext`，不能作为本轮原生浏览器 WebMCP 注册成功的证据。
 
@@ -69,7 +71,7 @@ Python `MaterialPortalClient` 的 v0.2 素材搜索请求与研究服务的 `POS
 
 真实外部 MCP tool 名称、传输和鉴权、图片 URI 的获取与解读、来源代码和许可审查、非幂等外部作业恢复，以及蓝图到 Builder / QA 的适配仍需与组件负责人对齐。外部候选即使 `isMock: false` 也只标记 `discovered`；revision 或 confidence 不能替代来源与运行验证。这些接入事项不再阻止 harness 接收三份完整规格或使用真实引擎构建，游戏本身仍必须完成原文规定的全部正式验收。
 
-## WebMCP 在 210 的隔离验证
+## WebMCP 在 210 的早期隔离验证
 
 本轮在 `.harness-dev/webmcp-validation/` 同步组件源码，使用独立 Node `v24.10.0` 与 pnpm `10.18.3`，完成 `pnpm install --frozen-lockfile`、`pnpm check`、`pnpm test` 和 `pnpm demo`。Node Linux x64 压缩包按 [官方 SHA256 清单](https://nodejs.org/download/release/v24.10.0/SHASUMS256.txt) 校验为 `2642f4428869aca32443660fd71b3918e2be1277a899bdcaeb64c93b54b5af17`。主游戏环境仍为 Node `v22.21.0`，没有重启主 harness、修改门户地址或发起重复的正式游戏任务。
 
