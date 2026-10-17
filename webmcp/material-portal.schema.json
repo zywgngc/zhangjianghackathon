@@ -1,0 +1,588 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:zhangjianghackathon:webmcp:material-portal:0.1",
+  "title": "Proposed material portal contract v0.1",
+  "description": "Application contract. Root accepts a request or result; validate specific boundaries through the named definitions.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/MaterialSearchRequest"
+    },
+    {
+      "$ref": "#/$defs/MaterialSearchResult"
+    }
+  ],
+  "$defs": {
+    "ImageReference": {
+      "type": "object",
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "uri",
+          "minLength": 1
+        },
+        "mimeType": {
+          "enum": [
+            "image/png",
+            "image/jpeg",
+            "image/webp"
+          ]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "uri",
+        "mimeType",
+        "description"
+      ],
+      "additionalProperties": false
+    },
+    "SearchConstraints": {
+      "type": "object",
+      "properties": {
+        "engine": {
+          "enum": [
+            "html",
+            "phaser",
+            "babylon",
+            null
+          ]
+        },
+        "engineVersion": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "platform": {
+          "const": "web"
+        },
+        "language": {
+          "enum": [
+            "typescript",
+            "javascript",
+            "any"
+          ]
+        },
+        "inputModes": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "keyboard",
+              "pointer",
+              "touch"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "engine",
+        "engineVersion",
+        "platform",
+        "language",
+        "inputModes"
+      ],
+      "additionalProperties": false
+    },
+    "MaterialSearchRequest": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "contractVersion": {
+              "const": "0.1"
+            },
+            "requestId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "projectRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ImageReference"
+              },
+              "minItems": 0
+            },
+            "constraints": {
+              "$ref": "#/$defs/SearchConstraints"
+            },
+            "materialKinds": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "game_repository",
+                  "source_code",
+                  "algorithm_documentation",
+                  "reference_media"
+                ]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10
+            },
+            "purpose": {
+              "const": "archetype"
+            }
+          },
+          "required": [
+            "contractVersion",
+            "requestId",
+            "projectRevision",
+            "description",
+            "images",
+            "constraints",
+            "materialKinds",
+            "limit",
+            "purpose"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "contractVersion": {
+              "const": "0.1"
+            },
+            "requestId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "projectRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1
+            },
+            "images": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ImageReference"
+              },
+              "minItems": 0
+            },
+            "constraints": {
+              "$ref": "#/$defs/SearchConstraints"
+            },
+            "materialKinds": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "game_repository",
+                  "source_code",
+                  "algorithm_documentation",
+                  "reference_media"
+                ]
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10
+            },
+            "purpose": {
+              "const": "mechanic"
+            },
+            "mechanicId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "requiredBehavior": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            }
+          },
+          "required": [
+            "contractVersion",
+            "requestId",
+            "projectRevision",
+            "description",
+            "images",
+            "constraints",
+            "materialKinds",
+            "limit",
+            "purpose",
+            "mechanicId",
+            "requiredBehavior"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "MaterialSource": {
+      "type": "object",
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "uri",
+          "minLength": 1
+        },
+        "repositoryUrl": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri",
+          "minLength": 1
+        },
+        "revision": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "symbols": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "uri",
+        "repositoryUrl",
+        "revision",
+        "paths",
+        "symbols"
+      ],
+      "additionalProperties": false
+    },
+    "LicenseEvidence": {
+      "type": "object",
+      "properties": {
+        "identifier": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "sourceUri": {
+          "type": "string",
+          "format": "uri",
+          "minLength": 1
+        },
+        "scope": {
+          "enum": [
+            "source_code",
+            "assets",
+            "mixed",
+            "unknown"
+          ]
+        }
+      },
+      "required": [
+        "identifier",
+        "sourceUri",
+        "scope"
+      ],
+      "additionalProperties": false
+    },
+    "MaterialCandidate": {
+      "type": "object",
+      "properties": {
+        "candidateId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "game_repository",
+            "source_code",
+            "algorithm_documentation",
+            "reference_media"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "$ref": "#/$defs/MaterialSource"
+        },
+        "coverageHints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "license": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LicenseEvidence"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sourceUri": {
+                "type": "string",
+                "format": "uri",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "description",
+              "sourceUri"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "candidateId",
+        "kind",
+        "title",
+        "summary",
+        "source",
+        "coverageHints",
+        "license",
+        "evidence",
+        "limitations"
+      ],
+      "additionalProperties": false
+    },
+    "MaterialSearchResult": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "contractVersion": {
+              "const": "0.1"
+            },
+            "requestId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "provider": {
+              "type": "string",
+              "minLength": 1
+            },
+            "retrievedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "isMock": {
+              "type": "boolean"
+            },
+            "status": {
+              "const": "completed"
+            },
+            "candidates": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MaterialCandidate"
+              },
+              "minItems": 0,
+              "maxItems": 10
+            },
+            "limitations": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 0
+            }
+          },
+          "required": [
+            "contractVersion",
+            "requestId",
+            "provider",
+            "retrievedAt",
+            "isMock",
+            "status",
+            "candidates",
+            "limitations"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "contractVersion": {
+              "const": "0.1"
+            },
+            "requestId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "provider": {
+              "type": "string",
+              "minLength": 1
+            },
+            "retrievedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "isMock": {
+              "type": "boolean"
+            },
+            "status": {
+              "const": "partial"
+            },
+            "candidates": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MaterialCandidate"
+              },
+              "minItems": 0,
+              "maxItems": 10
+            },
+            "limitations": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            }
+          },
+          "required": [
+            "contractVersion",
+            "requestId",
+            "provider",
+            "retrievedAt",
+            "isMock",
+            "status",
+            "candidates",
+            "limitations"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "contractVersion": {
+              "const": "0.1"
+            },
+            "requestId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "provider": {
+              "type": "string",
+              "minLength": 1
+            },
+            "retrievedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "isMock": {
+              "type": "boolean"
+            },
+            "status": {
+              "const": "failed"
+            },
+            "error": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "enum": [
+                    "UNAVAILABLE",
+                    "TIMEOUT",
+                    "RATE_LIMITED",
+                    "INVALID_INPUT",
+                    "UNSUPPORTED_INPUT",
+                    "AUTH_REQUIRED"
+                  ]
+                },
+                "message": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "retryable": {
+                  "type": "boolean"
+                },
+                "retryAfterMs": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "code",
+                "message",
+                "retryable",
+                "retryAfterMs"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "contractVersion",
+            "requestId",
+            "provider",
+            "retrievedAt",
+            "isMock",
+            "status",
+            "error"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

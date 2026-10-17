@@ -1,0 +1,28 @@
+digraph Research {
+  graph [rankdir=TB, bgcolor="transparent", pad=0.25, nodesep=0.35, ranksep=0.52, splines=spline, outputorder=edgesfirst];
+  node [shape=box, style="rounded,filled", fillcolor="#f5f5f5", color="#d7d7d7", fontname="Arial", fontsize=15, fontcolor="#303030", margin="0.20,0.15"];
+  edge [color="#8d9195", arrowsize=0.65, fontname="Arial", fontsize=12, fontcolor="#555a60"];
+  brief [label="Brief + reference images\nselected architecture + preferences"];
+  archetypes [label="Archetype research\nseveral similar games"];
+  planner [label="Planner\nchoices + editable defaults"];
+  developer [label="Developer overrides\nor continue with defaults"];
+  graph [label=""];
+  mechanics [label="Mechanic contracts\ninputs, outputs, state, dependencies"];
+  researchA [label="Research mechanic A\nmultiple source candidates"];
+  researchB [label="Research mechanic B\nmultiple source candidates"];
+  researchC [label="Research mechanic C\nmultiple source candidates"];
+  reviewer [label="Evidence + compatibility reviewer\ninspect, verify, select a coherent combination"];
+  blueprint [label="Versioned implementation blueprint\nrecommended sources + alternatives + tests"];
+  builder [label="Existing Builder → QA → Preview"];
+  brief -> archetypes -> planner -> mechanics;
+  {rank=same; planner; developer;}
+  developer -> planner;
+  mechanics -> researchA;
+  mechanics -> researchB;
+  mechanics -> researchC;
+  researchA -> reviewer;
+  researchB -> reviewer;
+  researchC -> reviewer;
+  reviewer -> mechanics [label="Gaps or conflicts", constraint=false];
+  reviewer -> blueprint -> builder;
+}

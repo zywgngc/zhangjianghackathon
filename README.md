@@ -68,3 +68,9 @@ curl http://127.0.0.1:18080/api/runs \
 保留原始 [系统提示词](system_prompt.txt)、[架构 Markdown](web-game-generator-mas-plan.md)、[架构 HTML](web-game-generator-mas-plan.html) 及 `diagrams/`。原始提示词面向“原型复刻＋人工确认”；本 harness 按当前 hackathon 的一句话自动生成需求运行，自动记录补充假设。原提示词文件没有被直接注入运行时。
 
 已验证的是 Chromium 的加载、状态机、操作冒烟、暂停、继续、重开、三种屏幕尺寸，以及截图/代码模型审查；不代表完整玩法、iOS Safari、微信或性能验收全部通过。真实测试证据保存在 `data/runs/<id>/`。
+
+## 团队新增组件与验收规格
+
+[WebMCP 架构及素材门户契约](webmcp/README.md) 定义了团队外部素材门户的接入边界；当前文档是提案，示例为 mock，不能当成真实检索证据。
+
+`tests` 分支提供数字门枪手、武林幸存者、百炼英雄的长规格和参考图片。它们包含严格的引擎与内容要求，与 Python 回归测试分别管理；能力预检不会将不支持的引擎自动改为 Canvas。

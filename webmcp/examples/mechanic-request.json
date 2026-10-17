@@ -1,0 +1,23 @@
+{
+  "contractVersion": "0.1",
+  "requestId": "fixture-movement-002",
+  "projectRevision": 2,
+  "purpose": "mechanic",
+  "mechanicId": "enemy-waypoint-movement",
+  "requiredBehavior": [
+    "Move enemies along ordered 2D waypoints using elapsed simulation time.",
+    "Handle crossing multiple waypoints within one update.",
+    "Emit a goal-reached event once per enemy."
+  ],
+  "description": "Find extractable waypoint-movement implementations or algorithm references compatible with a Phaser web game. The host owns entity state and simulation timing. Return multiple alternatives with relevant source paths and dependency information.",
+  "images": [],
+  "constraints": {
+    "engine": "phaser",
+    "engineVersion": null,
+    "platform": "web",
+    "language": "any",
+    "inputModes": ["pointer", "touch"]
+  },
+  "materialKinds": ["source_code", "algorithm_documentation"],
+  "limit": 3
+}

@@ -1,0 +1,23 @@
+{
+  "contractVersion": "0.1",
+  "requestId": "fixture-archetype-001",
+  "projectRevision": 1,
+  "purpose": "archetype",
+  "description": "Find several open-source 2D tower-defense games with mobile-friendly controls. Compare fixed-path, maze-building, and arena-defense structures, and return source references when available.",
+  "images": [
+    {
+      "uri": "asset://reference/tower-defense-01",
+      "mimeType": "image/png",
+      "description": "Developer reference showing tower placement and enemy routes."
+    }
+  ],
+  "constraints": {
+    "engine": "phaser",
+    "engineVersion": null,
+    "platform": "web",
+    "language": "typescript",
+    "inputModes": ["pointer", "touch"]
+  },
+  "materialKinds": ["game_repository", "source_code"],
+  "limit": 3
+}

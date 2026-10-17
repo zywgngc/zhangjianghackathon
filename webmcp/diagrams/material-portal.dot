@@ -1,0 +1,18 @@
+digraph Portal {
+  graph [rankdir=TB, bgcolor="transparent", pad=0.25, nodesep=0.42, ranksep=0.65, splines=spline, outputorder=edgesfirst];
+  node [shape=box, style="rounded,filled", fillcolor="#f5f5f5", color="#d7d7d7", fontname="Arial", fontsize=15, fontcolor="#303030", margin="0.22,0.17"];
+  edge [color="#8d9195", arrowsize=0.65, fontname="Arial", fontsize=12, fontcolor="#555a60"];
+  researcher [label="Our MAS researcher\narchetype or mechanic query"];
+  port [label="MaterialPortalPort\napplication I/O contract", fillcolor="#edf4f7", color="#b9ccd6"];
+  adapter [label="Our client adapter\ntranslate calls, manage retries and cancellation"];
+  external [label="External MCP material portal\nretrieval + material delivery\nOWNED BY TEAMMATE", style="rounded,filled,dashed"];
+  validation [label="Validate returned payload\ncandidates + provenance + limitations\nor structured failure"];
+  reviewer [label="Our reviewer\ninspect evidence + compare compatibility"];
+  researcher -> port [label="Description + images + constraints"];
+  port -> adapter;
+  {rank=same; adapter; external;}
+  adapter -> external [label="MCP request"];
+  external -> adapter [label="Material results", constraint=false];
+  adapter -> validation;
+  validation -> reviewer;
+}
