@@ -65,6 +65,7 @@ def inspect_html(html: str):
 
 
 class BrowserValidator:
+    version = "2-actionable-controls"
     def __init__(self, settings, store):
         self.settings, self.store = settings, store
 
@@ -119,21 +120,34 @@ class BrowserValidator:
         async def state():
             return await page.evaluate("() => {const g=window.__GAME__; return g ? {state:g.state,score:g.score,ticks:g.ticks} : null}")
 
+        async def click_action(action):
+            controls = page.locator(f'[data-action="{action}"]:visible')
+            # A toolbar and a modal may expose the same action; select an unobstructed one.
+            for index in reversed(range(await controls.count())):
+                candidate = controls.nth(index)
+                try:
+                    await candidate.click(trial=True, timeout=800)
+                except Exception:
+                    continue
+                await candidate.click(timeout=2000)
+                return
+            raise AssertionError("没有可点击的操作按钮：" + action)
+
         try:
             await page.goto("https://game.invalid/index.html", wait_until="load", timeout=10000)
             await page.get_by_test_id("game-root").wait_for(state="visible")
             initial = await state()
             await check(initial and initial.get("state") == "ready", "初始状态 ready")
-            await page.locator('[data-action="start"]').click()
+            await click_action("start")
             await page.wait_for_timeout(400)
             running = await state()
             await check(running and running.get("state") == "running" and isinstance(running.get("ticks"), (int, float)) and running["ticks"] > 0, "开始后真实运行并更新 ticks")
-            await page.locator('[data-action="pause"]').click()
+            await click_action("pause")
             paused = await state()
             await page.wait_for_timeout(160)
             still_paused = await state()
             await check(paused["state"] == still_paused["state"] == "paused" and paused["ticks"] == still_paused["ticks"], "暂停停止更新")
-            await page.locator('[data-action="resume"]').click()
+            await click_action("resume")
             await page.wait_for_timeout(100)
             resumed = await state()
             await check(resumed["state"] == "running" and resumed["ticks"] > paused["ticks"], "继续恢复更新")
@@ -146,7 +160,7 @@ class BrowserValidator:
                 for key in ("ArrowLeft", "ArrowRight", "Space"):
                     await page.keyboard.press(key)
             await check(True, "已发送触屏/键盘操作")
-            await page.locator('[data-action="restart"]').click()
+            await click_action("restart")
             restarted = await state()
             await check(restarted["state"] == "running" and restarted["score"] == 0, "重开回到 running 且分数归零")
             await check(await page.evaluate("document.documentElement.scrollWidth <= innerWidth + 2"), "布局没有横向溢出")

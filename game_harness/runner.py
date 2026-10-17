@@ -142,13 +142,15 @@ class Harness:
             self.stage(rid, "browser_test")
             report = self.store.read_json(rid, f"v{version}.report.json")
             digest = hashlib.sha256(html.encode()).hexdigest()
-            if report is None or report.get("sha256") != digest or report.get("infrastructure_error"):
+            validator_version = getattr(self.validator, "version", "custom-v1")
+            if report is None or report.get("sha256") != digest or report.get("infrastructure_error") or report.get("validator_version") != validator_version:
                 try:
                     report = await asyncio.wait_for(self.validator.validate(rid, version, html), timeout=self.settings.browser_timeout)
                 except asyncio.TimeoutError:
                     report = {"sha256": digest, "passed": False, "static_errors": [], "viewports": [],
                               "browser_errors": ["浏览器测试超时，请检查阻塞主线程或无法终止的游戏逻辑"],
                               "scope": "浏览器测试超时，未取得完整实测证据"}
+                report["validator_version"] = validator_version
                 self.store.write(rid, f"v{version}.report.json", report)
             self.store.event(rid, "browser_test", "stage_done", {"version": version, "passed": report["passed"]})
             if report.get("infrastructure_error"):
