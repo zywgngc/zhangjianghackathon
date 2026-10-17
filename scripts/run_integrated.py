@@ -2,6 +2,7 @@
 import argparse
 import os
 from pathlib import Path
+import re
 import secrets
 import shutil
 import subprocess
@@ -12,27 +13,57 @@ import uvicorn
 from dotenv import load_dotenv
 
 
+RUNTIME_ENV_KEYS = frozenset({
+    "PATH", "SYSTEMROOT", "WINDIR", "TEMP", "TMP", "TMPDIR",
+    "LANG", "LC_ALL", "LC_CTYPE", "TZ",
+})
+
+
+def runtime_environment():
+    """The trusted sidecar needs platform settings, not host service credentials."""
+    return {name: value for name, value in os.environ.items() if name in RUNTIME_ENV_KEYS}
+
+
+def research_environment(port, token, database):
+    return {**runtime_environment(), "PORT": str(port), "WEBMCP_TOKEN": token,
+            "WEBMCP_DB": str(Path(database).resolve())}
+
+
+def select_research_node(explicit=None):
+    """Select only the sidecar executable; never change the Builder's PATH."""
+    node = str(Path(explicit).expanduser().resolve()) if explicit else shutil.which("node")
+    if not node:
+        raise SystemExit("Node.js 24 is required; pass --research-node /path/to/node24.")
+    try:
+        version = subprocess.check_output([node, "--version"], text=True,
+            env=runtime_environment()).strip()
+    except (OSError, subprocess.CalledProcessError):
+        raise SystemExit("Cannot execute the research Node runtime; check --research-node.") from None
+    match = re.fullmatch(r"v(\d+)\.(\d+)\.(\d+)", version)
+    if not match or int(match[1]) != 24 or int(match[2]) < 10:
+        raise SystemExit("Use Node.js >=24.10 within Node 24; pass --research-node without changing the Builder PATH.")
+    return node
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run the harness with its WebMCP research workspace")
     parser.add_argument("--port", type=int, default=18080)
     parser.add_argument("--research-port", type=int, default=4174)
+    parser.add_argument("--research-node", type=Path,
+        help="Sidecar-only Node >=24.10 <25 executable; the game Builder keeps its current PATH/runtime")
     args = parser.parse_args()
     if not 1 <= args.port <= 65535 or not 1 <= args.research_port <= 65535 or args.port == args.research_port:
         parser.error("Use two distinct ports in 1..65535")
+    if args.research_node:
+        args.research_node = args.research_node.expanduser().resolve()
     root = Path(__file__).resolve().parents[1]
     os.chdir(root)
     load_dotenv(root / ".env")
-    node = shutil.which("node")
-    if not node:
-        raise SystemExit("Node.js 24 is required; install webmcp dependencies with pnpm first.")
-    version = subprocess.check_output([node, "--version"], text=True).strip()
-    parts = version.lstrip("v").split(".")
-    if int(parts[0]) != 24 or int(parts[1]) < 10:
-        raise SystemExit("Use Node.js >=24.10 within the Node 24 release line.")
+    node = select_research_node(args.research_node)
     token = secrets.token_urlsafe(32)
     origin = f"http://127.0.0.1:{args.research_port}"
     database = Path(os.getenv("WEBMCP_DB", str(root / "webmcp/.data/research.sqlite"))).resolve()
-    env = {**os.environ, "PORT": str(args.research_port), "WEBMCP_TOKEN": token, "WEBMCP_DB": str(database)}
+    env = research_environment(args.research_port, token, database)
     child = subprocess.Popen([node, "src/server.ts"], cwd=root / "webmcp", env=env,
         creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
     try:

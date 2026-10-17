@@ -1042,3 +1042,139 @@ async def test_small_approved_configuration_stays_complete_and_file_frontier_upd
     assert client.inputs[0]["data"]["next_unwritten_owned_files"] == ["src/types.ts", "src/config.ts"]
     assert client.inputs[1]["data"]["next_unwritten_owned_files"] == ["src/config.ts"]
     assert client.inputs[2]["data"]["next_unwritten_owned_files"] == []
+
+
+@pytest.mark.parametrize('prefer', ['compiler', 'latest_read', 'stale_compiler'])
+def test_focused_working_file_uses_actual_owned_failure_or_latest_read_not_first_owner(store, tmp_path, prefer):
+    workspace = Workspace(tmp_path / 'game')
+    for name in ['CombatSystem', 'ProjectilePool', 'StatusEffectSystem', 'OtherOwner']:
+        workspace.write_file('src/game/' + name + '.ts', 'export function ' + name + '(): void {}')
+    feature = {'id': 'actual-error-file', 'owned_paths': ['src/game/CombatSystem.ts', 'src/game/ProjectilePool.ts', 'src/game/StatusEffectSystem.ts']}
+    compiler_path = 'src/game/StatusEffectSystem.ts'
+    read_path = 'src/game/ProjectilePool.ts'
+    state = {'history': [{'tool': 'read_file', 'path': read_path,
+        'result': {'ok': True, 'sha256': hashlib.sha256(workspace.read_file(read_path).encode()).hexdigest()}}]}
+    if prefer != 'latest_read':
+        state['build_diagnostics'] = [
+            {'path': 'src/game/OtherOwner.ts', 'source_sha256': hashlib.sha256(workspace.read_file('src/game/OtherOwner.ts').encode()).hexdigest()},
+            {'path': compiler_path, 'source_sha256': '0' * 64 if prefer == 'stale_compiler' else hashlib.sha256(workspace.read_file(compiler_path).encode()).hexdigest()}]
+    expected = compiler_path if prefer == 'compiler' else read_path
+    assert CodingAgent(None, store, workspace)._focus_target(feature, {}, state) == expected
+
+
+def test_signature_headers_are_exact_source_and_ignore_documentation_or_literal_exports():
+    source = '''// export function pretend(): number { return 0; }
+const example = "export function fake(): string {}";
+export function applyStatus(
+  entityId: string,
+  type: 'slow' | 'freeze' | 'burn' | 'poison' | 'stun' | 'knockback',
+  duration: number,
+  strength: number,
+  damagePerTick: number | undefined,
+  isBoss: boolean,
+  config: GameConfig,
+  rng: PRNG,
+  emit: EventSink
+): void {
+  throw new Error('this implementation body must not enter signatures');
+}
+export async function load(name = "a)b("): Promise<string> { return name; }
+'''
+    signatures = CodingAgent._export_function_signatures(source)
+    assert [row['name'] for row in signatures] == ['applyStatus', 'load']
+    assert signatures[0]['signature'] == source[source.index('export function applyStatus'):source.index(' {\n  throw')]
+    assert signatures[0]['parameters_complete'] and signatures[0]['return_type_complete']
+    assert 'name = "a)b("' in signatures[1]['signature']
+    assert 'throw' not in json.dumps(signatures)
+
+
+async def test_case2_evicted_status_dependency_signature_stays_visible_in_focused_projectile_repair(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / 'game')
+    signature = '''export function applyStatus(
+  entityId: string, type: 'slow' | 'freeze' | 'burn' | 'poison' | 'stun' | 'knockback',
+  duration: number, strength: number, damagePerTick: number | undefined,
+  isBoss: boolean, config: GameConfig, rng: PRNG, emit: EventSink
+): void'''
+    workspace.write_file('src/game/types.ts', 'export interface PRNG { next(): number; }')
+    workspace.write_file('src/game/CombatSystem.ts', 'export function updateCombat(): void {}')
+    workspace.write_file('src/game/StatusEffectSystem.ts', signature + ' { /* actual body */ }')
+    projectile = 'export function updateProjectiles(): void {\n' + '// projectile lifecycle\n' * 160 + '\n}\n'
+    workspace.write_file('src/game/ProjectilePool.ts', projectile)
+    actions = [
+        {'tool': 'read_file', 'path': 'src/game/StatusEffectSystem.ts'},
+        {'tool': 'note', 'summary': '依赖签名已读。'},
+        {'tool': 'note', 'summary': '准备投射物具体调用修复。'},
+        {'tool': 'note', 'summary': '旧源码观察会从history3淘汰。'},
+        {'tool': 'read_file', 'path': 'src/game/ProjectilePool.ts'},
+        {'tool': 'read_file', 'path': 'src/game/ProjectilePool.ts'},
+        {'tool': 'apply_patch', 'path': 'src/game/ProjectilePool.ts', 'old': 'export function updateProjectiles(): void', 'new': 'export function updateProjectiles(): void /* dependency signature verified */'},
+        {'tool': 'finish', 'summary': '按真实签名完成精确修复；未宣称逐T验收。'},
+    ]
+    class InspectingClient(ScriptedClient):
+        async def structured(self, rid, stage, role, instruction, packet, schema, **kwargs):
+            if len(self.inputs) == 6:
+                assert schema is FocusedCodingAction
+                assert packet['focused_recovery']['target_file'] == 'src/game/ProjectilePool.ts'
+                assert not any(row.get('path') == 'src/game/StatusEffectSystem.ts' for row in packet['recent_observations'])
+                dependency = next(row for row in packet['read_function_signatures'] if row['path'] == 'src/game/StatusEffectSystem.ts')
+                assert dependency['signature_only'] and not dependency['full_source'] and not dependency['grants_full_read']
+                assert dependency['functions'][0]['signature'] == signature
+                assert dependency['sha256'] == hashlib.sha256(workspace.read_file(dependency['path']).encode()).hexdigest()
+                assert len(json.dumps(packet, ensure_ascii=False)) <= 32_000
+            return await super().structured(rid, stage, role, instruction, packet, schema, **kwargs)
+    client = InspectingClient(actions)
+    result = await CodingAgent(client, store, workspace, context_chars=32_000, history_limit=3).run_feature(rid,
+        {'id': 'case2-status-dependency-eviction', 'owned_paths': ['src/game/CombatSystem.ts', 'src/game/ProjectilePool.ts', 'src/game/StatusEffectSystem.ts']}, {})
+    assert result['status'] == 'implemented' and result['changed_files'] == ['src/game/ProjectilePool.ts']
+
+
+async def test_signature_only_inherited_read_does_not_authorize_whole_file_replacement(store, request_data, tmp_path):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / 'game')
+    path = 'src/dependency.ts'; text = 'export function dependency(value: number): number { return value; }'
+    workspace.write_file(path, text)
+    receipt = {'source': 'file:' + path, 'sha256': hashlib.sha256(text.encode()).hexdigest(), 'characters': len(text),
+        'ranges': [[0, len(text)]], 'next_unread_offset': len(text), 'next_offset': len(text), 'reads': 1}
+    client = ScriptedClient([{'tool': 'write_file', 'path': path, 'content': text.replace('return value;', 'return value + 1;')},
+        {'tool': 'blocked', 'summary': '签名视图不是全文件阅读，需精确patch或真实fullread。'}])
+    result = await CodingAgent(client, store, workspace, context_chars=32_000).run_feature(rid,
+        {'id': 'signature-no-write-permission', 'owned_paths': ['src/**']}, {'continuation': {'read_receipts': [receipt]}})
+    assert client.inputs[0]['data']['read_function_signatures'][0]['signature_only']
+    error = client.inputs[1]['data']['recent_observations'][-1]['result']
+    assert error['ok'] is False and 'read the entire existing file' in error['error']
+    assert workspace.read_file(path) == text and result['status'] == 'blocked'
+
+
+@pytest.mark.parametrize('mode', ['stale', 'partial'])
+async def test_signature_catalog_omits_stale_or_partly_read_sources(store, request_data, tmp_path, mode):
+    rid = run_id(store, request_data)
+    workspace = Workspace(tmp_path / 'game')
+    path = 'src/dependency.ts'; text = 'export function dependency(value: number): number { return value; }'
+    workspace.write_file(path, text)
+    length = len(text)
+    receipt = {'source': 'file:' + path, 'sha256': '0' * 64 if mode == 'stale' else hashlib.sha256(text.encode()).hexdigest(),
+        'characters': length, 'ranges': [[0, length if mode == 'stale' else length // 2]]}
+    client = ScriptedClient([{'tool': 'blocked', 'summary': '隔离检查，不生成游戏通过记录。'}])
+    await CodingAgent(client, store, workspace, context_chars=32_000).run_feature(rid,
+        {'id': 'signature-omit-' + mode, 'owned_paths': ['src/output.ts']}, {'continuation': {'read_receipts': [receipt]}})
+    assert 'read_function_signatures' not in client.inputs[0]['data']
+
+
+@pytest.mark.parametrize('limit', [8_000, 32_000])
+async def test_runtime_invariants_remain_exact_when_large_context_and_latest_page_are_compacted(store, request_data, tmp_path, limit):
+    rid = run_id(store, request_data)
+    invariant = {'advance': '每次使用生产固定步长处理全部给定毫秒，不丢剩余时间。', 'updateLoops': '活动更新循环数，不是累计tick。',
+        'fixture': '只有可信isolatedfixture可按真实关卡规则进入PLAYING，不能保留MENU/level0。', 'binding': 'SHA必须一致。' * 200}
+    assert len(json.dumps(invariant, ensure_ascii=False)) < 2500
+    escaped = ('中文\n"\\source' * 1600)
+    client = ScriptedClient([{'tool': 'read_context', 'section': 'production_contract', 'limit': 6000},
+        {'tool': 'blocked', 'summary': '只检查有界packet完整核心契约。'}])
+    await CodingAgent(client, store, Workspace(tmp_path / 'game'), context_chars=limit).run_feature(rid,
+        {'id': 'pinned-runtime-invariants-' + str(limit), 'objective': escaped},
+        {'runtime_invariants': invariant, 'production_contract': escaped, 'spec_excerpts': escaped,
+         'architecture': escaped, 'review_feedback': escaped})
+    for entry in client.inputs:
+        packet = entry['data']
+        assert packet['context']['runtime_invariants'] == invariant
+        assert len(json.dumps(packet, ensure_ascii=False)) <= limit

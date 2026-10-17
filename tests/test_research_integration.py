@@ -3,9 +3,9 @@ import copy
 import hashlib
 import json
 import os
-import shutil
 import socket
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -18,6 +18,8 @@ from game_harness.locking import owner_lock
 from game_harness.rag import Retriever
 from game_harness.research import ResearchClient, ResearchError, ResearchReference
 from game_harness.runner import Harness
+from scripts.run_integrated import research_environment, select_research_node
+from scripts import run_integrated
 from test_harness import Agents, Validator
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -185,17 +187,100 @@ def test_server_lock_excludes_another_owner_and_releases(tmp_path):
         pass
 
 
+def test_sidecar_environment_does_not_inherit_host_credentials_or_node_hooks(tmp_path, monkeypatch):
+    for key in ("OPENAI_API_KEY", "RAG_API_TOKEN", "MATERIAL_PORTAL_TOKEN", "HARNESS_API_TOKEN",
+                "SSH_AUTH_SOCK", "NODE_OPTIONS", "NODE_PATH", "HTTP_PROXY", "npm_config_token",
+                "WEBMCP_RESEARCH_TOKEN", "WEBMCP_TOKEN", "WEBMCP_UNRECOGNIZED"):
+        monkeypatch.setenv(key, "host-only-value")
+    monkeypatch.setenv("LANG", "zh_CN.UTF-8")
+    monkeypatch.setenv("PATH", "/trusted/node22/bin:/usr/bin")
+    before = dict(os.environ)
+    child = research_environment(4174, "fresh-private-sidecar-token", tmp_path / "research.sqlite")
+    assert child == {key: value for key, value in child.items() if key in {
+        "PATH", "SYSTEMROOT", "WINDIR", "TEMP", "TMP", "TMPDIR", "LANG", "LC_ALL", "LC_CTYPE", "TZ",
+        "PORT", "WEBMCP_TOKEN", "WEBMCP_DB"}}
+    assert "host-only-value" not in child.values()
+    assert child["WEBMCP_TOKEN"] == "fresh-private-sidecar-token"
+    assert child["PORT"] == "4174" and child["WEBMCP_DB"] == str(tmp_path / "research.sqlite")
+    assert child["LANG"] == "zh_CN.UTF-8" and child["PATH"] == before["PATH"]
+    assert dict(os.environ) == before
+
+
+@pytest.mark.parametrize("version", ["v22.22.1", "v24.9.0", "v25.0.0", "not-a-version"])
+def test_research_node_rejects_incompatible_versions_without_changing_builder_path(tmp_path, monkeypatch, version):
+    path = os.environ.get("PATH")
+    monkeypatch.setattr(subprocess, "check_output", lambda *a, **kw: version)
+    with pytest.raises(SystemExit, match="Node.js >=24.10"):
+        select_research_node(tmp_path / "node24")
+    assert os.environ.get("PATH") == path
+
+
+def test_explicit_research_node_uses_clean_probe_and_keeps_builder_node22(tmp_path, monkeypatch):
+    monkeypatch.setenv("PATH", "/trusted/node22/bin:/usr/bin")
+    monkeypatch.setenv("OPENAI_API_KEY", "host-only-value")
+    seen = []
+    def version(command, **kwargs):
+        seen.append((command, kwargs))
+        return "v24.10.0\n"
+    monkeypatch.setattr(subprocess, "check_output", version)
+    explicit = tmp_path / "isolated-node24"
+    assert select_research_node(explicit) == str(explicit.resolve())
+    assert seen[0][0] == [str(explicit.resolve()), "--version"]
+    assert "OPENAI_API_KEY" not in seen[0][1]["env"]
+    assert seen[0][1]["env"]["PATH"] == "/trusted/node22/bin:/usr/bin"
+    assert os.environ["PATH"] == "/trusted/node22/bin:/usr/bin"
+
+
+def test_integrated_launcher_routes_explicit_node_only_to_sidecar(settings, tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    monkeypatch.setattr(sys, "argv", ["run_integrated.py", "--port", "18291", "--research-port", "14174",
+        "--research-node", str(tmp_path / "node24")])
+    monkeypatch.setenv("OPENAI_API_KEY", "host-only-value")
+    monkeypatch.setenv("SSH_AUTH_SOCK", "/host/ssh-agent")
+    monkeypatch.setenv("WEBMCP_DB", str(tmp_path / "research.sqlite"))
+    monkeypatch.setattr(run_integrated.os, "chdir", lambda _: None)
+    monkeypatch.setattr(run_integrated, "load_dotenv", lambda _: None)
+    selected = []
+    monkeypatch.setattr(run_integrated, "select_research_node", lambda path: selected.append(path) or str(path))
+    captured = {}
+    class Child:
+        def poll(self): return None
+        def terminate(self): captured["terminated"] = True
+        def wait(self, **kwargs): return 0
+    def spawn(command, **kwargs):
+        captured.update(command=command, child=kwargs)
+        return Child()
+    class Client:
+        def __init__(self, **kwargs): pass
+        def __enter__(self): return self
+        def __exit__(self, *args): pass
+        def get(self, url, **kwargs): return SimpleNamespace(status_code=200)
+    monkeypatch.setattr(run_integrated.subprocess, "Popen", spawn)
+    monkeypatch.setattr(run_integrated.httpx, "Client", Client)
+    monkeypatch.setattr("game_harness.config.load_settings", lambda: settings)
+    monkeypatch.setattr("game_harness.app.create_app", lambda settings: "host-app")
+    monkeypatch.setattr(run_integrated.uvicorn, "run", lambda app, **kwargs: captured.update(app=app, host=kwargs))
+    path_before = os.environ.get("PATH")
+    run_integrated.main()
+    assert selected == [tmp_path / "node24"]
+    assert captured["command"] == [str(tmp_path / "node24"), "src/server.ts"]
+    assert "OPENAI_API_KEY" not in captured["child"]["env"] and "SSH_AUTH_SOCK" not in captured["child"]["env"]
+    assert settings.research_url == "http://127.0.0.1:14174"
+    assert settings.research_token == captured["child"]["env"]["WEBMCP_TOKEN"]
+    assert captured["host"] == {"host": "127.0.0.1", "port": 18291, "workers": 1}
+    assert captured["terminated"] and os.environ.get("PATH") == path_before
+
+
 @pytest.mark.skipif(os.getenv("RUN_RESEARCH_INTEGRATION") != "1", reason="Requires Node 24 and webmcp dependencies")
 def test_real_node_runtime_through_fastapi_gateway(settings, tmp_path, request_data):
-    node = shutil.which("node")
+    node = select_research_node(os.getenv("RESEARCH_NODE"))
     assert node
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         port = sock.getsockname()[1]
     headers = configure(settings)
     settings.research_url = f"http://127.0.0.1:{port}"
-    env = {**os.environ, "PORT": str(port), "WEBMCP_TOKEN": settings.research_token,
-           "WEBMCP_DB": str(tmp_path / "research.sqlite")}
+    env = research_environment(port, settings.research_token, tmp_path / "research.sqlite")
     process = subprocess.Popen([node, "src/server.ts"], cwd=ROOT / "webmcp", env=env,
         stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
         creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)

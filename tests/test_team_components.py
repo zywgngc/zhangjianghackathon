@@ -8,6 +8,7 @@ import pytest
 from jsonschema import Draft202012Validator
 
 from game_harness.benchmarks import inventory
+from game_harness.acceptance import PLAN_SOURCE_HASHES
 from game_harness.material_portal import MaterialPortalClient, PortalContractError
 from game_harness.specifications import load_case
 
@@ -47,7 +48,10 @@ def test_research_profiles_preserve_every_official_acceptance_requirement(case_i
         # Profiles flatten line wrapping, but cannot change words or numeric rules.
         assert " ".join(check["requirement"].split()) == " ".join(test["text"].split())
     source = profile["source"]
-    assert source["path"] == spec.source_path
+    # The immutable reference URL belongs to the original commit. Only the
+    # current checkout directory was renamed for portable filesystem support.
+    assert source["path"].replace(":", "-", 1) == spec.source_path
+    assert spec.sha256 == PLAN_SOURCE_HASHES[case_id]
     assert source["commit"] == "81fc5366aa417754ccdba07d5d3dc08daa8f6a02"
     url = urlparse(source["url"])
     assert url.scheme == "https" and url.netloc == "github.com"

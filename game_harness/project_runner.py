@@ -71,6 +71,16 @@ src/game/Simulation.ts与src/game/bridge.ts的集成修改权限，接通模板�
 Simulation核心节点应依赖所有生产子系统，不能先于Boss/Level/Skill接口就要求编译引用不存在模块。
 """
 
+RUNTIME_INVARIANTS = """
+以下是同一生产游戏的可观察协议，不是测试专用游戏或通过答案；完整约束仍见production_contract。
+Simulation.advance(ms)须消费请求的全部时长，按固定步长分段并保留小数余量；不得把3000ms截成10帧。RAF现实长帧可有独立积压策略，测试推进不能丢时间；simTime单位秒。
+metrics.updateLoops是当前有效模拟驱动的数量(活动时恰为1)，不是累计帧数；真实累计tick可另列ticks。首次advance停用RAF自动更新，避免双驱动，渲染仍绘制同一状态。
+isolatedSimulation使用同一生产Simulation。fixture默认初始化合法level>=1、PLAYING；仅数值菜单测试可声明MENU/UPGRADES/UPGRADE/LEVEL_UP。敌人/武器等实体须走生产初始化规则，包括真实active/hp/power/id；boss:null和spawnEnabled:false必须生效。
+snapshot的实体kind统一为enemy/boss/weapon/gate/obstacle等角色，原物种另保留archetype；保留真实位置、生命、状态、攻击/吞噬动画和事件序号。导航速度单位统一，禁止绝对速度再次乘基础速度。
+独立实例返回snapshot/config/dispatch/advance/events/dispose。render:true绑定生产渲染器并提供真实engineInfo/projectEntity；ui:true挂同一React游戏视图并返回containerId。dispose恢复活动游戏/存档/音频并释放实例资源。
+fixture只初始化边界，不注入VICTORY/DEFEAT/DEADLOCK、奖励、通关或期望答案。三个关卡必须从正常start经合法输入实际完成；独立数值检查不能替代正常通关。
+""".strip()
+
 
 class FeatureDefinition(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -269,6 +279,7 @@ class ProjectOrchestrator:
         return {'project_summary': {'case_id': spec.case_id, 'names': spec.names, 'engine': self.store.request(rid)['engine']},
                 'architecture': plan.architecture, 'interfaces': plan.interfaces + '\n' + feature.get('interfaces', ''),
                 'production_contract': ARCHITECTURE_CONTRACT + SHARED_INTERFACES, 'spec_excerpts': excerpts,
+                'runtime_invariants': RUNTIME_INVARIANTS,
                 'scope_index': {'assigned_sections': assigned, 'active_excerpt_sections': numbers,
                     'full_scope_preserved': True, 'read_full_source': 'read_context(__specification__)'},
                 'trusted_acceptance_plan': scenario_plan(spec.case_id) if spec.case_id in CASES else {},
@@ -451,6 +462,7 @@ class ProjectOrchestrator:
                 'owned_paths': ['src/**', 'public/**', 'index.html'], 'acceptance_ids': [t['id'] for t in spec.acceptance_tests]}
             self.stage(rid, 'project_repair', round=round_no, repair=repair_index)
             context = {'project_summary': {'case_id': spec.case_id}, 'production_contract': ARCHITECTURE_CONTRACT,
+                'runtime_invariants': RUNTIME_INVARIANTS,
                 'interfaces': plan.interfaces, 'validation_report': report, 'source_archive': 'specification.txt',
                 'review_feedback': self.store.read_json(rid, 'independent-code-review.json') or {},
                 'proposed_repairs': self.proposed_repairs(rid),

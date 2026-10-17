@@ -90,6 +90,8 @@ next_unwritten_owned_files是主机根据真实目录计算的待创建文件，
 memory应保存当前/下一文件、关键导出签名、已确定参数值及其来源、确切剩余偏移；避免只写“还需更多资料/已经读过”。
 continuation是上一分段会话的主机交接；优先沿下一文件继续，核对已读区间后复用已确定配置，避免新会话又从全文offset0开始。
 resident_files是主机本轮从真实工作区读出的完整文件，含当前SHA与完整export名称；实际字段以这些文件为准，不用再次read_file确认。
+read_function_signatures来自已完整读过且SHA仍一致的真实源文件，只保留export函数的参数/返回类型，不是完整源码，不授予整文件替换权限；按这些确切接口精确patch，勿因旧观察淘汰再次通读。
+runtime_invariants是每轮固定的真实生产运行协议，必须逐条保持；不能用预览、测试专用状态或丢弃advance剩余时间替代。
 接口提案中存在而真实types未导出的名字，不能通过反复读interfaces找到。可在当前owned文件定义兼容的局部结构类型；确实需要上游新增字段则blocked列出最小缺失，禁止捏造已存在字段。
 若packet有focused_recovery，本次JSON只能write_file/apply_patch/build/blocked。主机已提供可容纳的当前文件与接口；仍缺必要信息则blocked列出确切缺失，不能再读资料或只写note。
 这是真实多文件 React + TypeScript + Vite 项目；必须使用项目指定 Phaser/Babylon 引擎，npm 依赖已由主机固定并本地打包。
@@ -294,7 +296,36 @@ class CodingAgent:
         return not paths or any(re.search(r"(?:^|/)(?:types|config|balance|levels|skills|passives|enemies|evolutions)(?:[./]|$)",
                                          path, re.I) for path in paths)
 
-    def _focus_target(self, feature, context):
+    def _focus_target(self, feature, context, state=None):
+        state = state or {}
+
+        def owned_source(path, expected=None):
+            try:
+                self._owned(path, feature)
+                text = self._read(path)
+                return text is not None and (expected is None or _text_hash(text) == expected)
+            except (ValueError, OSError):
+                return False
+
+        # The current compiler error is more useful than the first item in a
+        # planner's ownership list. Ignore diagnostics for an obsolete version.
+        for row in state.get("build_diagnostics", []):
+            if owned_source(row.get("path", ""), row.get("source_sha256")):
+                return row["path"]
+        for row in reversed(state.get("history", [])):
+            if row.get("tool") in {"read_file", "read_lines"} and row.get("result", {}).get("ok"):
+                if owned_source(row.get("path", ""), row["result"].get("sha256")):
+                    return row["path"]
+        focused = state.get("focused_recovery", {})
+        if focused.get("source", "").startswith("file:"):
+            path = focused["source"][5:]
+            if owned_source(path, focused.get("sha256")):
+                return path
+        for row in reversed(list(state.get("read_receipts", {}).values())):
+            if row.get("source", "").startswith("file:"):
+                path = row["source"][5:]
+                if owned_source(path, row.get("sha256")):
+                    return path
         paths = [path for path in feature.get("owned_paths", [])
                  if not any(mark in path for mark in ("*", "?", "["))]
         if paths:
@@ -310,13 +341,119 @@ class CodingAgent:
                 pass
         return None
 
+    @staticmethod
+    def _export_function_signatures(text):
+        """Copy bounded declaration headers, never infer types or copy bodies.
+
+        Mask comments and literals while preserving offsets, so documentation
+        examples cannot invent exports and parentheses in defaults do not close
+        a real parameter list. Unsupported/oversized headers are simply omitted.
+        """
+        masked = list(text)
+        index = 0
+        while index < len(text):
+            if text.startswith("//", index):
+                end = text.find("\n", index + 2)
+                end = len(text) if end < 0 else end
+            elif text.startswith("/*", index):
+                end = text.find("*/", index + 2)
+                end = len(text) if end < 0 else end + 2
+            elif text[index] in {"'", '"', "`"}:
+                quote, end = text[index], index + 1
+                while end < len(text):
+                    if text[end] == "\\":
+                        end += 2
+                    elif text[end] == quote:
+                        end += 1
+                        break
+                    else:
+                        end += 1
+            else:
+                index += 1
+                continue
+            for position in range(index, min(end, len(text))):
+                if masked[position] != "\n":
+                    masked[position] = " "
+            index = end
+        code = "".join(masked)
+        pattern = re.compile(r"\bexport\s+(?:default\s+)?(?:declare\s+)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)")
+        result = []
+        for match in pattern.finditer(code):
+            opening = code.find("(", match.end(), match.end() + 500)
+            if opening < 0 or any(mark in code[match.end():opening] for mark in (";", "=")):
+                continue
+            depth, end = 1, opening + 1
+            while end < len(code) and end - match.start() < 2_000 and depth:
+                if code[end] == "(":
+                    depth += 1
+                elif code[end] == ")":
+                    depth -= 1
+                end += 1
+            if depth:
+                continue
+            tail = code[end:end + 500]
+            boundary = re.search(r"[;{]", tail)
+            return_type_complete = False
+            if boundary and (not tail[:boundary.start()].strip()
+                             or tail[:boundary.start()].lstrip().startswith(":")):
+                # Simple return annotations (void, Promise<T>, arrays, unions)
+                # are copied exactly. An object return type starts with '{';
+                # keep only the complete parameters rather than pretend its
+                # first brace is the function body.
+                annotation = tail[:boundary.start()].strip()
+                if annotation != ":":
+                    end += boundary.start()
+                    return_type_complete = True
+            signature = text[match.start():end].rstrip()
+            if _serialized_size(signature) > 2_400:
+                continue
+            result.append({"name": match.group(1), "signature": signature,
+                "parameters_complete": True, "return_type_complete": return_type_complete,
+                "start_line": text.count("\n", 0, match.start()) + 1,
+                "end_line": text.count("\n", 0, max(match.start(), end - 1)) + 1})
+            if len(result) >= 16:
+                break
+        return result
+
+    def _read_function_signatures(self, state):
+        result, paths = [], set()
+        budget = min(4_000, self.context_chars // 8)
+        for receipt in reversed(list(state.get("read_receipts", {}).values())):
+            source = receipt.get("source", "")
+            if not source.startswith("file:") or receipt.get("next_unread_offset", 0) < receipt.get("characters", 0):
+                continue
+            path = source[5:]
+            if path in paths:
+                continue
+            paths.add(path)
+            try:
+                text = self._read(path)
+            except (ValueError, OSError):
+                continue
+            if text is None or _text_hash(text) != receipt.get("sha256") or len(text) != receipt.get("characters"):
+                continue
+            functions = self._export_function_signatures(text)
+            if not functions:
+                continue
+            entry = {"path": path, "sha256": _text_hash(text), "signature_only": True,
+                     "full_source": False, "grants_full_read": False, "functions": []}
+            for function in functions:
+                candidate = {**entry, "functions": entry["functions"] + [function]}
+                if _serialized_size(result + [candidate]) <= budget:
+                    entry = candidate
+            if entry["functions"]:
+                result.append(entry)
+            if len(result) >= 6:
+                break
+        return result
+
     def _resident_files(self, feature, context, state):
         """Fresh source beats obsolete plan names; never call a preview complete."""
         if self._configuration_feature(feature) and not state.get("focused_recovery"):
             return []
         paths = ["src/game/types.ts", "src/types.ts"]
         if state.get("focused_recovery"):
-            target = self._focus_target(feature, context)
+            target = self._focus_target(feature, context, state)
             if target and target not in paths:
                 paths.append(target)
         result = []
@@ -365,21 +502,29 @@ class CodingAgent:
             payload["new_build_diagnostic"] = state["diagnostic_read_allowance"]
         if resident:
             payload["resident_files"] = resident
+        signatures = self._read_function_signatures(state)
+        if signatures:
+            payload["read_function_signatures"] = signatures
         if state.get("focused_recovery"):
             payload["focused_recovery"] = {**state["focused_recovery"],
                 "allowed_tools": ["write_file", "apply_patch", "build", "blocked"],
-                "target_file": self._focus_target(feature, context),
+                "target_file": self._focus_target(feature, context, state),
                 "instruction": "工作集为当前真实源码。现在提交一项具体改动；接口确实缺失则blocked列出名字/字段，禁止再读同一资料。"}
         if context.get("source_archive") == "specification.txt":
             payload["context_sections"]["__specification__"] = {
                 "archive": "specification.txt", "retrieve": "read_context", "immutable_source": True}
         # Large specs never accumulate in the conversation. This is a small
         # project/feature packet plus a filesystem-style context catalog.
-        protected = {"project_summary"}
+        protected = {"project_summary", "runtime_invariants"}
         configuration = self._configuration_feature(feature)
-        for key in ("project_summary", "approved_configuration", "continuation", "independent_code_review", "review_feedback", "validation_report", "interfaces", "blocked_feature",
+        for key in ("project_summary", "runtime_invariants", "approved_configuration", "continuation", "independent_code_review", "review_feedback", "validation_report", "interfaces", "blocked_feature",
                     "engine_contract", "production_contract", "architecture", "acceptance", "spec_excerpts", "source_index"):
             if key in context:
+                if key == "runtime_invariants":
+                    # Host supplies a compact contract, not a specification
+                    # preview. Pin it in full through all packet compaction.
+                    payload["context"][key] = context[key]
+                    continue
                 if key == "interfaces" and self.context_chars >= 28_000 and _serialized_size(context[key]) <= 8_000:
                     limit = 8_000
                     protected.add(key)
@@ -459,6 +604,8 @@ class CodingAgent:
                        "recent_observations": [{"step": item["step"], "tool": item["tool"],
                            "result_artifact": item["result_artifact"]} for item in history[-2:]],
                        "notice": "Context view compacted; retrieve exact feature, context or observation before editing."}
+            if "runtime_invariants" in context:
+                payload["context"] = {"runtime_invariants": context["runtime_invariants"]}
         # Full replacement permission is issued only for complete source that
         # actually survived packet budgeting, never for a hash-only receipt.
         for entry in payload.get("resident_files", []):
@@ -763,7 +910,7 @@ class CodingAgent:
                                   selected_lines_complete=offset + len(text) >= end)
             if repeats >= 2:
                 result["read_guidance"] = "此页已读取；按真实 next_offset 继续下一页，或根据当前feature已有章节开始实现，勿重复通读整本规格。"
-                if receipt["next_unread_offset"] >= len(full) and self._focus_target(feature, context):
+                if receipt["next_unread_offset"] >= len(full) and self._focus_target(feature, context, state):
                     state["focused_recovery"] = {"reason": "complete source repeatedly reread without code progress",
                         "source": source, "sha256": digest, "armed_at_step": state["steps"]}
                     result["next_action"] = "host will supply the complete shared types and interfaces; next proposal must write/patch/build/blocked"
@@ -946,7 +1093,7 @@ class CodingAgent:
             feedback = context.get("review_feedback")
             prior = context.get("continuation") or (feedback.get("failed_session") if isinstance(feedback, dict) else None) or {}
             if (state["steps"] == 0 and isinstance(prior, dict) and prior.get("stop_reason") == "non_progress"
-                    and self._focus_target(feature, context)):
+                    and self._focus_target(feature, context, state)):
                 state["focused_recovery"] = {"reason": "previous session stopped for repeated reads",
                     "armed_at_step": 0, "prior_stop_reason": "non_progress"}
             if not state.get("pending"):
