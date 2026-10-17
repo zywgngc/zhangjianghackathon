@@ -25,8 +25,21 @@ def runtime_environment():
 
 
 def research_environment(port, token, database):
-    return {**runtime_environment(), "PORT": str(port), "WEBMCP_TOKEN": token,
-            "WEBMCP_DB": str(Path(database).resolve())}
+    """Forward only named research settings; networking and credentials are opt-in."""
+    env = {**runtime_environment(), "PORT": str(port), "WEBMCP_TOKEN": token,
+           "WEBMCP_DB": str(Path(database).resolve()), "WEBMCP_GITHUB_NETWORK": "off"}
+    mode = os.getenv("WEBMCP_RESEARCH_MODE")
+    if mode:
+        env["WEBMCP_RESEARCH_MODE"] = mode
+    state = os.getenv("WEBMCP_GITHUB_STATE")
+    if state:
+        env["WEBMCP_GITHUB_STATE"] = str(Path(state).expanduser().resolve())
+    if os.getenv("WEBMCP_GITHUB_NETWORK") == "bounded" and mode != "fixtures":
+        env["WEBMCP_GITHUB_NETWORK"] = "bounded"
+        github_token = os.getenv("WEBMCP_GITHUB_TOKEN")
+        if github_token:
+            env["WEBMCP_GITHUB_TOKEN"] = github_token
+    return env
 
 
 def select_research_node(explicit=None):

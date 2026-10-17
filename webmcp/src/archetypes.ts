@@ -4,6 +4,8 @@ import type { MaterialSearchRequest, MaterialSearchResult } from '../material-po
 export interface ArchetypeResearchPort {
   readonly provider: string;
   readonly idempotentRequests: boolean;
+  readonly automaticRetries?: boolean;
+  networkStatus?(runId?: string): unknown;
   search(
     request: MaterialSearchRequest,
     options?: { signal?: AbortSignal },

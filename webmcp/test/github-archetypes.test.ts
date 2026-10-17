@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { GitHubNetworkStore } from '../src/github-network.ts';
 import assert from 'node:assert/strict';
 import { GitHubArchetypeResearcher, githubQueries } from '../src/github-archetypes.ts';
 import {
@@ -131,17 +132,29 @@ function fixture() {
   return { calls, fetcher, files };
 }
 
-test('real adapter pins multiple repositories and records only files actually read', async () => {
+function researcher(options: ConstructorParameters<typeof GitHubArchetypeResearcher>[0]) {
+  let now = 1_800_000_000_000;
+  return new GitHubArchetypeResearcher({
+    networkEnabled: true,
+    network: new GitHubNetworkStore(':memory:', () => now),
+    wait: async (ms) => {
+      now += ms;
+    },
+    ...options,
+  });
+}
+
+test('bounded adapter returns three candidates but reads source only for the first', async () => {
   const { fetcher, calls, files } = fixture();
-  const provider = new GitHubArchetypeResearcher({ fetch: fetcher });
+  const provider = researcher({ fetch: fetcher });
   const result = await provider.search(request);
   validateResult(request, result);
   assert.equal(result.isMock, false);
   assert.equal(result.status, 'partial');
   assert.ok('candidates' in result);
   assert.equal(result.candidates.length, 3);
-  assert.equal(calls.length, 32); // two searches + three repositories × ten bounded metadata/file reads
-  for (const c of result.candidates) {
+  assert.equal(calls.length, 12); // two searches + only one repository × ten reads
+  for (const c of result.candidates.slice(0, 1)) {
     assert.equal(c.source.revision, commit);
     assert.deepEqual(new Set(c.source.paths), new Set(files.map((f) => f.path)));
     assert.ok(c.evidence.some((e) => e.sourceUri.includes(`/blob/${commit}/src/Player.ts#L3`)));
@@ -153,7 +166,12 @@ test('real adapter pins multiple repositories and records only files actually re
   }
   assert.ok(!calls.some((p) => /no-license|private|four|five|localisation|Survivor-AI/.test(p)));
   const cached = await provider.search({ ...request, requestId: 'retry-id' });
-  assert.equal(calls.length, 32);
+  assert.equal(calls.length, 12);
+  assert.ok(
+    result.candidates
+      .slice(1)
+      .every((c) => c.source.revision === null && c.source.paths.length === 0),
+  );
   assert.equal(cached.requestId, 'retry-id');
 });
 
@@ -164,7 +182,7 @@ test('rate limits, authorization failures, network errors and empty search never
     [401, 'AUTH_REQUIRED'],
   ] as const) {
     let calls = 0;
-    const provider = new GitHubArchetypeResearcher({
+    const provider = researcher({
       fetch: async () => {
         calls++;
         return new Response('ignored', { status, headers: { 'x-ratelimit-remaining': '0' } });
@@ -179,13 +197,13 @@ test('rate limits, authorization failures, network errors and empty search never
       assert.equal(result.error.retryable, false);
     }
   }
-  const unavailable = await new GitHubArchetypeResearcher({
+  const unavailable = await researcher({
     fetch: async () => {
       throw new Error('network');
     },
   }).search(request);
   assert.equal(unavailable.status, 'failed');
-  const empty = await new GitHubArchetypeResearcher({
+  const empty = await researcher({
     fetch: async () => json({ items: [] }),
   }).search(request);
   assert.ok('candidates' in empty);
@@ -193,9 +211,9 @@ test('rate limits, authorization failures, network errors and empty search never
   assert.ok(empty.limitations.some((l) => l.includes('0/3')));
 });
 
-test('partial inspection reports missing files; rate limits preserve already completed repositories', async () => {
+test('partial inspection reports missing files without fetching other repositories', async () => {
   const f = fixture();
-  const provider = new GitHubArchetypeResearcher({
+  const provider = researcher({
     fetch: async (url, init) => {
       const p = new URL(String(url)).pathname;
       if (p.includes('/games/two/')) return new Response('', { status: 429 });
@@ -206,14 +224,14 @@ test('partial inspection reports missing files; rate limits preserve already com
   const result = await provider.search(request);
   validateResult(request, result);
   assert.ok('candidates' in result);
-  assert.equal(result.candidates.length, 1);
+  assert.equal(result.candidates.length, 3);
   assert.ok(!result.candidates[0].source.paths.includes('src/Player.ts'));
   assert.ok(result.candidates[0].limitations.some((l) => l.includes('Player.ts')));
-  assert.ok(result.limitations.some((l) => l.includes('额度')));
+  assert.ok(!f.calls.some((p) => p.includes('/games/two/')));
 });
 
 test('bounds responses, rejects mechanic requests, and propagates explicit cancellation', async () => {
-  const provider = new GitHubArchetypeResearcher({
+  const provider = researcher({
     fetch: async () => new Response(' '.repeat(2_000_001)),
   });
   const large = await provider.search(request);
@@ -256,7 +274,7 @@ test('archetypes belong to WebMCP and never go through the teammate material por
     },
   });
   const { engine, store, id } = setup(portal, {
-    archetypes: new GitHubArchetypeResearcher({ fetch: f.fetcher }),
+    archetypes: researcher({ fetch: f.fetcher }),
   });
   try {
     await engine.drain();

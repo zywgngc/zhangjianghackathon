@@ -9,6 +9,7 @@ import { AppError } from './model.ts';
 import { ResearchOrchestrator } from './orchestrator.ts';
 import { MockMaterialPortal, UnconfiguredMaterialPortal } from './portal.ts';
 import { GitHubArchetypeResearcher } from './github-archetypes.ts';
+import { GitHubNetworkStore } from './github-network.ts';
 import { RunStore } from './store.ts';
 
 const assets: Record<string, [string, string]> = {
@@ -104,7 +105,11 @@ export async function createResearchServer(options: {
         return;
       }
       if (req.method === 'GET' && path === '/api/providers') {
-        json(200, { archetypes: engine.archetypes.provider, materials: engine.portal.provider });
+        json(200, {
+          archetypes: engine.archetypes.provider,
+          materials: engine.portal.provider,
+          ...(engine.archetypes.networkStatus ? { github: engine.archetypes.networkStatus() } : {}),
+        });
         return;
       }
       if (req.method === 'GET' && path === '/api/contract') {
@@ -143,7 +148,12 @@ export async function createResearchServer(options: {
         const id = decodeURIComponent(match[1]);
         const action = match[2];
         if (req.method === 'GET' && !action) {
-          json(200, engine.get(id));
+          json(200, {
+            ...engine.get(id),
+            ...(engine.archetypes.networkStatus
+              ? { githubNetwork: engine.archetypes.networkStatus(id) }
+              : {}),
+          });
           return;
         }
         if (req.method === 'GET' && action === 'blueprint') {
@@ -233,7 +243,13 @@ async function main(): Promise<void> {
   const engine = new ResearchOrchestrator(store, portal, {
     archetypes: fixtures
       ? new MockMaterialPortal()
-      : new GitHubArchetypeResearcher({ token: process.env.WEBMCP_GITHUB_TOKEN }),
+      : new GitHubArchetypeResearcher({
+          token: process.env.WEBMCP_GITHUB_TOKEN,
+          networkEnabled: process.env.WEBMCP_GITHUB_NETWORK === 'bounded',
+          network: new GitHubNetworkStore(
+            process.env.WEBMCP_GITHUB_STATE ? resolve(process.env.WEBMCP_GITHUB_STATE) : undefined,
+          ),
+        }),
   });
   const service = await createResearchServer({
     engine,

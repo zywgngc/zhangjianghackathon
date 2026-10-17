@@ -16,6 +16,8 @@ flowchart LR
   GATE -->|partial / mock / unsupported engine| GAP[Explicit blockers; no model call]
 ```
 
+本次最终集成以 `codex/game-harness@4d779f1` 和 WebMCP 防护提交 `4304ae6` 为基线，见 [最终交接](final-webmcp-harness.md)。
+
 ## 启动
 
 在完整仓库根目录准备 Python 环境，安装 harness 与 Node 依赖：
@@ -40,13 +42,13 @@ Windows 联合启动用于研究组件与 v1 的接入验证。上游 v2 工程�
 
 需要 Node.js `>=24.10 <25`。脚本在 loopback 启动 Python `18080` 与 Node `4174`，生成仅在两个服务内存中共享的 backend token，退出时停止它启动的 Node 子进程。可用 `--port 18081 --research-port 4175` 改端口。已有独立 studio 占用端口时选择另一个 research port。研究运行不调用模型；生成游戏仍需配置 `OPENAI_API_KEY`，浏览器验收需 `.venv/bin/python -m playwright install chromium`。
 
-Builder 可继续使用已验证的 Node22；以 `--research-node /path/to/node24` 只为研究侧车选择 Node24，不改变 Builder 的 PATH。版本探测和研究子进程仅接收明确列出的平台环境与研究服务配置，不继承模型密钥、RAG/门户口令、SSH agent 或 `NODE_OPTIONS`。
+Builder 可继续使用已验证的 Node22；以 `--research-node /path/to/node24` 只为研究侧车选择 Node24，不改变 Builder 的 PATH。版本探测和研究子进程仅接收明确列出的平台环境与研究服务配置，不继承模型密钥、RAG/门户口令、SSH agent 或 `NODE_OPTIONS`。研究子进程显式传递 `WEBMCP_RESEARCH_MODE`、`WEBMCP_GITHUB_NETWORK`、`WEBMCP_GITHUB_STATE`；只有联网为 `bounded` 且非 fixtures 时才传递专用 `WEBMCP_GITHUB_TOKEN`。默认联网关闭。
 
 打开 [harness](http://127.0.0.1:18080)，点击“研究 MAS · 决策与蓝图”，或直接访问 [研究工作台](http://127.0.0.1:18080/research)。`HARNESS_API_TOKEN` 如果已配置，在主工作台“访问设置”中输入；研究工作台复用同一 sessionStorage 口令。浏览器不会接触 backend research token。原有独立 `pnpm start` 入口仍可使用。
 
 若分别启动两端：Node 配置 `WEBMCP_TOKEN`，Python 配置相同的 `WEBMCP_RESEARCH_TOKEN`（至少 16 字符）和 `WEBMCP_RESEARCH_URL=http://127.0.0.1:4174`。URL 必须是 origin，不带路径、查询、用户名或密码。backend token 与面向用户的 `HARNESS_API_TOKEN` 是两个不同边界。
 
-**数据路径：** harness 继续使用 `DATA_DIR` 与 rollback journal；Node 使用 `WEBMCP_DB` 与 WAL。Node 的数据库必须位于单台机器的本地磁盘，不能直接放在 210 的 NFS checkout 上。NFS 部署应设置例如 `WEBMCP_DB=/var/lib/webmcp/research.sqlite`，并自行准备该本地目录权限。
+**数据路径：** harness 继续使用 `DATA_DIR` 与 rollback journal；Node 使用 `WEBMCP_DB` 与 WAL。Node 的数据库必须位于单台机器的本地磁盘，不能直接放在 210 的 NFS checkout 上。NFS 部署必须同时设置例如 `WEBMCP_DB=/var/lib/webmcp/research.sqlite` 和 `WEBMCP_GITHUB_STATE=/var/lib/webmcp/github-network.sqlite`，并自行准备该本地目录权限。所有本机预览共用同一个保护数据库；不要通过切换或删除文件重置限额。
 
 2026-10-17 已在 210 启动独立 Node24 研究侧车，内部地址 `127.0.0.1:4175`，经主服务 `18080/api/research` 访问；已有其他服务占用的 4174 保持原状。研究 SQLite 位于已确认 ext4 的 `/var/tmp/youzao-webmcp-zhaoyiwen/research.sqlite`，后端口令仅保存在权限为600的服务端 `.env`。通过主网关创建的三个研究任务均真实返回 `partial`，分别保留54/88/83条 `not_executed` 验收项及明确 synthetic 候选；没有启动 Builder 或调用模型。证据保存在服务器 `.harness-dev/research-deployment-smoke.json`。这些研究任务与三份正式游戏生成任务分别计数，研究完成不构成游戏通过。
 
@@ -87,7 +89,7 @@ Builder 可继续使用已验证的 Node22；以 `--research-node /path/to/node2
 
 蓝图中 `proposal.known` 保留用户文字；`decisions[].source` 标记默认、已保存偏好或开发者选择。验收草案从生效选择派生，带 `provisional: true` 与 `derivedFrom`，不会默认带入三个案例的 225 项规格。选择其他原型会替换原型专属问题，缺失选择继续采用明确默认。系统补全、采用默认和开发者逐项确认是不同来源，不能混为一谈。
 
-当前补全依赖跑酷、生存、解谜、平台跳跃四类规则模板。**开源游戏原型仓库由 WebMCP 自己检索 GitHub、固定 commit 并静态读取少量源码**，不再委托材料门户；新增 `/api/research/providers` 透传接入状态。机制材料仍保留 teammate-owned `MaterialPortalPort`，收到生效选项、来源、原始特征和图片引用，v0.2 wire contract 不变。默认材料门户未配置时明确返回缺口；只有显式 fixtures 模式生成模拟数据。原型内部重查有独立计数，不占材料门户的 3 次额度。首次选项修改原型/引擎/候选数时，会免费修正一次查询并将旧证据保留为历史。视觉理解和模型规划仍待接入；更改方案后证据按修订失效。详见 [仓库检索的实现与边界](../webmcp/github-research.md)。
+当前补全依赖跑酷、生存、解谜、平台跳跃四类规则模板。**开源游戏原型仓库由 WebMCP 负责；默认仅读本地缓存，显式开启有限联网后只对首选仓库固定 commit 并静态读取少量源码**，不再委托材料门户；新增 `/api/research/providers` 透传接入状态。机制材料仍保留 teammate-owned `MaterialPortalPort`，收到生效选项、来源、原始特征和图片引用，v0.2 wire contract 不变。默认材料门户未配置时明确返回缺口；只有显式 fixtures 模式生成模拟数据。原型内部重查有独立计数，不占材料门户的 3 次额度。首次选项修改原型/引擎/候选数时，会免费修正一次查询并将旧证据保留为历史。视觉理解和模型规划仍待接入；更改方案后证据按修订失效。详见 [仓库检索的实现与边界](../webmcp/github-research.md)。
 
 历史 `caseId` 请求与显式 `mode: benchmark` 继续保留全部案例规格和引擎锁。Python harness 只增加一个 `/decisions` 透传路由；生成、QA、发布和主项目入口的所有权不变。
 

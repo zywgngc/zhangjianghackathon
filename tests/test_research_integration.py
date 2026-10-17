@@ -191,20 +191,55 @@ def test_server_lock_excludes_another_owner_and_releases(tmp_path):
 def test_sidecar_environment_does_not_inherit_host_credentials_or_node_hooks(tmp_path, monkeypatch):
     for key in ("OPENAI_API_KEY", "RAG_API_TOKEN", "MATERIAL_PORTAL_TOKEN", "HARNESS_API_TOKEN",
                 "SSH_AUTH_SOCK", "NODE_OPTIONS", "NODE_PATH", "HTTP_PROXY", "npm_config_token",
-                "WEBMCP_RESEARCH_TOKEN", "WEBMCP_TOKEN", "WEBMCP_UNRECOGNIZED"):
+                "WEBMCP_RESEARCH_TOKEN", "WEBMCP_TOKEN", "WEBMCP_UNRECOGNIZED",
+                "GH_TOKEN", "GITHUB_TOKEN", "WEBMCP_GITHUB_TOKEN"):
         monkeypatch.setenv(key, "host-only-value")
+    for key in ("WEBMCP_RESEARCH_MODE", "WEBMCP_GITHUB_NETWORK", "WEBMCP_GITHUB_STATE"):
+        monkeypatch.delenv(key, raising=False)
     monkeypatch.setenv("LANG", "zh_CN.UTF-8")
     monkeypatch.setenv("PATH", "/trusted/node22/bin:/usr/bin")
     before = dict(os.environ)
     child = research_environment(4174, "fresh-private-sidecar-token", tmp_path / "research.sqlite")
     assert child == {key: value for key, value in child.items() if key in {
         "PATH", "SYSTEMROOT", "WINDIR", "TEMP", "TMP", "TMPDIR", "LANG", "LC_ALL", "LC_CTYPE", "TZ",
-        "PORT", "WEBMCP_TOKEN", "WEBMCP_DB"}}
+        "PORT", "WEBMCP_TOKEN", "WEBMCP_DB", "WEBMCP_GITHUB_NETWORK"}}
     assert "host-only-value" not in child.values()
+    assert child["WEBMCP_GITHUB_NETWORK"] == "off"
     assert child["WEBMCP_TOKEN"] == "fresh-private-sidecar-token"
     assert child["PORT"] == "4174" and child["WEBMCP_DB"] == str(tmp_path / "research.sqlite")
     assert child["LANG"] == "zh_CN.UTF-8" and child["PATH"] == before["PATH"]
     assert dict(os.environ) == before
+
+
+def test_sidecar_explicit_github_configuration_keeps_only_dedicated_credentials(tmp_path, monkeypatch):
+    monkeypatch.setenv("WEBMCP_RESEARCH_MODE", "live")
+    monkeypatch.setenv("WEBMCP_GITHUB_NETWORK", "bounded")
+    monkeypatch.setenv("WEBMCP_GITHUB_STATE", str(tmp_path / "shared" / ".." / "github.sqlite"))
+    monkeypatch.setenv("WEBMCP_GITHUB_TOKEN", "dedicated-research-token")
+    for key in ("GH_TOKEN", "GITHUB_TOKEN", "OPENAI_API_KEY", "MATERIAL_PORTAL_TOKEN",
+                "NODE_OPTIONS", "WEBMCP_GITHUB_UNKNOWN"):
+        monkeypatch.setenv(key, "host-only-value")
+    before = dict(os.environ)
+    child = research_environment(4175, "backend-token", tmp_path / "run-a.sqlite")
+    other = research_environment(4176, "other-backend-token", tmp_path / "run-b.sqlite")
+    assert child["WEBMCP_RESEARCH_MODE"] == "live"
+    assert child["WEBMCP_GITHUB_NETWORK"] == "bounded"
+    assert child["WEBMCP_GITHUB_TOKEN"] == "dedicated-research-token"
+    assert child["WEBMCP_GITHUB_STATE"] == other["WEBMCP_GITHUB_STATE"] == str(tmp_path / "github.sqlite")
+    assert child["WEBMCP_DB"] != other["WEBMCP_DB"]
+    assert "host-only-value" not in child.values()
+    assert dict(os.environ) == before
+
+
+@pytest.mark.parametrize("mode,network", [("fixtures", "bounded"), ("live", "off"), ("live", "invalid")])
+def test_sidecar_offline_modes_exclude_github_credentials(tmp_path, monkeypatch, mode, network):
+    monkeypatch.setenv("WEBMCP_RESEARCH_MODE", mode)
+    monkeypatch.setenv("WEBMCP_GITHUB_NETWORK", network)
+    monkeypatch.setenv("WEBMCP_GITHUB_TOKEN", "must-not-reach-offline-child")
+    child = research_environment(4174, "backend-token", tmp_path / "research.sqlite")
+    assert child["WEBMCP_RESEARCH_MODE"] == mode
+    assert child["WEBMCP_GITHUB_NETWORK"] == "off"
+    assert "WEBMCP_GITHUB_TOKEN" not in child
 
 
 @pytest.mark.parametrize("version", ["v22.22.1", "v24.9.0", "v25.0.0", "not-a-version"])
@@ -273,7 +308,7 @@ def test_integrated_launcher_routes_explicit_node_only_to_sidecar(settings, tmp_
 
 
 @pytest.mark.skipif(os.getenv("RUN_RESEARCH_INTEGRATION") != "1", reason="Requires Node 24 and webmcp dependencies")
-def test_real_node_runtime_through_fastapi_gateway(settings, tmp_path, request_data):
+def test_real_node_runtime_through_fastapi_gateway(settings, tmp_path, request_data, monkeypatch):
     node = select_research_node(os.getenv("RESEARCH_NODE"))
     assert node
     with socket.socket() as sock:
@@ -281,8 +316,8 @@ def test_real_node_runtime_through_fastapi_gateway(settings, tmp_path, request_d
         port = sock.getsockname()[1]
     headers = configure(settings)
     settings.research_url = f"http://127.0.0.1:{port}"
-    env = {**research_environment(port, settings.research_token, tmp_path / "research.sqlite"),
-           "WEBMCP_RESEARCH_MODE": "fixtures"}
+    monkeypatch.setenv("WEBMCP_RESEARCH_MODE", "fixtures")
+    env = research_environment(port, settings.research_token, tmp_path / "research.sqlite")
     process = subprocess.Popen([node, "src/server.ts"], cwd=ROOT / "webmcp", env=env,
         stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
         creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
