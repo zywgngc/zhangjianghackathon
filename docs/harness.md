@@ -37,6 +37,8 @@ SQLite 保存状态、调用次数、已报告 token 和事件。产物写入临
 
 Pydantic 严格校验 `Brief`、`Design` 和 `Review`。多余字段被拒绝；结构化输出失败可纠正一次。HTTP 连接错误和部分 4xx/5xx 可退避重试，单调用最多三次，所有请求均计入持久化调用预算。模型返回截断或空内容时失败，不把半份代码视作可交付。
 
+Builder / Repair 默认使用流式响应，每 5 秒记录一次生成进度；收到结束标记后才交付候选代码。`STREAM_BUILD=false` 可适配没有 SSE 的服务。单次网络请求默认超时 300 秒，浏览器候选测试默认超时 60 秒，总任务时限仍独立生效。
+
 默认最多 16 次模型请求、100000 个已报告 token、2 次修复和 1200 秒总任务时限。发起请求前用保守的输入估算和输出上限检查剩余 token；供应商 tokenizer 与图片计费可能不同，真实 usage 超过预算会立即停止后续阶段。网络中断时供应商实际计费可能无法获知，calls 仍被计数。角色和模型名在事件中记录。
 
 ```text
@@ -45,7 +47,7 @@ data/
   server.lock
   diagnostics/model-probe.json
   runs/<id>/
-    brief.input.json, brief.json
+    brief.input.json, brief.json, brief.checkpoint.json
     retrieval.json
     design.input.json, design.json
     call-01-rewrite.txt, ...

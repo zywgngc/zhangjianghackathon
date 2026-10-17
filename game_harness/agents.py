@@ -46,6 +46,37 @@ class AgentClient:
     async def close(self):
         await self.client.close()
 
+    async def request(self, rid, stage, role, payload):
+        if role not in {"build", "repair"} or not self.settings.stream_build:
+            response = await self.client.chat.completions.create(**payload)
+            choice = response.choices[0] if response.choices else None
+            return (choice.message.content if choice else None,
+                    response.usage.total_tokens if response.usage else None,
+                    choice.finish_reason if choice else None)
+        stream = await self.client.chat.completions.create(**payload, stream=True, stream_options={"include_usage": True})
+        parts, count, reasoning_count, usage, finish = [], 0, 0, None, None
+        started = last_update = time.monotonic()
+        try:
+            async for chunk in stream:
+                if chunk.usage:
+                    usage = chunk.usage.total_tokens
+                for choice in chunk.choices:
+                    if choice.delta.content:
+                        parts.append(choice.delta.content)
+                        count += len(choice.delta.content)
+                    reasoning_count += len(getattr(choice.delta, "reasoning_content", "") or "")
+                    if choice.finish_reason:
+                        finish = choice.finish_reason
+                if time.monotonic() - last_update >= 5:
+                    self.store.event(rid, stage, "model_progress", {"role": role, "characters": count,
+                        "reasoning_characters": reasoning_count, "seconds": round(time.monotonic() - started, 1)})
+                    last_update = time.monotonic()
+                if count > 300000:
+                    raise RuntimeError("模型代码输出超过 300KB 规模上限")
+        finally:
+            await stream.close()
+        return "".join(parts), usage, finish
+
     async def complete(self, rid, stage, role, system, data, max_tokens=4000, images=None):
         if not self.settings.api_key:
             raise RuntimeError("请在服务端 .env 配置 OPENAI_API_KEY")
@@ -70,8 +101,9 @@ class AgentClient:
                                                         "images": [p.name for p in images or []]})
             start = time.monotonic()
             try:
-                response = await self.client.chat.completions.create(
-                    model=model, messages=messages, max_tokens=output_limit, temperature=.3 if role in {"qa", "design"} else .65)
+                content, usage, finish = await self.request(rid, stage, role, {
+                    "model": model, "messages": messages, "max_tokens": output_limit,
+                    "temperature": .3 if role in {"qa", "design"} else .65})
             except (APIConnectionError, APIStatusError) as exc:
                 retryable = isinstance(exc, APIConnectionError) or exc.status_code in {408, 409, 429, 500, 502, 503, 504}
                 self.store.event(rid, stage, "model_error", {"error_type": type(exc).__name__, "retryable": retryable})
@@ -79,15 +111,13 @@ class AgentClient:
                     raise RuntimeError("模型接口调用失败：" + type(exc).__name__) from None
                 await asyncio.sleep(2 ** attempt)
                 continue
-            choice = response.choices[0] if response.choices else None
-            content = choice.message.content if choice else None
-            usage = response.usage.total_tokens if response.usage else input_estimate + max(1, len(content or ""))
+            usage = usage if usage is not None else input_estimate + max(1, len(content or ""))
             self.store.charge(rid, usage)
             self.store.write(rid, f"call-{call_number:02d}-{role}.txt", content or "")
             self.store.event(rid, stage, "model_done", {"role": role, "model": model, "tokens": usage,
-                "seconds": round(time.monotonic() - start, 2), "finish_reason": choice.finish_reason if choice else "empty"})
-            if not content or choice.finish_reason == "length":
-                raise RuntimeError("模型输出为空或被截断；请检查输出长度与模型预算")
+                "seconds": round(time.monotonic() - start, 2), "finish_reason": finish or "incomplete"})
+            if not content or finish != "stop":
+                raise RuntimeError("模型输出为空、被截断或流式响应未完整结束；请检查输出长度与模型预算")
             if self.store.get(rid)["tokens"] > self.settings.max_tokens:
                 raise RuntimeError("模型 token 预算已用尽")
             return content
