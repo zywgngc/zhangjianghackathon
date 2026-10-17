@@ -5,6 +5,7 @@ let current = null;
 let busy = false;
 let questionKey = '';
 let proposalKey = '';
+let repositoryKey = '';
 const runTitle = (run) =>
   run.input.caseId ? label(run.input.caseId) : run.input.brief?.slice(0, 60) || '图片 / 特征创意';
 function node(tag, text, className) {
@@ -12,6 +13,87 @@ function node(tag, text, className) {
   element.textContent = text;
   if (className) element.className = className;
   return element;
+}
+function sourceLink(text, uri) {
+  const link = node('a', text);
+  try {
+    const url = new URL(uri);
+    if (
+      url.protocol === 'https:' &&
+      url.hostname === 'github.com' &&
+      !url.username &&
+      !url.password
+    ) {
+      link.href = url.href;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+    }
+  } catch {}
+  return link;
+}
+function renderRepositories(run) {
+  const job = run.jobs
+    .filter((j) => j.request.purpose === 'archetype' && j.request.projectRevision === run.revision)
+    .at(-1);
+  const key = `${run.id}:${run.revision}:${job?.state}:${job?.result?.retrievedAt}`;
+  if (key === repositoryKey) return;
+  repositoryKey = key;
+  const root = $('repositories');
+  root.replaceChildren(node('h3', '相似游戏仓库 · 原型检索'));
+  const result = job?.result;
+  if (!result) {
+    root.append(
+      node('p', job?.error || '正在检索仓库并读取源码，完成后显示可核查的证据。', 'muted hint'),
+    );
+    return;
+  }
+  if (result.status === 'failed') {
+    root.append(node('p', `检索未完成：${result.error.message}`, 'notice'));
+    root.append(node('p', '下面仍可使用规则默认提案；它不代表已经找到相似仓库。', 'muted hint'));
+    return;
+  }
+  root.append(
+    node(
+      'p',
+      `${result.isMock ? '模拟测试数据' : '真实检索结果'} · ${result.candidates.length} 个候选 · ${result.provider}`,
+      'muted hint',
+    ),
+  );
+  for (const candidate of result.candidates) {
+    const card = node('article', '', 'repository');
+    const title = node('h3', '');
+    title.append(sourceLink(candidate.title, candidate.source.uri));
+    card.append(title, node('p', candidate.summary, 'hint'));
+    card.append(
+      node(
+        'p',
+        `固定版本：${candidate.source.revision?.slice(0, 12) || '未知'} · 许可证标识：${candidate.license?.identifier || '未知'} · 玩法未验证`,
+        'muted hint',
+      ),
+    );
+    if (candidate.coverageHints.length)
+      card.append(node('p', `匹配线索：${candidate.coverageHints.join('；')}`, 'hint'));
+    const detail = document.createElement('details');
+    detail.append(
+      node('summary', `查看 ${candidate.source.paths.length} 个已读取文件、证据与限制`),
+    );
+    detail.append(node('p', `文件：${candidate.source.paths.join('、') || '尚无'}`, 'hint'));
+    const evidence = document.createElement('ul');
+    for (const item of candidate.evidence) {
+      const li = node('li', '');
+      li.append(sourceLink(item.description, item.sourceUri));
+      evidence.append(li);
+    }
+    detail.append(evidence);
+    for (const limitation of candidate.limitations)
+      detail.append(node('p', limitation, 'muted hint'));
+    card.append(detail);
+    root.append(card);
+  }
+  const gaps = document.createElement('details');
+  gaps.append(node('summary', '检索范围与候选缺口'));
+  for (const item of result.limitations) gaps.append(node('p', item, 'muted hint'));
+  root.append(gaps);
 }
 function renderProposal(run) {
   const key = `${run.id}:${run.revision}:${run.stage}:${run.proposal?.basis}:${run.mainUsed}`;
@@ -193,7 +275,8 @@ function renderQuestions(run) {
     const result = job.result;
     const form = document.createElement('form');
     const title = document.createElement('h3');
-    title.textContent = '素材门户需要补充信息';
+    title.textContent =
+      job.request.purpose === 'archetype' ? '原型研究需要补充信息' : '素材门户需要补充信息';
     form.append(title);
     const fields = [];
     for (const q of result.questions) {
@@ -223,7 +306,10 @@ function renderQuestions(run) {
     }
     const button = document.createElement('button');
     button.textContent = '提交回答';
-    button.disabled = run.mainUsed >= 3 || run.materialUsed >= 3 || run.status === 'cancelled';
+    button.disabled =
+      run.mainUsed >= 3 ||
+      (job.request.purpose === 'archetype' ? (run.archetypeUsed ?? 0) : run.materialUsed) >= 3 ||
+      run.status === 'cancelled';
     form.append(button);
     form.onsubmit = async (event) => {
       event.preventDefault();
@@ -303,7 +389,8 @@ function render(run) {
     ...[
       `开发者追问：${run.mainUsed}/3`,
       `素材门户追问：${run.materialUsed}/3`,
-      `门户请求次数：${run.portalAttempts}/${run.maxPortalAttempts}`,
+      `原型重查：${run.archetypeUsed ?? 0}/3`,
+      `研究调用次数：${run.portalAttempts}/${run.maxPortalAttempts}`,
     ].map((text) => {
       const span = document.createElement('span');
       span.textContent = text;
@@ -336,6 +423,7 @@ function render(run) {
   $('state').textContent = JSON.stringify(run, null, 2);
   const mechanics = run.plan?.mechanics ?? [];
   renderQuestions(run);
+  renderRepositories(run);
   renderProposal(run);
   $('mechanics').replaceChildren(
     ...mechanics.map((m) => {
@@ -347,6 +435,16 @@ function render(run) {
       const detail = document.createElement('p');
       detail.textContent = `${m.checks.length} 项${run.proposal ? '派生验收草案' : '验收要求'} · ${blueprint?.candidates.filter((c) => c.mechanicId === m.id).length ?? 0} 个候选方案 · 行为尚未验证`;
       card.append(title, body, detail);
+      const materialJob = run.jobs
+        .filter(
+          (j) =>
+            j.request.purpose === 'mechanic' &&
+            j.request.mechanicId === m.id &&
+            j.request.projectRevision === run.revision,
+        )
+        .at(-1);
+      if (materialJob?.result?.status === 'failed')
+        card.append(node('p', `候选缺口：${materialJob.result.error.message}`, 'notice'));
       if (run.proposal) {
         const acceptance = document.createElement('details');
         acceptance.append(node('summary', '查看验收草案及来源'));
@@ -375,6 +473,7 @@ async function refresh() {
   current = null;
   questionKey = '';
   proposalKey = '';
+  repositoryKey = '';
   $('status').textContent = '请选择历史任务，或开始新的研究。';
   $('state').textContent = '尚未选择任务。';
   $('handoff-status').textContent = '';
@@ -385,6 +484,7 @@ async function refresh() {
     'clarifications',
     'handoff-blockers',
     'proposal',
+    'repositories',
   ])
     $(name).replaceChildren();
   for (const name of ['send', 'export', 'cancel', 'handoff']) $(name).disabled = true;
@@ -528,6 +628,16 @@ $('handoff').onclick = async () => {
   }
 };
 try {
+  const providers = await api('/api/providers');
+  $('provider-status').textContent = [
+    providers.archetypes === 'github-archetype-research'
+      ? '原型：WebMCP 直接检索 GitHub，并读取固定版本的源码。'
+      : `原型 provider：${providers.archetypes}（测试配置请核对结果中的模拟标识）。`,
+    providers.materials === 'material-portal-not-configured'
+      ? '素材门户：尚未接入，机制候选会明确标记缺口。'
+      : `素材门户：${providers.materials}。`,
+    '提案仍使用规则模板；尚无图片理解，源码未执行，玩法与验收均待验证。',
+  ].join(' ');
   const cases = await api('/api/cases');
   $('case').replaceChildren(
     ...cases.map(

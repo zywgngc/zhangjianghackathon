@@ -9,7 +9,9 @@ import type { ProposalSelection, StartRequest } from '../src/model.ts';
 
 function setup(extra: Partial<StartRequest> = {}) {
   const store = new RunStore(':memory:');
-  const engine = new ResearchOrchestrator(store, new MockMaterialPortal());
+  const engine = new ResearchOrchestrator(store, new MockMaterialPortal(), {
+    archetypes: new MockMaterialPortal(),
+  });
   const run = engine.start({
     requestId: randomUUID(),
     projectId: randomUUID(),
@@ -145,6 +147,30 @@ test('image-only auto mode retains references without pretending to interpret th
   }
 });
 
+test('initial archetype change researches the selected scope without consuming follow-up slots', async () => {
+  const { engine, store, id } = setup();
+  try {
+    await engine.drain();
+    const cmd = selection(engine, id, [choice('archetype', 'platformer')]);
+    engine.selectProposal(id, cmd);
+    engine.selectProposal(id, cmd);
+    assert.equal(engine.get(id).jobs.filter((j) => j.request.purpose === 'archetype').length, 2);
+    await engine.drain();
+    const run = engine.get(id);
+    assert.equal(run.jobs[0].state, 'stale');
+    assert.match(run.jobs[1].request.description, /archetype=platformer/);
+    assert.equal(run.archetypeUsed, 0);
+    assert.equal(run.mainUsed, 0);
+    assert.equal(run.materialUsed, 0);
+    assert.ok(
+      run.blueprints[0].candidates.every((c) => c.requestId !== run.jobs[0].request.requestId),
+    );
+    assert.ok(run.plan?.mechanics.some((m) => m.id === 'platform-motion'));
+  } finally {
+    store.close();
+  }
+});
+
 test('later archetype changes rebuild the plan even when all material follow-up slots are spent', async () => {
   const { engine, store, id } = setup({ decisionMode: 'auto' });
   try {
@@ -170,7 +196,9 @@ test('later archetype changes rebuild the plan even when all material follow-up 
     assert.ok(!bp.plan.mechanics.some((m) => m.id === 'combat'));
     assert.ok(!run.decisions.some((d) => d.id === 'attackMode'));
     assert.equal(run.decisions.find((d) => d.id === 'jumpRule')?.source, 'system_default');
-    assert.equal(bp.candidates.length, 0);
+    assert.ok(bp.candidates.some((c) => c.mechanicId === null));
+    assert.ok(bp.candidates.every((c) => c.projectRevision === run.revision));
+    assert.ok(!bp.candidates.some((c) => c.mechanicId === 'input'));
     assert.ok(bp.gaps.some((g) => g.includes('exhausted')));
     assert.deepEqual(run.blueprints[0], before);
   } finally {
@@ -236,7 +264,7 @@ test('real candidate hints can propose an archetype but cannot turn it into a co
     },
   });
   try {
-    const engine = new ResearchOrchestrator(store, portal);
+    const engine = new ResearchOrchestrator(store, portal, { archetypes: portal });
     const run = engine.start({
       requestId: 'candidate',
       projectId: 'candidate',
@@ -256,7 +284,10 @@ test('real candidate hints can propose an archetype but cannot turn it into a co
 test('an unanswered initial proposal expires without being implicitly confirmed', async () => {
   const store = new RunStore(':memory:');
   let now = 1000;
-  const engine = new ResearchOrchestrator(store, new MockMaterialPortal(), { now: () => now });
+  const engine = new ResearchOrchestrator(store, new MockMaterialPortal(), {
+    now: () => now,
+    archetypes: new MockMaterialPortal(),
+  });
   try {
     const run = engine.start({
       requestId: 'expire',
@@ -284,7 +315,7 @@ test('provider retry exhaustion still offers the initial proposal instead of sil
     },
   });
   try {
-    const engine = new ResearchOrchestrator(store, portal);
+    const engine = new ResearchOrchestrator(store, portal, { archetypes: portal });
     const run = engine.start({
       requestId: 'offline',
       projectId: 'offline',

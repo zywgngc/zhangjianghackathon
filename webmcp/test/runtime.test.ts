@@ -14,7 +14,9 @@ import { cleanupTemp, failed, hasCode, mainCommand, setup } from './helpers.ts';
 test('all three cases preserve 225 acceptance checks and produce honest partial blueprints', async () => {
   const store = new RunStore(':memory:');
   try {
-    const engine = new ResearchOrchestrator(store, new MockMaterialPortal());
+    const engine = new ResearchOrchestrator(store, new MockMaterialPortal(), {
+      archetypes: new MockMaterialPortal(),
+    });
     const ids = benchmarks.map(
       (b) =>
         engine.start({ requestId: randomUUID(), projectId: randomUUID(), caseId: b.caseId }).id,
@@ -52,7 +54,9 @@ test('all three cases preserve 225 acceptance checks and produce honest partial 
 test('locked engines reject incompatible input and saved preferences retain provenance', () => {
   const store = new RunStore(':memory:');
   try {
-    const engine = new ResearchOrchestrator(store, new MockMaterialPortal());
+    const engine = new ResearchOrchestrator(store, new MockMaterialPortal(), {
+      archetypes: new MockMaterialPortal(),
+    });
     assert.throws(
       () =>
         engine.start({
@@ -155,7 +159,7 @@ test('stale main revisions and parent links do not consume slots', () => {
     store.close();
   }
 });
-test('optional portal clarifications use defaults and only material budget', async () => {
+test('optional archetype clarifications use defaults and their own budget', async () => {
   const mock = new MockMaterialPortal();
   const portal = new FunctionPortalAdapter({
     provider: 'questions',
@@ -191,7 +195,8 @@ test('optional portal clarifications use defaults and only material budget', asy
   try {
     await engine.drain();
     const r = engine.get(id);
-    assert.equal(r.materialUsed, 1);
+    assert.equal(r.materialUsed, 0);
+    assert.equal(r.archetypeUsed, 1);
     assert.equal(r.mainUsed, 0);
     assert.ok(r.assumptions.some((s) => s.includes('sort=fit')));
     assert.equal(r.status, 'partial');
@@ -248,7 +253,8 @@ test('required clarification waits and resumes through correlated main and porta
     engine.mainFollowUp(cmd);
     await engine.drain();
     assert.equal(engine.get(id).mainUsed, 1);
-    assert.equal(engine.get(id).materialUsed, 1);
+    assert.equal(engine.get(id).materialUsed, 0);
+    assert.equal(engine.get(id).archetypeUsed, 1);
     assert.equal(engine.get(id).status, 'partial');
   } finally {
     store.close();
@@ -310,7 +316,7 @@ test('an ordinary main note does not relabel automatic defaults as developer cho
     store.close();
   }
 });
-test('persistent portal questions stop at three follow-ups', async () => {
+test('persistent archetype questions stop at three independent follow-ups', async () => {
   const mock = new MockMaterialPortal();
   const portal = new FunctionPortalAdapter({
     provider: 'questions',
@@ -341,7 +347,8 @@ test('persistent portal questions stop at three follow-ups', async () => {
   try {
     await engine.drain();
     const r = engine.get(id);
-    assert.equal(r.materialUsed, 3);
+    assert.equal(r.materialUsed, 0);
+    assert.equal(r.archetypeUsed, 3);
     assert.equal(r.portalAttempts, 4);
     assert.equal(r.status, 'partial');
     assert.ok(r.blueprints.at(-1)!.gaps.some((g) => g.includes('exhausted')));
@@ -517,7 +524,9 @@ test('SQLite restart preserves counters, queued IDs, and immutable blueprint his
   const path = join(dir, 'state.sqlite');
   let store = new RunStore(path);
   try {
-    let engine = new ResearchOrchestrator(store, new MockMaterialPortal());
+    let engine = new ResearchOrchestrator(store, new MockMaterialPortal(), {
+      archetypes: new MockMaterialPortal(),
+    });
     const id = engine.start({
       requestId: 'initial',
       projectId: 'project',
@@ -532,9 +541,12 @@ test('SQLite restart preserves counters, queued IDs, and immutable blueprint his
       .map((j) => j.request.requestId);
     store.close();
     store = new RunStore(path);
-    engine = new ResearchOrchestrator(store, new MockMaterialPortal());
+    engine = new ResearchOrchestrator(store, new MockMaterialPortal(), {
+      archetypes: new MockMaterialPortal(),
+    });
     assert.equal(engine.get(id).mainUsed, 1);
-    assert.equal(engine.get(id).materialUsed, 1);
+    assert.equal(engine.get(id).materialUsed, 0);
+    assert.equal(engine.get(id).archetypeUsed, 1);
     assert.deepEqual(
       engine
         .get(id)

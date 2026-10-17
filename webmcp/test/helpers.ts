@@ -14,7 +14,7 @@ export function setup(
   path = ':memory:',
 ) {
   const store = new RunStore(path);
-  const engine = new ResearchOrchestrator(store, portal, options);
+  const engine = new ResearchOrchestrator(store, portal, { archetypes: portal, ...options });
   const run = engine.start({
     requestId: randomUUID(),
     projectId: randomUUID(),

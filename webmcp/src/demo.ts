@@ -9,7 +9,9 @@ import { MockMaterialPortal } from './portal.ts';
 mkdirSync('.demo', { recursive: true });
 const store = new RunStore(resolve('.demo/research.sqlite'));
 try {
-  const engine = new ResearchOrchestrator(store, new MockMaterialPortal());
+  const engine = new ResearchOrchestrator(store, new MockMaterialPortal(), {
+    archetypes: new MockMaterialPortal(),
+  });
   const ids = benchmarks.map(
     (b) =>
       engine.start({ requestId: randomUUID(), projectId: `demo-${randomUUID()}`, caseId: b.caseId })

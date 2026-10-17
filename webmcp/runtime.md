@@ -1,8 +1,8 @@
 # Running the WebMCP research service
 
-The first executable slice is available on `Webmcp`. It has a durable local orchestrator, separate Researcher/Planner/Reviewer components, a mock material portal, an HTTP API, a small research studio, and a feature-detected browser WebMCP adapter.
+The current executable slice is on `codex/webmcp-harness-integration`. It has a durable local orchestrator, WebMCP-owned live GitHub repository search, separate Researcher/Planner/Reviewer components, a teammate-owned material port, an HTTP API, a Chinese research studio, and a feature-detected browser WebMCP adapter. See [repository discovery and source evidence](github-research.md).
 
-**The default entry accepts a sparse idea, not a complete acceptance specification.** Supply a brief, known characteristics, and/or image references. Archetype research runs first, followed by editable proposed choices. Developers can resolve the initial batch or opt into automatic completion. Explicit benchmark mode still preserves the three pinned test specifications. The current proposal planner uses rules and four templates, not an LLM or image recognition. The default portal returns synthetic alternatives; blueprints remain `partial`, and acceptance checks remain `not_executed`.
+**The default entry accepts a sparse idea, not a complete acceptance specification.** Supply a brief, known characteristics, and/or image references. GitHub archetype research runs first, followed by editable proposed choices. Developers can resolve the initial batch or opt into automatic completion. Explicit benchmark mode still preserves the three pinned test specifications. The current proposal planner uses rules and four templates, not an LLM or image recognition. The default material port reports `UNAVAILABLE` until the teammate adapter is configured; it does not manufacture candidates. Blueprints remain `partial`, and acceptance checks remain `not_executed`.
 
 ## Quick start
 
@@ -33,7 +33,7 @@ The 225 check descriptions were extracted from the `tests` branch at commit `81f
 
 ## What runs today
 
-- SQLite transactions reserve main and material follow-up slots atomically, including across independent processes using the same local database. The two limits remain three per run.
+- SQLite transactions reserve main and material follow-up slots atomically, including across independent processes using the same local database. Each remains three per run. WebMCP's internal archetype rechecks have their own three-slot counter and do not use the material allowance. Initial selection may refine the archetype/engine/count query once, keeping the exploratory results as stale history; all follow-up counters stay at zero.
 - Request hashes and parent links enforce idempotency and correlation. Stale revisions cannot overwrite current accepted research. Historical blueprints remain available in run state.
 - The worker persists queued requests, attempt counts, deadlines, and dispatch leases. Automatic replay after uncertain delivery is allowed only when an adapter explicitly guarantees request-ID idempotency.
 - Optional portal questions use established project facts where available, then valid defaults. Required unanswered questions pause for main. Counter exhaustion, missing evidence, and failed searches remain explicit gaps.
@@ -53,12 +53,13 @@ Revision handling is conservative: a main follow-up invalidates current research
 
 The development server binds only to `127.0.0.1`. Opening its page establishes a local HttpOnly, SameSite cookie session. Programmatic callers can set `WEBMCP_TOKEN` in the server environment and use `Authorization: Bearer <token>`. Configured tokens must contain at least 16 characters. This is a single-user local development service, not production login or multi-tenant authorization.
 
-Optional environment settings: `PORT` (default `4174`), `WEBMCP_DB` (SQLite path), and `WEBMCP_TOKEN`. Keep credentials out of source files and request examples.
+Optional environment settings: `PORT` (default `4174`), `WEBMCP_DB` (SQLite path), `WEBMCP_TOKEN` (local API authentication), `WEBMCP_GITHUB_TOKEN` (server-only GitHub credential), and `WEBMCP_RESEARCH_MODE` (`live` by default; `fixtures` explicitly opts into synthetic offline data). Keep credentials out of source files and request examples. The GitHub token is never read from another logged-in account, passed to the browser, or sent to MaterialPortal.
 
 | Method / path | Input or result |
 | --- | --- |
 | `GET /health` | Public process/provider health |
 | `GET /api/cases` | Three benchmark profiles and their acceptance checks |
+| `GET /api/providers` | Current archetype and material provider IDs, without credentials |
 | `GET /api/contract` | v0.2 discussion/material JSON Schema |
 | `GET /api/runs` | Persisted run summaries |
 | `POST /api/runs` | `StartRequest`; returns HTTP 202 with run ID and project revision |
@@ -89,7 +90,7 @@ The browser adapter registers `get_research_context`, `start_research`, `resolve
 
 ## Connecting the teammate's material portal
 
-Keep the external service teammate-owned. Replace `MockMaterialPortal` through `FunctionPortalAdapter`, passing a function that maps our request to their real MCP tool and maps its response back to v0.2:
+Keep the external service teammate-owned. Replace `UnconfiguredMaterialPortal` through `FunctionPortalAdapter`, passing a function that maps mechanic requests to their real MCP tool and maps its response back to v0.2. Archetype requests are routed separately to `ArchetypeResearchPort`:
 
 ```ts
 import { FunctionPortalAdapter } from './src/portal.ts';
@@ -105,7 +106,7 @@ const portal = new FunctionPortalAdapter({
 const engine = new ResearchOrchestrator(store, portal);
 ```
 
-`teammateClient` above is an integration placeholder, not an included SDK or endpoint. Instantiate `createResearchServer({ engine })` in your own entry point when using that adapter; the shipped `pnpm start` entry point deliberately uses fixtures. Images are passed as references; the mock never interprets their contents. The actual MCP transport, authentication, image resolution, asynchronous provider-job recovery, and source-file download interface still need agreement with the portal owner.
+`teammateClient` above is an integration placeholder, not an included SDK or endpoint. Instantiate `createResearchServer({ engine })` in your own entry point when using that adapter. The constructor independently defaults archetypes to `GitHubArchetypeResearcher`; inject `new GitHubArchetypeResearcher({ token: process.env.WEBMCP_GITHUB_TOKEN })` if using an optional token. The shipped entry point already does this. Images are retained as references; GitHub discovery never fetches or interprets them. The material MCP transport, authentication, image resolution, asynchronous provider-job recovery, and source-file download interface still need agreement with the portal owner.
 
 The service uses [Node's SQLite API](https://nodejs.org/docs/latest-v24.x/api/sqlite.html) for a local single-host store. Moving to Postgres/distributed workers, production authorization, model-backed agents, sandboxed source verification, and the Builder/QA integration remains separate work.
 

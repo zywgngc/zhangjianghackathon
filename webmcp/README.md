@@ -1,6 +1,6 @@
 # WebMCP research architecture
 
-**Status:** contract v0.2 plus a runnable reference-case research service. The durable orchestrator, three deterministic role components, mock portal, HTTP API, studio, and browser adapter are implemented. Live portal integration, model-backed planning, source verification, and game generation remain pending.
+**Status:** runnable sparse-idea research with WebMCP-owned **live GitHub archetype search and bounded static source inspection**. The durable orchestrator, deterministic proposal/planning roles, HTTP API, Chinese studio, and browser adapter are implemented. The teammate-owned material portal remains an independent, unconfigured port. Model/vision planning, behavior verification, and game generation remain pending. See [repository research and ownership](github-research.md).
 
 **Run it:** see [runtime.md](runtime.md) for setup, API routes, demonstration results, and the portal integration hook. From this directory: `pnpm install --frozen-lockfile`, `pnpm check`, `pnpm test`, then `pnpm start`.
 
@@ -42,4 +42,4 @@ The external MCP portal is owned by another teammate. Our `MaterialPortalPort` i
 | [architecture.html](architecture.html) | Standalone diagrams and contract summary; download and open locally to print |
 | [diagrams](diagrams) | SVG exports and editable DOT sources |
 
-The included mock workflow is executable now. Connect the teammate's real portal behind the same interface next. Fixture candidates never count as researched or verified sources, and current blueprints remain explicitly partial.
+`pnpm start` uses live GitHub repository research and explicitly reports missing material integration. `pnpm demo` and `WEBMCP_RESEARCH_MODE=fixtures` use synthetic data for offline regression. Neither source discovery nor static reading certifies behavior; current blueprints remain explicitly partial.

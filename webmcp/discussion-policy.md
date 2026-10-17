@@ -7,9 +7,11 @@
 | Boundary | Direction of a follow-up request | Limit per research run |
 | --- | --- | --- |
 | Main application ↔ our MAS | Main refines the brief, answers our questions, or asks us to reconsider a result | Three follow-ups after the initial brief |
-| Our MAS ↔ material portal | MAS refines a search, requests missing evidence/alternatives, or answers portal questions | Three follow-ups after initial searches, shared across the run's archetype and mechanic tasks |
+| Our MAS ↔ material portal | MAS refines mechanic searches, requests missing evidence/alternatives, or answers portal questions | Three follow-ups after initial searches, shared across the run's mechanic tasks |
 
 The initial request is round `0`; follow-ups use slots `1`, `2`, and `3`. One request plus its response is one round. Several related questions can be batched into one round. The main and material counters are independent: a main follow-up does not itself consume a material slot, but a resulting material refinement does.
+
+**Current runtime ownership:** GitHub archetype research is internal to WebMCP and uses a separate `archetypeUsed` counter (at most three rechecks), not the material allowance. Initial proposal selection can refine its original search once without using follow-up slots. This does not reset either external discussion budget. See [GitHub research](github-research.md) for routing and legacy counter compatibility.
 
 **Scope choice:** the material allowance is run-wide, not three extra rounds for every mechanic. Separate planned mechanics can have initial searches, bounded by the run's total request/cost budget. Repeating or narrowing an existing search intent is a follow-up even if a caller gives it a new thread ID. This prevents a larger mechanic graph from multiplying the discussion budget.
 

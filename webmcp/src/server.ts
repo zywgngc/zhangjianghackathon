@@ -7,7 +7,8 @@ import { pathToFileURL } from 'node:url';
 import { benchmarks } from './agents.ts';
 import { AppError } from './model.ts';
 import { ResearchOrchestrator } from './orchestrator.ts';
-import { MockMaterialPortal } from './portal.ts';
+import { MockMaterialPortal, UnconfiguredMaterialPortal } from './portal.ts';
+import { GitHubArchetypeResearcher } from './github-archetypes.ts';
 import { RunStore } from './store.ts';
 
 const assets: Record<string, [string, string]> = {
@@ -100,6 +101,10 @@ export async function createResearchServer(options: {
         throw new AppError('UNAUTHORIZED', 'A local session or bearer token is required.', 401);
       if (req.method === 'GET' && path === '/api/cases') {
         json(200, benchmarks);
+        return;
+      }
+      if (req.method === 'GET' && path === '/api/providers') {
+        json(200, { archetypes: engine.archetypes.provider, materials: engine.portal.provider });
         return;
       }
       if (req.method === 'GET' && path === '/api/contract') {
@@ -223,14 +228,20 @@ export async function createResearchServer(options: {
 }
 async function main(): Promise<void> {
   const store = new RunStore(resolve(process.env.WEBMCP_DB ?? '.data/research.sqlite'));
-  const engine = new ResearchOrchestrator(store, new MockMaterialPortal());
+  const fixtures = process.env.WEBMCP_RESEARCH_MODE === 'fixtures';
+  const portal = fixtures ? new MockMaterialPortal() : new UnconfiguredMaterialPortal();
+  const engine = new ResearchOrchestrator(store, portal, {
+    archetypes: fixtures
+      ? new MockMaterialPortal()
+      : new GitHubArchetypeResearcher({ token: process.env.WEBMCP_GITHUB_TOKEN }),
+  });
   const service = await createResearchServer({
     engine,
     port: Number(process.env.PORT ?? 4174),
     token: process.env.WEBMCP_TOKEN,
   });
   console.log(
-    `Research studio: ${service.origin}\nProvider: synthetic fixtures. Open the local page to establish a browser session.`,
+    `Research studio: ${service.origin}\nArchetypes: ${engine.archetypes.provider}; materials: ${portal.provider}.`,
   );
   const close = async () => {
     await service.close();

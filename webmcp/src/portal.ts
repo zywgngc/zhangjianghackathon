@@ -9,6 +9,32 @@ export interface PortalAdapter extends MaterialPortalPort {
   /** Only true when identical request IDs are safe to replay after an uncertain outcome. */
   readonly idempotentRequests: boolean;
 }
+/** Production placeholder for the teammate-owned service, never synthetic search results. */
+export class UnconfiguredMaterialPortal implements PortalAdapter {
+  readonly provider = 'material-portal-not-configured';
+  readonly idempotentRequests = true;
+  async search(request: MaterialSearchRequest): Promise<MaterialSearchResult> {
+    return {
+      contractVersion: '0.2',
+      requestId: request.requestId,
+      discussion: {
+        runId: request.discussion.runId,
+        threadId: request.discussion.threadId,
+        round: request.discussion.round,
+      },
+      provider: this.provider,
+      retrievedAt: new Date().toISOString(),
+      isMock: false,
+      status: 'failed',
+      error: {
+        code: 'UNAVAILABLE',
+        message: '素材门户尚未配置；请由门户负责人接入 MaterialPortalPort。未生成模拟候选。',
+        retryable: false,
+        retryAfterMs: null,
+      },
+    };
+  }
+}
 export class FunctionPortalAdapter implements PortalAdapter {
   readonly provider: string;
   readonly idempotentRequests: boolean;
