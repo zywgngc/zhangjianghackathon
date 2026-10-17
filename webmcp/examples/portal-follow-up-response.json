@@ -1,0 +1,70 @@
+{
+  "contractVersion": "0.2",
+  "requestId": "fixture-movement-follow-up-001",
+  "provider": "material-portal-fixture",
+  "retrievedAt": "2026-10-17T00:00:00Z",
+  "isMock": true,
+  "status": "completed",
+  "candidates": [
+    {
+      "candidateId": "fixture-waypoints-a",
+      "kind": "source_code",
+      "title": "Fixture: direct waypoint follower",
+      "summary": "Illustrative candidate using distance-to-next-waypoint traversal.",
+      "source": {
+        "uri": "https://materials.example/demo-waypoints/src/follow.ts",
+        "repositoryUrl": "https://materials.example/demo-waypoints",
+        "revision": null,
+        "paths": [
+          "src/follow.ts"
+        ],
+        "symbols": [
+          "advanceAlongWaypoints"
+        ]
+      },
+      "coverageHints": [
+        "Ordered waypoints",
+        "Elapsed-time integration"
+      ],
+      "license": null,
+      "evidence": [],
+      "limitations": [
+        "Synthetic fixture",
+        "No pinned source revision",
+        "License and behavior remain unverified"
+      ]
+    },
+    {
+      "candidateId": "fixture-waypoints-b",
+      "kind": "algorithm_documentation",
+      "title": "Fixture: cumulative path-distance lookup",
+      "summary": "Illustrative alternative that maps travelled distance onto precomputed path segments.",
+      "source": {
+        "uri": "https://materials.example/algorithms/path-distance",
+        "repositoryUrl": null,
+        "revision": null,
+        "paths": [],
+        "symbols": []
+      },
+      "coverageHints": [
+        "Distance-based path traversal",
+        "Potential support for large simulation steps"
+      ],
+      "license": null,
+      "evidence": [],
+      "limitations": [
+        "Synthetic fixture",
+        "Requires implementation and verification"
+      ]
+    }
+  ],
+  "limitations": [
+    "Only two fixture alternatives are supplied; this is not a real source search.",
+    "Follow-up exchange is synthetic; no new code or behavior evidence is established."
+  ],
+  "discussion": {
+    "runId": "fixture-run-001",
+    "threadId": "fixture-movement",
+    "round": 1
+  }
+}

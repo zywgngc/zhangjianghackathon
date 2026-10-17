@@ -1,5 +1,5 @@
 {
-  "contractVersion": "0.1",
+  "contractVersion": "0.2",
   "requestId": "fixture-movement-002",
   "provider": "material-portal-fixture",
   "retrievedAt": "2026-10-17T00:00:00Z",
@@ -10,5 +10,10 @@
     "message": "Fixture: the external material portal is temporarily unavailable.",
     "retryable": true,
     "retryAfterMs": 2000
+  },
+  "discussion": {
+    "runId": "fixture-run-001",
+    "threadId": "fixture-outage",
+    "round": 0
   }
 }

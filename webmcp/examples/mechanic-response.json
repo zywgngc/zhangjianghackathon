@@ -1,5 +1,5 @@
 {
-  "contractVersion": "0.1",
+  "contractVersion": "0.2",
   "requestId": "fixture-movement-002",
   "provider": "material-portal-fixture",
   "retrievedAt": "2026-10-17T00:00:00Z",
@@ -15,13 +15,24 @@
         "uri": "https://materials.example/demo-waypoints/src/follow.ts",
         "repositoryUrl": "https://materials.example/demo-waypoints",
         "revision": null,
-        "paths": ["src/follow.ts"],
-        "symbols": ["advanceAlongWaypoints"]
+        "paths": [
+          "src/follow.ts"
+        ],
+        "symbols": [
+          "advanceAlongWaypoints"
+        ]
       },
-      "coverageHints": ["Ordered waypoints", "Elapsed-time integration"],
+      "coverageHints": [
+        "Ordered waypoints",
+        "Elapsed-time integration"
+      ],
       "license": null,
       "evidence": [],
-      "limitations": ["Synthetic fixture", "No pinned source revision", "License and behavior remain unverified"]
+      "limitations": [
+        "Synthetic fixture",
+        "No pinned source revision",
+        "License and behavior remain unverified"
+      ]
     },
     {
       "candidateId": "fixture-waypoints-b",
@@ -35,11 +46,24 @@
         "paths": [],
         "symbols": []
       },
-      "coverageHints": ["Distance-based path traversal", "Potential support for large simulation steps"],
+      "coverageHints": [
+        "Distance-based path traversal",
+        "Potential support for large simulation steps"
+      ],
       "license": null,
       "evidence": [],
-      "limitations": ["Synthetic fixture", "Requires implementation and verification"]
+      "limitations": [
+        "Synthetic fixture",
+        "Requires implementation and verification"
+      ]
     }
   ],
-  "limitations": ["Only two fixture alternatives are supplied; this is not a real source search."]
+  "limitations": [
+    "Only two fixture alternatives are supplied; this is not a real source search."
+  ],
+  "discussion": {
+    "runId": "fixture-run-001",
+    "threadId": "fixture-movement",
+    "round": 0
+  }
 }

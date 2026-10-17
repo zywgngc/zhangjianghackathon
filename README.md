@@ -4,6 +4,8 @@
 
 **Receiving the WebMCP work?** Read the [current-state handoff](webmcp/handoff.md) for delivered artifacts, ownership, interface expectations, and next steps. The research runtime and live portal integration are not implemented in this package yet.
 
+**v0.2 discussion proposal:** [Three follow-ups on each boundary](webmcp/discussion-policy.md), with separate run-wide main/MAS and MAS/material-portal budgets, correlated clarification, and editable defaults.
+
 Proposed multi-agent architecture for browser games, including mobile browsers.
 
 [Editable Markdown / Mermaid](web-game-generator-mas-plan.md) · [Standalone HTML export](web-game-generator-mas-plan.html)

@@ -1,4 +1,6 @@
-/** Proposed application contract v0.1. No portal implementation or MCP SDK dependency. */
+/** Proposed application contract v0.2. No portal implementation or MCP SDK dependency. */
+import type { ClarificationQuestion, DiscussionContext, DiscussionReference } from "./discussion.ts";
+
 export type Engine = "html" | "phaser" | "babylon";
 export type MaterialKind =
   | "game_repository"
@@ -23,8 +25,9 @@ export interface SearchConstraints {
 }
 
 interface SearchRequestBase {
-  contractVersion: "0.1";
+  contractVersion: "0.2";
   requestId: string;
+  discussion: DiscussionContext;
   /** Non-negative project revision; used for provenance, not authorization. */
   projectRevision: number;
   description: string;
@@ -69,8 +72,10 @@ export interface MaterialCandidate {
 }
 
 interface ResultMetadata {
-  contractVersion: "0.1";
+  contractVersion: "0.2";
   requestId: string;
+  /** Echo the request's run ID, thread ID, and round. */
+  discussion: DiscussionReference;
   provider: string;
   retrievedAt: string;
   /** Fixtures must be true and cannot satisfy production evidence requirements. */
@@ -86,6 +91,14 @@ export type PortalErrorCode =
   | "AUTH_REQUIRED";
 
 export type MaterialSearchResult = ResultMetadata & (
+  | {
+      status: "needs_clarification";
+      clarificationId: string;
+      questions: ClarificationQuestion[];
+      /** Preserve useful candidates while requesting one batched clarification. */
+      candidates: MaterialCandidate[];
+      limitations: string[];
+    }
   | {
       status: "completed" | "partial";
       candidates: MaterialCandidate[];

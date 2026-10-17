@@ -1,0 +1,48 @@
+{
+  "contractVersion": "0.2",
+  "requestId": "fixture-movement-follow-up-001",
+  "projectRevision": 2,
+  "purpose": "mechanic",
+  "mechanicId": "enemy-waypoint-movement",
+  "requiredBehavior": [
+    "Move enemies along ordered 2D waypoints using elapsed simulation time.",
+    "Handle crossing multiple waypoints within one update.",
+    "Emit a goal-reached event once per enemy.",
+    "Only forward traversal is required; reverse traversal is outside the mechanic contract."
+  ],
+  "description": "Find extractable waypoint-movement implementations or algorithm references compatible with a Phaser web game. The host owns entity state and simulation timing. Return multiple alternatives with relevant source paths and dependency information.",
+  "images": [],
+  "constraints": {
+    "engine": "phaser",
+    "engineVersion": null,
+    "platform": "web",
+    "language": "any",
+    "inputModes": [
+      "pointer",
+      "touch"
+    ]
+  },
+  "materialKinds": [
+    "source_code",
+    "algorithm_documentation"
+  ],
+  "limit": 3,
+  "discussion": {
+    "runId": "fixture-run-001",
+    "threadId": "fixture-movement",
+    "round": 1,
+    "inReplyToRequestId": "fixture-movement-002",
+    "followUp": {
+      "message": "Use the forward-only default and prioritize extractable implementations that handle a large elapsed-time step.",
+      "clarificationId": "fixture-movement-clarification-001",
+      "answers": [
+        {
+          "questionId": "reverse-traversal",
+          "source": "system_default",
+          "optionId": "forward-only",
+          "text": null
+        }
+      ]
+    }
+  }
+}

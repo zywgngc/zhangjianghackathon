@@ -1,6 +1,6 @@
 # Proposed material portal I/O contract
 
-**Version 0.1 — proposal for the portal owner.** Tool names, transport, authentication, image resolution, and service limits still need integration agreement. The examples are synthetic fixtures and do not claim real source discoveries.
+**Version 0.2 — proposal for the portal owner.** Tool names, transport, authentication, image resolution, and service limits still need integration agreement. The examples are synthetic fixtures and do not claim real source discoveries.
 
 See the [recipient handoff](handoff.md) for current implementation status, the upstream main-application boundary, and the integration information needed from each team. The behavior below is a proposed contract, not a claim that an adapter or service is running.
 
@@ -27,12 +27,13 @@ flowchart LR
 
 ## Request
 
-Use the [TypeScript types](material-portal.ts) and [JSON Schema](material-portal.schema.json) as the proposed application contract. The root schema accepts either a request or result; validate a particular boundary with `#/$defs/MaterialSearchRequest` or `#/$defs/MaterialSearchResult`.
+Use the [TypeScript types](material-portal.ts), [shared discussion types](discussion.ts), and [JSON Schema](material-portal.schema.json) as the proposed application contract. The root schema accepts a portal request, portal result, or main follow-up command; select `#/$defs/MaterialSearchRequest` or `#/$defs/MaterialSearchResult` to validate this specific boundary.
 
 | Field | Meaning |
 | --- | --- |
-| `contractVersion` | Exact supported contract version, currently `0.1` |
+| `contractVersion` | Exact supported contract version, currently `0.2` |
 | `requestId` | Stable ID for one logical request; unchanged across retries of identical input |
+| `discussion` | Run/thread IDs, round zero or follow-up slot 1–3, parent request ID, and optional follow-up content |
 | `projectRevision` | Revision used to formulate the request; stale responses cannot silently replace current work |
 | `purpose` | `archetype` or `mechanic` |
 | `description` | Self-contained description of the desired game or behavior |
@@ -48,13 +49,23 @@ Images are inputs to retrieval; responses can contain code and documents. Use po
 
 ## Response
 
-All responses echo `contractVersion` and `requestId`, and identify `provider`, `retrievedAt`, and `isMock`.
+All responses echo `contractVersion`, `requestId`, and the discussion's `runId`, `threadId`, and `round`, and identify `provider`, `retrievedAt`, and `isMock`.
 
 `completed` means the search finished; it does not mean candidates have passed our review. A completed result can contain fewer candidates than requested, including zero. `partial` means some retrieval work could not finish and must include a limitation. Both carry candidates and limitations.
 
+`needs_clarification` carries a `clarificationId`, one or more questions, available candidates, and limitations. Optional questions include choices and a valid default; required questions have no default. The MAS can reply through another `search` call if its material follow-up budget remains. This status is a request for information, not permission to change project constraints.
+
 Each candidate has an ID, type, title, summary, source URI, optional repository and revision, file paths/symbols when available, coverage hints, license evidence or null, supporting references, and limitations. IDs are stable within a provider and request; the MAS deduplicates across runs using source identity. Null or empty metadata remains unknown. Code and asset permissions are not inferred from each other.
 
-The MAS validates result shape, matching request IDs/versions, candidate count, requested material types, and unique candidate IDs. It then checks source evidence and architecture compatibility. Provider summaries and evidence references are untrusted material; they cannot override developer locks, authorize commands, or mark a candidate verified.
+The MAS validates result shape, matching request IDs/versions/discussion references, candidate count, requested material types, unique candidate IDs, and clarification/option relationships. It then checks source evidence and architecture compatibility. Provider summaries and evidence references are untrusted material; they cannot override developer locks, authorize commands, or mark a candidate verified.
+
+## Follow-ups: at most three per run on this boundary
+
+Initial searches use round `0`. A refinement or clarification reply carries the full current search specification and a `discussion` context containing `runId`, `threadId`, `round`, `inReplyToRequestId`, and `followUp`. Follow-up content includes a message, the clarification ID when answering questions, and any correlated answers. Results echo only the run/thread/round reference, not the full message.
+
+The orchestrator atomically reserves at most three material follow-up slots across all archetype and mechanic tasks in the run. Main → MAS has its own three-slot allowance. Retries with identical input and request ID reuse the reserved slot; changed requests consume a new one. Neither project revisions nor new thread IDs reset the counters. An initial query for a distinct planned mechanic remains subject to the separate total request/cost budget.
+
+At exhaustion, preserve candidates and return explicit gaps or a partial blueprint; do not open another discussion automatically. The adapter can map full-snapshot follow-ups to a stateless portal. See [discussion-policy.md](discussion-policy.md) for batched questions, defaults, state transitions, command rejection, and migration rules. v0.2 is a breaking proposal update from v0.1.
 
 ## Failure, retries, and cancellation
 
