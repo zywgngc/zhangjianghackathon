@@ -1,6 +1,6 @@
 # WebMCP research architecture
 
-**Status:** runnable sparse-idea research with WebMCP-owned **live GitHub archetype search and bounded static source inspection**. The durable orchestrator, deterministic proposal/planning roles, HTTP API, Chinese studio, and browser adapter are implemented. The teammate-owned material portal remains an independent, unconfigured port. Model/vision planning, behavior verification, and game generation remain pending. See [repository research and ownership](github-research.md).
+**Status:** runnable sparse-idea research with WebMCP-owned **GitHub archetype search and bounded static source inspection (cache-only by default)**. The durable orchestrator, deterministic proposal/planning roles, HTTP API, Chinese studio, and browser adapter are implemented. The teammate-owned material portal remains an independent, unconfigured port. Model/vision planning, behavior verification, and game generation remain pending. See [repository research and ownership](github-research.md).
 
 **Run it:** see [runtime.md](runtime.md) for setup, API routes, demonstration results, and the portal integration hook. From this directory: `pnpm install --frozen-lockfile`, `pnpm check`, `pnpm test`, then `pnpm start`.
 
@@ -42,4 +42,4 @@ The external MCP portal is owned by another teammate. Our `MaterialPortalPort` i
 | [architecture.html](architecture.html) | Standalone diagrams and contract summary; download and open locally to print |
 | [diagrams](diagrams) | SVG exports and editable DOT sources |
 
-`pnpm start` uses live GitHub repository research and explicitly reports missing material integration. `pnpm demo` and `WEBMCP_RESEARCH_MODE=fixtures` use synthetic data for offline regression. Neither source discovery nor static reading certifies behavior; current blueprints remain explicitly partial.
+`pnpm start` reads only the local GitHub cache (zero GitHub requests); bounded networking requires explicit `WEBMCP_GITHUB_NETWORK=bounded` and explicitly reports missing material integration. `pnpm demo` and `WEBMCP_RESEARCH_MODE=fixtures` use synthetic data for offline regression. Neither source discovery nor static reading certifies behavior; current blueprints remain explicitly partial.

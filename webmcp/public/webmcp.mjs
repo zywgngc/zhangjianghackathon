@@ -25,7 +25,7 @@ export function researchTools(api, contract) {
     ),
     tool(
       'start_research',
-      '用图片引用或稀疏创意创建研究任务；省略 caseId。decisionMode=ask 先检索相似开源仓库再给选项，auto 自动采用默认。原型由 WebMCP 检索 GitHub 并静态读取源码；素材门户独立接入。当前使用规则提案，图片尚未识别，行为尚未验证。测试模式可显式使用模拟数据。',
+      '用图片引用或稀疏创意创建研究任务；省略 caseId。decisionMode=ask 先检索相似开源仓库再给选项，auto 自动采用默认。原型由 WebMCP 研究：默认只读本地缓存，显式开启有限联网后检索 GitHub 并静态读取少量源码；素材门户独立接入。当前使用规则提案，图片尚未识别，行为尚未验证。测试模式可显式使用模拟数据。',
       startRequestSchema(contract),
       false,
       (input) => api('/api/runs', 'POST', input),

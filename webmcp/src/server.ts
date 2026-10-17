@@ -104,7 +104,11 @@ export async function createResearchServer(options: {
         return;
       }
       if (req.method === 'GET' && path === '/api/providers') {
-        json(200, { archetypes: engine.archetypes.provider, materials: engine.portal.provider });
+        json(200, {
+          archetypes: engine.archetypes.provider,
+          materials: engine.portal.provider,
+          ...(engine.archetypes.networkStatus ? { github: engine.archetypes.networkStatus() } : {}),
+        });
         return;
       }
       if (req.method === 'GET' && path === '/api/contract') {
@@ -143,7 +147,12 @@ export async function createResearchServer(options: {
         const id = decodeURIComponent(match[1]);
         const action = match[2];
         if (req.method === 'GET' && !action) {
-          json(200, engine.get(id));
+          json(200, {
+            ...engine.get(id),
+            ...(engine.archetypes.networkStatus
+              ? { githubNetwork: engine.archetypes.networkStatus(id) }
+              : {}),
+          });
           return;
         }
         if (req.method === 'GET' && action === 'blueprint') {
@@ -233,7 +242,10 @@ async function main(): Promise<void> {
   const engine = new ResearchOrchestrator(store, portal, {
     archetypes: fixtures
       ? new MockMaterialPortal()
-      : new GitHubArchetypeResearcher({ token: process.env.WEBMCP_GITHUB_TOKEN }),
+      : new GitHubArchetypeResearcher({
+          token: process.env.WEBMCP_GITHUB_TOKEN,
+          networkEnabled: process.env.WEBMCP_GITHUB_NETWORK === 'bounded',
+        }),
   });
   const service = await createResearchServer({
     engine,
