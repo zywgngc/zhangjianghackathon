@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>游造 · 从一句话到可玩世界</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/">游造<span>GAME LAB</span></a
+      ><span class="tag">多智能体游戏工坊</span>
+      <div class="model"><i></i><span id="model">连接中</span></div>
+    </header>
+    <main>
+      <aside>
+        <div class="eyebrow">IDEA → PLAY</div>
+        <h1>一句灵感，<br />一个可玩的世界。</h1>
+        <p class="intro">
+          描述你的想法，让设计、开发与质检代理接力完成一个中文小游戏。
+        </p>
+        <form id="generate-form">
+          <label for="description">你想做什么游戏？</label>
+          <textarea
+            id="description"
+            minlength="5"
+            maxlength="8000"
+            required
+            placeholder="例如：做一个太空接星星游戏，左右移动飞船接星星，躲避陨石，支持手机触屏。"
+          ></textarea>
+          <div class="examples">
+            <button type="button" data-example="star">✧ 太空接星星</button
+            ><button type="button" data-example="memory">▦ 记忆翻牌</button
+            ><button type="button" data-example="snake">↝ 贪吃蛇</button>
+          </div>
+          <div class="form-row">
+            <label for="engine">渲染方式</label
+            ><select id="engine">
+              <option value="auto">由设计代理选择</option>
+              <option value="canvas">Canvas · 动作游戏</option>
+              <option value="dom">DOM · 棋盘与卡牌</option>
+            </select>
+          </div>
+          <details class="access">
+            <summary>访问设置</summary>
+            <input
+              id="token"
+              type="password"
+              autocomplete="off"
+              placeholder="访问口令（如服务端已配置）"
+            /><button id="save-token" type="button">应用口令</button>
+          </details>
+          <button class="primary" id="generate" type="submit">
+            开始创造 <span>↗</span>
+          </button>
+          <p class="small">简体中文 · 手机适配 · 单文件离线运行</p>
+        </form>
+        <div class="history-heading">
+          最近的创作<button id="refresh" type="button">刷新</button>
+        </div>
+        <div id="history" class="history"></div>
+      </aside>
+      <section class="workspace">
+        <div class="workspace-top">
+          <div>
+            <div class="eyebrow">WORKSPACE</div>
+            <h2 id="run-title">创作工作台</h2>
+          </div>
+          <span class="status" id="status">等待灵感</span>
+        </div>
+        <div class="pipeline" id="pipeline">
+          <div data-stage="brief">01 <b>需求改写</b></div>
+          <div data-stage="retrieval">02 <b>知识检索</b></div>
+          <div data-stage="design">03 <b>游戏设计</b></div>
+          <div data-stage="build">04 <b>开发修复</b></div>
+          <div data-stage="browser_test">05 <b>实测与 QA</b></div>
+        </div>
+        <div class="run-meta">
+          <span id="usage">代理已就绪，等待任务</span>
+          <div>
+            <button id="resume" hidden type="button">恢复任务</button
+            ><button id="cancel" hidden type="button">取消任务</button
+            ><button id="download" hidden type="button">下载游戏 ↓</button>
+          </div>
+        </div>
+        <nav class="tabs">
+          <button data-tab="preview" class="selected" type="button">
+            游戏预览</button
+          ><button data-tab="spec" type="button">需求与设计</button
+          ><button data-tab="qa" type="button">验证报告</button
+          ><button data-tab="logs" type="button">运行轨迹</button>
+        </nav>
+        <div class="panel" id="panel-preview">
+          <div class="empty" id="empty">
+            <div class="empty-mark">✧</div>
+            <h3>下一个游戏，从这里开始</h3>
+            <p>通过浏览器验证与 QA 的版本，会在这里出现。</p>
+            <div class="empty-pills">
+              <span>设计代理</span><span>开发代理</span><span>质检代理</span>
+            </div>
+          </div>
+          <iframe
+            id="game"
+            title="通过验证的游戏"
+            sandbox="allow-scripts"
+            hidden
+          ></iframe>
+        </div>
+        <div class="panel text-panel" id="panel-spec" hidden>
+          <div id="spec" class="document">暂无需求与设计。</div>
+        </div>
+        <div class="panel text-panel" id="panel-qa" hidden>
+          <div id="qa" class="document">浏览器实测与 QA 记录会在这里显示。</div>
+        </div>
+        <div class="panel text-panel" id="panel-logs" hidden>
+          <ol id="logs" class="logs"></ol>
+        </div>
+        <div id="notice" role="status"></div>
+        <footer>
+          每一步都有据可查。只预览实际通过验证的同一份文件。<span
+            >ZHANGJIANG HACKATHON / 2026</span
+          >
+        </footer>
+      </section>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
