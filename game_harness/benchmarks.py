@@ -30,7 +30,7 @@ def inventory(root=None):
                 raise ValueError("无效 PNG：" + image.name)
             digest = hashlib.sha256(data).hexdigest()
             width, height = struct.unpack(">II", data[16:24])
-            images.append({"path": str(image.relative_to(root)), "sha256": digest, "width": width, "height": height})
+            images.append({"path": image.relative_to(root).as_posix(), "sha256": digest, "width": width, "height": height})
             if digest in hashes:
                 warnings.append("存在内容相同的参考图：" + image.name)
             hashes.add(digest)
@@ -42,7 +42,7 @@ def inventory(root=None):
             blockers.append("engine_adapter_not_installed:" + str(locked_engine))
         if len(text) > 1000000:
             blockers.append("spec_input_exceeds_one_million_characters")
-        results.append({"case_id": case_id, "names": names, "specification": str(path.relative_to(root)),
+        results.append({"case_id": case_id, "names": names, "specification": path.relative_to(root).as_posix(),
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "characters": len(text),
             "required_stack": stack, "locked_engine": locked_engine,
             "sections": re.findall(r"^\d{2}\. [A-Z][A-Z /()\-]+$", text, re.M),

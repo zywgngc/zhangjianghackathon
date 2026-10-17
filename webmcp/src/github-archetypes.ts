@@ -148,6 +148,11 @@ export class GitHubArchetypeResearcher implements ArchetypeResearchPort {
             );
           parts.push(value);
         }
+      } catch (error) {
+        // fetch resolves at the headers; transport failures can still occur while reading.
+        if (!(error instanceof GitHubFailure))
+          this.network.pause(this.network.now() + 60000, '网络异常或取消；暂停联网，不自动重试。');
+        throw error;
       } finally {
         await reader.cancel().catch(() => {});
       }

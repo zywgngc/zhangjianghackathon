@@ -9,6 +9,7 @@ import { AppError } from './model.ts';
 import { ResearchOrchestrator } from './orchestrator.ts';
 import { MockMaterialPortal, UnconfiguredMaterialPortal } from './portal.ts';
 import { GitHubArchetypeResearcher } from './github-archetypes.ts';
+import { GitHubNetworkStore } from './github-network.ts';
 import { RunStore } from './store.ts';
 
 const assets: Record<string, [string, string]> = {
@@ -245,6 +246,9 @@ async function main(): Promise<void> {
       : new GitHubArchetypeResearcher({
           token: process.env.WEBMCP_GITHUB_TOKEN,
           networkEnabled: process.env.WEBMCP_GITHUB_NETWORK === 'bounded',
+          network: new GitHubNetworkStore(
+            process.env.WEBMCP_GITHUB_STATE ? resolve(process.env.WEBMCP_GITHUB_STATE) : undefined,
+          ),
         }),
   });
   const service = await createResearchServer({

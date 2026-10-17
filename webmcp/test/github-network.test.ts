@@ -200,6 +200,59 @@ test('server Retry-After/reset headers and low remaining allowance stop subseque
   }
 });
 
+for (const failure of [
+  new TypeError('Simulated connection reset after headers'),
+  new DOMException('Simulated body read aborted after headers', 'AbortError'),
+]) {
+  test(`response body ${failure.name} pauses later searches until the shared cooldown expires`, async () => {
+    let now = 1_800_000_000_000,
+      calls = 0;
+    const state = new GitHubNetworkStore(':memory:', () => now);
+    const provider = new GitHubArchetypeResearcher({
+      networkEnabled: true,
+      network: state,
+      wait: async (ms) => {
+        now += ms;
+      },
+      fetch: async () => {
+        calls++;
+        return calls === 1
+          ? new Response(
+              new ReadableStream({
+                start(controller) {
+                  controller.error(failure);
+                },
+              }),
+            )
+          : Response.json({ items: [] });
+      },
+    });
+    try {
+      assert.equal((await provider.search(request)).status, 'failed');
+      assert.equal(calls, 1);
+      assert.equal(Date.parse(state.status().cooldownUntil!), now + 60000);
+      assert.equal(state.status('idea').ideaRequests, 1);
+
+      const differentRun = {
+        ...request,
+        discussion: { ...request.discussion, runId: 'different-idea' },
+      };
+      now += 59999;
+      const blocked = await provider.search(differentRun);
+      assert.equal(blocked.status, 'failed');
+      assert.ok(blocked.status === 'failed' && blocked.error.code === 'RATE_LIMITED');
+      assert.equal(calls, 1);
+      assert.equal(state.status('different-idea').ideaRequests, 0);
+
+      now++;
+      assert.equal((await provider.search(differentRun)).status, 'partial');
+      assert.equal(calls, 3); // The next manual search may perform its two queries.
+    } finally {
+      provider.close();
+    }
+  });
+}
+
 test('orchestrator does not replay GitHub jobs after a timeout', async () => {
   let calls = 0;
   const provider = new GitHubArchetypeResearcher({ network: new GitHubNetworkStore(':memory:') });

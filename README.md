@@ -4,9 +4,11 @@
 
 v2 已补齐长规格入口、真实第三方引擎模板、工具式编码循环、功能 DAG、检查点恢复及项目交付。**三个官方大型 case 已在 210 使用完整原文开始真实实现，目前尚未全部验收通过。** 引擎模板或 Python 回归测试通过，不代表这些游戏已经完成。
 
-已合并团队新增的 [WebMCP 研究服务与工作台](webmcp/runtime.md)，包括持久任务、受限讨论及三份参考规格。GitHub 原型检索默认仅读缓存，显式开启后受持久额度和冷却限制；真实素材门户仍未配置，缺失时会明确报告，不生成模拟成功。组件边界见 [WebMCP 交接文档](webmcp/handoff.md)。
+已合并团队新增的 [WebMCP 研究服务与工作台](webmcp/runtime.md)，包括持久任务、受限讨论及三份参考规格；GitHub 原型检索默认仅读本地缓存，显式开启后受持久请求预算和冷却保护。材料门户尚未配置，只有显式 fixtures 模式使用合成候选。组件边界见 [WebMCP 交接文档](webmcp/handoff.md)。
 
 本集成分支增加可选的 `/api/research` 适配器与 `/research` 工作台入口，见 [WebMCP 组件接入说明](docs/webmcp-integration.md)。研究组件不接管项目编排、编码、验收或发布；固定蓝图的接收钩子目前仅接入 v1 `/api/runs`，v2 `/api/projects` 仍由 harness 负责人维护。
+
+团队整合分支 `codex/final-webmcp-harness` 的启动与请求保护补充也已纳入当前开发分支；其固定基线、验证范围和待接接口见 [整合交接记录](docs/final-webmcp-harness.md)。团队同步使用默认分支 `prompting`。
 
 ## 两条工作流
 

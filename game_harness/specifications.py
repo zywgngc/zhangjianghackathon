@@ -214,12 +214,12 @@ def load_case(case_id: str, root: str | Path | None = None, *, archive_dir: str 
     root = Path(root) if root else Path(__file__).resolve().parents[1]
     directory, name = CASES[case_id]
     path = root / directory / name
-    images = [{"path": str(image.relative_to(root)), "sha256": sha256(image.read_bytes())}
+    images = [{"path": image.relative_to(root).as_posix(), "sha256": sha256(image.read_bytes())}
               for image in sorted((root / directory).glob("*.png"))]
     # newline='' is essential: CRLF is source data, not a normalization request.
     with path.open(encoding="utf-8", newline="") as handle:
         text = handle.read()
-    return ingest_text(text, case_id=case_id, source_path=str(path.relative_to(root)),
+    return ingest_text(text, case_id=case_id, source_path=path.relative_to(root).as_posix(),
                        archive_dir=archive_dir, reference_images=images)
 
 
